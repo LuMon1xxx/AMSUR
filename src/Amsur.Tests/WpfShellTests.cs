@@ -1,5 +1,11 @@
 using Amsur.Application;
 using Amsur.Wpf;
+using System.Windows;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 
 namespace Amsur.Tests;
 
@@ -79,6 +85,61 @@ public sealed class WpfShellTests : IAsyncDisposable
             Assert.Null(win.Result);
             win.Close();
             return Task.CompletedTask;
+        });
+    }
+
+    private static Button? FindCaptionButton(DependencyObject root, string tooltip)
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is Button b && Equals(b.ToolTip, tooltip))
+                return b;
+            var found = FindCaptionButton(child, tooltip);
+            if (found is not null) return found;
+        }
+        return null;
+    }
+
+    // Настоящий путь клика (IInvokeProvider → OnClick → Command), не RaiseEvent:
+    // RaiseEvent(Click) команду не выполняет и ничего не доказывает.
+    // Invoke асинхронен (BeginInvoke Input) — после клика промываем диспетчер.
+    private static void Click(Button b)
+    {
+        ((IInvokeProvider)new ButtonAutomationPeer(b)).Invoke();
+        System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
+            () => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+    }
+
+    // --- 5. Кнопки кастомной шапки реально работают (repro: свернуть/развернуть) ---
+    [Fact]
+    public void ChromeTitleButtons_MinMaxWork()
+    {
+        RunSta(async _ =>
+        {
+            Directory.CreateDirectory(_dir);
+            var app = EnsureApp();
+            var session = new AppSession(_dir);
+            await session.InitAsync();
+            typeof(App).GetProperty("Session")!.SetValue(app, session);
+            var main = new MainWindow();
+            main.ApplyTemplate();
+            var min = FindCaptionButton(main, "Свернуть");
+            var max = FindCaptionButton(main, "Развернуть");
+            var restore = FindCaptionButton(main, "Восстановить");
+            var close = FindCaptionButton(main, "Закрыть");
+            Assert.NotNull(min);
+            Assert.NotNull(max);
+            Assert.NotNull(restore);
+            Assert.NotNull(close);
+            Assert.Equal(WindowState.Maximized, main.WindowState);
+            Click(restore!);
+            Assert.Equal(WindowState.Normal, main.WindowState);
+            Click(max!);
+            Assert.Equal(WindowState.Maximized, main.WindowState);
+            Click(min!);
+            Assert.Equal(WindowState.Minimized, main.WindowState);
+            main.Close();
         });
     }
 
