@@ -9,6 +9,7 @@ using Microsoft.Win32;
 namespace Amsur.Wpf;
 
 public sealed record LoadRowVm(
+    int SourceIndex,
     string ClassName, string SubjectName, int Hours,
     string TeacherName, string RoomName, string GroupText);
 
@@ -35,13 +36,7 @@ public partial class SchoolDataWindow : Window
             return;
         }
         var classes = d.Classes.ToDictionary(c => c.Id);
-        var subjects = d.Subjects.ToDictionary(s => s.Id);
-        var teachers = d.Teachers.ToDictionary(t => t.Id);
-        var rooms = d.Rooms.ToDictionary(r => r.Id);
         string CN(Guid id) => classes.TryGetValue(id, out var c) ? c.Name : "?";
-        string SN(Guid id) => subjects.TryGetValue(id, out var s) ? s.Name : "?";
-        string TN(Guid id) => teachers.TryGetValue(id, out var t) ? t.Name : "?";
-        string RN(Guid? id) => id.HasValue && rooms.TryGetValue(id.Value, out var r) ? r.Name : "—";
 
         SummaryText.Text = $"{d.Classes.Count} классов · {d.Teachers.Count} учителей · " +
             $"{d.Subjects.Count} предметов · {d.Rooms.Count} кабинетов · " +
@@ -54,11 +49,15 @@ public partial class SchoolDataWindow : Window
         TabRooms.Content = $"Кабинеты ({d.Rooms.Count})";
         TabGroups.Content = $"Подгруппы ({d.Groups.Count})";
 
-        _allLoad = new ObservableCollection<LoadRowVm>(d.Curriculum
-            .OrderBy(c => CN(c.ClassId)).ThenBy(c => SN(c.SubjectId))
-            .Select(c => new LoadRowVm(CN(c.ClassId), SN(c.SubjectId), c.HoursPerWeek,
-                TN(c.TeacherId), RN(c.RoomId), c.SplitSubgroups ? "A/B" : "Весь класс")));
+        // P3: вид нагрузки строим из исходных строк (сохраняем индекс для правок).
+        _allLoad = new ObservableCollection<LoadRowVm>(_session.LoadRows
+            .Select((r, i) => (Row: r, Index: i))
+            .OrderBy(x => x.Row.ClassName).ThenBy(x => x.Row.SubjectName)
+            .Select(x => new LoadRowVm(x.Index, x.Row.ClassName, x.Row.SubjectName, x.Row.HoursPerWeek,
+                x.Row.TeacherName, x.Row.RoomName ?? "—", x.Row.SplitSubgroups ? "A/B" : "Весь класс")));
         LoadGrid.ItemsSource = _allLoad;
+        DaysBox.Text = d.DaysCount.ToString();
+        SlotsBox.Text = d.SlotsPerDay.ToString();
         ClassFilterBox.ItemsSource = new[] { "Все классы" }
             .Concat(d.Classes.OrderBy(c => c.Name).Select(c => c.Name)).ToList();
         ClassFilterBox.SelectedIndex = 0;
@@ -138,7 +137,7 @@ public partial class SchoolDataWindow : Window
         }
     }
 
-    private void OnImportClick(object sender, RoutedEventArgs e)
+    private async void OnImportClick(object sender, RoutedEventArgs e)
     {
         var dlg = new OpenFileDialog { Filter = "Excel (*.xlsx)|*.xlsx" };
         if (dlg.ShowDialog() != true) return;
@@ -149,7 +148,7 @@ public partial class SchoolDataWindow : Window
                 throw new InvalidOperationException("Дни и уроки должны быть положительными числами.");
             using var fs = File.OpenRead(dlg.FileName);
             var rows = ExcelLoadExchange.ImportLoad(fs);
-            _session.ImportLoad(rows, days, slots);
+            await _session.ImportLoadAsync(rows, days, slots);
             ErrorCard.Visibility = Visibility.Collapsed;
             LoadAll();
         }
@@ -160,6 +159,115 @@ public partial class SchoolDataWindow : Window
             ErrorList.ItemsSource = (errs.Count > 0 ? errs : new[] { ex.Message }).Take(8).ToList();
             LoadAll();
         }
+    }
+
+    // --- P3: ручной ввод строк нагрузки (без Excel) ---
+    private int GridDays() =>
+        int.TryParse(DaysBox.Text, out int days) && days > 0
+            ? days : _session.Data?.DaysCount ?? 5;
+
+    private int GridSlots() =>
+        int.TryParse(SlotsBox.Text, out int slots) && slots > 0
+            ? slots : _session.Data?.SlotsPerDay ?? 7;
+
+    private IReadOnlyList<string> KnownClasses() => _session.LoadRows
+        .Select(r => r.ClassName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s).ToList();
+
+    private IReadOnlyList<string> KnownSubjects() => _session.LoadRows
+        .Select(r => r.SubjectName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s).ToList();
+
+    private IReadOnlyList<string> KnownTeachers() => _session.LoadRows
+        .SelectMany(r => new[] { r.TeacherName, r.SplitTeacherBName })
+        .Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s!)
+        .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s).ToList();
+
+    private IReadOnlyList<string> KnownRooms() => _session.LoadRows
+        .Select(r => r.RoomName).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s!)
+        .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s).ToList();
+
+    private LoadRowWindow OpenRowDialog(LoadRow? existing)
+    {
+        var dlg = new LoadRowWindow(existing,
+            KnownClasses(), KnownSubjects(), KnownTeachers(), KnownRooms())
+        {
+            Owner = this,
+        };
+        return dlg;
+    }
+
+    private async Task ApplyManualRows(List<LoadRow> rows, int days, int slots)
+    {
+        try
+        {
+            await _session.SetManualRowsAsync(rows, days, slots);
+            ErrorCard.Visibility = Visibility.Collapsed;
+        }
+        catch (Exception ex)
+        {
+            var errs = _session.LastImportErrors;
+            ErrorCard.Visibility = Visibility.Visible;
+            ErrorList.ItemsSource = (errs.Count > 0 ? errs : new[] { ex.Message }).Take(8).ToList();
+        }
+        LoadAll();
+    }
+
+    private async void OnAddClick(object sender, RoutedEventArgs e)
+    {
+        var dlg = OpenRowDialog(null);
+        if (dlg.ShowDialog() != true || dlg.Result is null) return;
+        var rows = _session.LoadRows.Concat([dlg.Result]).ToList();
+        await ApplyManualRows(rows, GridDays(), GridSlots());
+    }
+
+    private async void OnEditClick(object sender, RoutedEventArgs e)
+    {
+        if (LoadGrid.SelectedItem is not LoadRowVm sel)
+        {
+            ErrorCard.Visibility = Visibility.Visible;
+            ErrorList.ItemsSource = new[] { "Выберите строку в таблице, затем «Изменить»." };
+            return;
+        }
+        var dlg = OpenRowDialog(_session.LoadRows[sel.SourceIndex]);
+        if (dlg.ShowDialog() != true || dlg.Result is null) return;
+        var rows = _session.LoadRows.ToList();
+        rows[sel.SourceIndex] = dlg.Result;
+        await ApplyManualRows(rows, GridDays(), GridSlots());
+    }
+
+    private async void OnDeleteClick(object sender, RoutedEventArgs e)
+    {
+        if (LoadGrid.SelectedItem is not LoadRowVm sel)
+        {
+            ErrorCard.Visibility = Visibility.Visible;
+            ErrorList.ItemsSource = new[] { "Выберите строку в таблице, затем «Удалить»." };
+            return;
+        }
+        var row = _session.LoadRows[sel.SourceIndex];
+        if (MessageBox.Show(this,
+                $"Удалить строку «{row.ClassName} — {row.SubjectName} ({row.TeacherName})»?",
+                "Удаление строки", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+        var rows = _session.LoadRows.ToList();
+        rows.RemoveAt(sel.SourceIndex);
+        await ApplyManualRows(rows, GridDays(), GridSlots());
+    }
+
+    private async void OnGridApplyClick(object sender, RoutedEventArgs e)
+    {
+        if (!_session.HasData)
+        {
+            ErrorCard.Visibility = Visibility.Visible;
+            ErrorList.ItemsSource = new[] { "Нет данных: загрузите Excel или добавьте первую строку кнопкой «Добавить»." };
+            return;
+        }
+        if (!int.TryParse(DaysBox.Text, out int days) || days <= 0 ||
+            !int.TryParse(SlotsBox.Text, out int slots) || slots <= 0)
+        {
+            ErrorCard.Visibility = Visibility.Visible;
+            ErrorList.ItemsSource = new[] { "Дни и уроки должны быть положительными числами." };
+            return;
+        }
+        await ApplyManualRows(_session.LoadRows.ToList(), days, slots);
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();

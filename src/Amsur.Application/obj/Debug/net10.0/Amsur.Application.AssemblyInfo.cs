@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Amsur.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a36796fc7b872f2396484bcea80df29cc2715429")]
 [assembly: System.Reflection.AssemblyProductAttribute("Amsur.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Amsur.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

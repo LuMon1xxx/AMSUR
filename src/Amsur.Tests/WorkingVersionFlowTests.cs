@@ -44,7 +44,7 @@ public sealed class WorkingVersionFlowTests : IAsyncDisposable
             ExcelLoadExchange.ExportLoad(ms, rows);
             rows = ExcelLoadExchange.ImportLoad(new MemoryStream(ms.ToArray())).ToList();
         }
-        session.ImportLoad(rows, days: 3, slots: 4);
+        await session.ImportLoadAsync(rows, days: 3, slots: 4);
         Assert.True(session.HasData);
 
         // 2. Генерация реальным solver (короткий бюджет, 1 seed).

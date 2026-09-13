@@ -494,3 +494,5 @@ D:\LuMon1x\AMSUR\src\Amsur.Wpf\obj\Debug\net10.0-windows\SchoolDataWindow.g.cs
 D:\LuMon1x\AMSUR\src\Amsur.Wpf\obj\Debug\net10.0-windows\SettingsWindow.g.cs
 D:\LuMon1x\AMSUR\src\Amsur.Wpf\obj\Debug\net10.0-windows\ExportWindow.baml
 D:\LuMon1x\AMSUR\src\Amsur.Wpf\obj\Debug\net10.0-windows\ExportWindow.g.cs
+D:\LuMon1x\AMSUR\src\Amsur.Wpf\obj\Debug\net10.0-windows\LoadRowWindow.baml
+D:\LuMon1x\AMSUR\src\Amsur.Wpf\obj\Debug\net10.0-windows\LoadRowWindow.g.cs

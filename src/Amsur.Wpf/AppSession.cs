@@ -19,6 +19,7 @@ public sealed class AppSession
     public SqliteScheduleStore Store { get; }
     public ManualEditService EditService { get; }
     private readonly SqliteQualityProfileStore _profiles;
+    private readonly SqliteSchoolDataStore _schoolData;
 
     /// <summary>Активный набор весов (S5): обычный завуч не трогает (STANDARD).</summary>
     public EffectiveRuleSet QualityRules { get; private set; } = EffectiveRuleSet.Default;
@@ -56,6 +57,7 @@ public sealed class AppSession
         Store = new SqliteScheduleStore($"Data Source={DbPath}");
         EditService = new ManualEditService(new AcceptScheduleService(Store));
         _profiles = new SqliteQualityProfileStore($"Data Source={DbPath}");
+        _schoolData = new SqliteSchoolDataStore($"Data Source={DbPath}");
     }
 
     public async Task InitAsync()
@@ -63,6 +65,7 @@ public sealed class AppSession
         await Store.InitializeAsync();
         await Store.RepairAsync(); // честная починка после нештатных завершений
         await _profiles.InitializeAsync();
+        await _schoolData.InitializeAsync();
         // Восстанавливаем сохранённый CUSTOM (промт §18); версия каталога новее —
         // профиль устарел: остаёмся на STANDARD, молча не перезаписываем.
         var saved = await _profiles.GetActiveAsync();
@@ -74,6 +77,21 @@ public sealed class AppSession
         if (File.Exists(_yearFile) && Guid.TryParse(
                 await File.ReadAllTextAsync(_yearFile), out var year))
             AcademicYearId = year;
+        // P3: восстанавливаем сохранённые строки нагрузки (ручной ввод / прошлый импорт).
+        try
+        {
+            var stored = await _schoolData.LoadAsync();
+            if (stored is not null && stored.Rows.Count > 0)
+            {
+                AcademicYearId = stored.AcademicYearId;
+                AcceptRows(FromStored(stored.Rows), stored.DaysCount, stored.SlotsPerDay, stored.Source);
+                File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+            }
+        }
+        catch (Exception ex)
+        {
+            LastImportErrors = [$"Сохранённые данные не восстановились: {ex.Message}"];
+        }
     }
 
     /// <summary>Сохранить «Моя школа» (промт §18): валидация до записи, single-active.</summary>
@@ -95,6 +113,12 @@ public sealed class AppSession
 
     public bool HasData => Data is not null;
 
+    /// <summary>Исходные строки нагрузки (источник истины для ручного ввода).</summary>
+    public IReadOnlyList<LoadRow> LoadRows { get; private set; } = [];
+
+    /// <summary>Откуда данные: "excel" или "manual".</summary>
+    public string DataSource { get; private set; } = "";
+
     /// <summary>Ошибки последнего импорта (для dashboard; пусто — всё хорошо).</summary>
     public IReadOnlyList<string> LastImportErrors { get; private set; } = [];
 
@@ -106,9 +130,41 @@ public sealed class AppSession
         Data.Classes.Count, Data.Teachers.Count, Data.Subjects.Count,
         Data.Curriculum.Sum(c => c.HoursPerWeek), Data.DaysCount, Data.SlotsPerDay);
 
-    public void ImportLoad(IReadOnlyList<LoadRow> rows, int days, int slots)
+    public async Task ImportLoadAsync(
+        IReadOnlyList<LoadRow> rows, int days, int slots,
+        CancellationToken ct = default)
     {
         AcademicYearId = Guid.NewGuid();
+        AcceptRows(rows, days, slots, source: "excel");
+        await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
+            Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
+        File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+    }
+
+    /// <summary>P3: ручные правки — тот же AcceptRows, но год сохраняется
+    /// (активное расписание остаётся привязанным к году).</summary>
+    public async Task SetManualRowsAsync(
+        IReadOnlyList<LoadRow> rows, int days, int slots,
+        CancellationToken ct = default)
+    {
+        if (AcademicYearId == Guid.Empty)
+            AcademicYearId = Guid.NewGuid();
+        AcceptRows(rows, days, slots, source: "manual");
+        await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
+            Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
+        File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+    }
+
+    private static IReadOnlyList<StoredLoadRow> ToStored(IReadOnlyList<LoadRow> rows) =>
+        rows.Select(r => new StoredLoadRow(r.ClassName, r.SubjectName, r.HoursPerWeek,
+            r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName)).ToList();
+
+    private static IReadOnlyList<LoadRow> FromStored(IReadOnlyList<StoredLoadRow> rows) =>
+        rows.Select(r => new LoadRow(r.ClassName, r.SubjectName, r.HoursPerWeek,
+            r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName)).ToList();
+
+    private void AcceptRows(IReadOnlyList<LoadRow> rows, int days, int slots, string source)
+    {
         LastImportErrors = [];
         var data = SchoolDataImporter.Import(AcademicYearId, rows, days, slots);
         // Fail-loud ДО принятия данных: вход обязан строиться.
@@ -120,8 +176,9 @@ public sealed class AppSession
                 "Данные не строятся в задачу: " + string.Join("; ", errors.Take(5)));
         }
         Data = data;
+        LoadRows = rows.ToList();
+        DataSource = source;
         LastQuality = null; // новые данные — старая оценка невалидна
-        File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
     }
 
     public SchedulingProblem BuildProblem()

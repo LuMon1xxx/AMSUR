@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Школа и данные" Height="660" Width="1000"
         MinWidth="860" MinHeight="540" WindowStartupLocation="CenterOwner"
+        Style="{DynamicResource ChromeWindow}"
         Background="{StaticResource BBg}">
   <DockPanel Margin="20">
     <StackPanel DockPanel.Dock="Top">
@@ -18,6 +19,8 @@
           <TextBox x:Name="SlotsBox" Text="7" Width="36" Margin="6,0,10,0"/>
           <Button Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Click="OnTemplateClick"/>
           <Button Content="Загрузить Excel" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0" Padding="12,7" FontSize="13" Click="OnImportClick"/>
+          <Button Content="Применить сетку" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Padding="10,4"
+                  ToolTip="Применить дни и уроки к текущим данным (без Excel)" Click="OnGridApplyClick"/>
         </StackPanel>
       </DockPanel>
       <Border x:Name="ErrorCard" Style="{StaticResource Card}" Margin="0,12,0,0"
@@ -64,10 +67,18 @@
       </Border>
 
       <DockPanel Grid.Column="1">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,8" x:Name="LoadToolbar">
-          <TextBox x:Name="SearchBox" Width="280" Margin="0,0,8,0" TextChanged="OnFilterChanged"/>
-          <ComboBox x:Name="ClassFilterBox" Width="160" SelectionChanged="OnFilterChanged"/>
-        </StackPanel>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8" x:Name="LoadToolbar" LastChildFill="False">
+          <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+            <TextBox x:Name="SearchBox" Width="280" Margin="0,0,8,0" TextChanged="OnFilterChanged"/>
+            <ComboBox x:Name="ClassFilterBox" Width="160" SelectionChanged="OnFilterChanged"/>
+          </StackPanel>
+          <!-- P3: ручной ввод строк нагрузки -->
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+            <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnAddClick"/>
+            <Button Content="Изменить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnEditClick"/>
+            <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnDeleteClick"/>
+          </StackPanel>
+        </DockPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
           <StackPanel>
             <DataGrid x:Name="LoadGrid" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="420">

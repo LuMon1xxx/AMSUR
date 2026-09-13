@@ -248,7 +248,7 @@ public partial class MainWindow : Window
         catch (Exception ex) { ShowError(ex); }
     }
 
-    private void OnImportClick(object sender, RoutedEventArgs e)
+    private async void OnImportClick(object sender, RoutedEventArgs e)
     {
         var dlg = new OpenFileDialog { Filter = "Excel (*.xlsx)|*.xlsx" };
         if (dlg.ShowDialog() != true) return;
@@ -259,7 +259,7 @@ public partial class MainWindow : Window
                 throw new InvalidOperationException("Дни и уроки должны быть положительными числами.");
             using var fs = File.OpenRead(dlg.FileName);
             var rows = ExcelLoadExchange.ImportLoad(fs);
-            Session.ImportLoad(rows, days, slots);
+            await Session.ImportLoadAsync(rows, days, slots);
             ShowErrors([]);
             RefreshAll();
         }

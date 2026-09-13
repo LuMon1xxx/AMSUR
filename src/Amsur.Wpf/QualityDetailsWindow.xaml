@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Почему такая оценка" Height="520" Width="680"
         MinWidth="560" MinHeight="440" WindowStartupLocation="CenterOwner"
+        Style="{DynamicResource ChromeWindow}"
         Background="{StaticResource BBg}">
   <DockPanel Margin="20">
     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">

@@ -69,6 +69,19 @@ public sealed class WpfShellTests : IAsyncDisposable
         });
     }
 
+    // --- 4. LoadRowWindow: диалог ручного ввода собирается и без ресурсов App ---
+    [Fact]
+    public void LoadRowWindow_Constructs()
+    {
+        RunSta(_ =>
+        {
+            var win = new LoadRowWindow(null, ["5А"], ["Мат"], ["Иванов"], ["101"]);
+            Assert.Null(win.Result);
+            win.Close();
+            return Task.CompletedTask;
+        });
+    }
+
     private static bool _appResourcesLoaded;
     private static readonly object _appLock = new();
 

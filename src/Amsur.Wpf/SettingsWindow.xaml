@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Настройки качества" Height="680" Width="1020"
         MinWidth="900" MinHeight="600" WindowStartupLocation="CenterOwner"
+        Style="{DynamicResource ChromeWindow}"
         Background="{StaticResource BBg}">
   <DockPanel Margin="20">
     <StackPanel DockPanel.Dock="Top">

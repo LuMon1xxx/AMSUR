@@ -4,6 +4,7 @@
         xmlns:local="clr-namespace:Amsur.Wpf"
         Title="Составление расписания" Height="780" Width="1100"
         MinWidth="940" MinHeight="660" WindowStartupLocation="CenterScreen"
+        Style="{DynamicResource ChromeWindow}"
         Background="{DynamicResource BBg}">
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
   <StackPanel Margin="24" MaxWidth="1200">

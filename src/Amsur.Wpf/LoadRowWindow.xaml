@@ -1,0 +1,45 @@
+<Window x:Class="Amsur.Wpf.LoadRowWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Строка нагрузки" Height="540" Width="440"
+        MinWidth="380" MinHeight="480" WindowStartupLocation="CenterOwner"
+        Style="{DynamicResource ChromeWindow}"
+        Background="{DynamicResource BBg}">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Margin="20">
+    <TextBlock Style="{DynamicResource TH1}" FontSize="18" Text="Строка нагрузки"/>
+    <TextBlock x:Name="HintText" Style="{DynamicResource THint}" FontSize="12" Margin="0,4,0,0"
+               Text="Одна строка = один предмет у класса. Новое имя создаст класс, предмет, учителя или кабинет." TextWrapping="Wrap"/>
+
+    <TextBlock Text="Класс" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
+    <TextBox x:Name="ClassBox" ToolTip="Например: 5А"/>
+    <TextBlock x:Name="ClassKnown" Style="{DynamicResource THCaption}" Margin="0,4,0,0" Text=""/>
+
+    <TextBlock Text="Предмет" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
+    <TextBox x:Name="SubjectBox" ToolTip="Например: Математика"/>
+    <TextBlock x:Name="SubjectKnown" Style="{DynamicResource THCaption}" Margin="0,4,0,0" Text=""/>
+
+    <TextBlock Text="Часов в неделю" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
+    <TextBox x:Name="HoursBox" Text="1" Width="80" HorizontalAlignment="Left" ToolTip="Целое число 1..50"/>
+
+    <TextBlock Text="Учитель" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
+    <TextBox x:Name="TeacherBox" ToolTip="Например: Иванова Е.В."/>
+    <TextBlock x:Name="TeacherKnown" Style="{DynamicResource THCaption}" Margin="0,4,0,0" Text=""/>
+
+    <TextBlock Text="Кабинет (необязательно)" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
+    <TextBox x:Name="RoomBox" ToolTip="Пусто — без привязки к кабинету"/>
+    <TextBlock x:Name="RoomKnown" Style="{DynamicResource THCaption}" Margin="0,4,0,0" Text=""/>
+
+    <CheckBox x:Name="SplitBox" Content="Делить на подгруппы A/B" Margin="0,14,0,0" Checked="OnSplitToggled" Unchecked="OnSplitToggled"/>
+    <TextBlock Text="Второй учитель (для подгруппы B)" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
+    <TextBox x:Name="TeacherBBox" IsEnabled="False" ToolTip="Обязателен при делении на подгруппы"/>
+
+    <TextBlock x:Name="ErrorText" FontSize="13" Foreground="{DynamicResource BBad}" Margin="0,12,0,0" TextWrapping="Wrap" Text=""/>
+
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+      <Button Content="Отмена" Style="{DynamicResource BtnSecondary}" Click="OnCancelClick"/>
+      <Button Content="Сохранить" Style="{DynamicResource BtnPrimary}" Margin="8,0,0,0" Click="OnSaveClick"/>
+    </StackPanel>
+  </StackPanel>
+  </ScrollViewer>
+</Window>

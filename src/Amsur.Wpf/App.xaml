@@ -283,6 +283,404 @@
       </Style.Triggers>
     </Style>
 
+    <!-- P1-shell: современные поля ввода (implicit — все TextBox приложения) -->
+    <Style TargetType="TextBox">
+      <Setter Property="Background" Value="{StaticResource BCard}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="8,5"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Cursor" Value="IBeam"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="TextBox">
+            <Border x:Name="Frame" Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="6" Padding="{TemplateBinding Padding}"
+                    SnapsToDevicePixels="True">
+              <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                            HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BBorderStrong}"/>
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BSubtle}"/>
+                <Setter Property="Foreground" Value="{StaticResource BTextMuted}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- P1-shell: современные комбобоксы (implicit — фильтры расписания/данных) -->
+    <Style x:Key="ComboBoxToggle" TargetType="ToggleButton">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ToggleButton">
+            <Border Background="Transparent" Padding="0,0,8,0">
+              <Path x:Name="Arrow" Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource BTextMuted}"
+                    StrokeThickness="1.6" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Arrow" Property="Stroke" Value="{StaticResource BAccent}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="ComboBoxItem">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Padding" Value="8,6"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBoxItem">
+            <Border x:Name="Frame" Background="{TemplateBinding Background}"
+                    CornerRadius="6" Padding="{TemplateBinding Padding}" Margin="4,1">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsHighlighted" Value="True">
+                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentSoft}"/>
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentSoft}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="ComboBox">
+      <Setter Property="Background" Value="{StaticResource BCard}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="8,5"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="MinHeight" Value="30"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ComboBox">
+            <Grid>
+              <Border x:Name="Frame" Background="{TemplateBinding Background}"
+                      BorderBrush="{TemplateBinding BorderBrush}"
+                      BorderThickness="{TemplateBinding BorderThickness}"
+                      CornerRadius="6" SnapsToDevicePixels="True"/>
+              <Grid Margin="{TemplateBinding Padding}">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ContentPresenter Grid.Column="0"
+                                  Content="{TemplateBinding SelectionBoxItem}"
+                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                <ToggleButton Grid.Column="1" Style="{StaticResource ComboBoxToggle}" Width="20"
+                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+              </Grid>
+              <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
+                     Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                <Border Background="{StaticResource BCard}" BorderBrush="{StaticResource BBorder}"
+                        BorderThickness="1" CornerRadius="8" Padding="2"
+                        MinWidth="{TemplateBinding ActualWidth}" MaxHeight="240">
+                  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsPresenter/>
+                  </ScrollViewer>
+                </Border>
+              </Popup>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BBorderStrong}"/>
+              </Trigger>
+              <Trigger Property="IsDropDownOpen" Value="True">
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BSubtle}"/>
+                <Setter Property="Foreground" Value="{StaticResource BTextMuted}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- P1-shell: пункты боковых списков (категории настроек, справочники) -->
+    <Style TargetType="ListBoxItem">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="Padding" Value="10,7"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="Frame" Background="{TemplateBinding Background}" CornerRadius="8"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BSubtle}"/>
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentSoft}"/>
+                <Setter Property="Foreground" Value="{StaticResource BAccent}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- P1-shell: современные слайдеры настроек (трек + круглая ручка) -->
+    <Style x:Key="SliderRepeat" TargetType="RepeatButton">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RepeatButton">
+            <Border Background="Transparent"/>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style TargetType="Slider">
+      <Setter Property="Background" Value="{StaticResource BSubtle}"/>
+      <Setter Property="Foreground" Value="{StaticResource BAccent}"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Slider">
+            <Grid VerticalAlignment="Center">
+              <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}"/>
+              <Track x:Name="PART_Track">
+                <Track.DecreaseRepeatButton>
+                  <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource SliderRepeat}"/>
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                  <Thumb Width="16" Height="16">
+                    <Thumb.Template>
+                      <ControlTemplate TargetType="Thumb">
+                        <Ellipse Fill="White" Stroke="{StaticResource BAccent}" StrokeThickness="2"/>
+                      </ControlTemplate>
+                    </Thumb.Template>
+                  </Thumb>
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                  <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource SliderRepeat}"/>
+                </Track.IncreaseRepeatButton>
+              </Track>
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- P1-shell: экспандеры со шевроном вместо штатного треугольника -->
+    <Style TargetType="Expander">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Expander">
+            <StackPanel>
+              <ToggleButton IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                            Background="Transparent" BorderThickness="0" Cursor="Hand" Padding="4">
+                <ToggleButton.Template>
+                  <ControlTemplate TargetType="ToggleButton">
+                    <StackPanel Orientation="Horizontal">
+                      <Path x:Name="Glyph" Data="M 0 0 L 0 8 L 5 4 Z" Fill="{StaticResource BTextSoft}"
+                            VerticalAlignment="Center" Margin="0,0,8,0"/>
+                      <ContentPresenter Content="{Binding Header, RelativeSource={RelativeSource AncestorType=Expander}}"
+                                        VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="Glyph" Property="Data" Value="M 0 0 L 8 0 L 4 5 Z"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </ToggleButton.Template>
+              </ToggleButton>
+              <ContentPresenter x:Name="Body" ContentSource="Content" Margin="18,4,0,0" Visibility="Collapsed"/>
+            </StackPanel>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsExpanded" Value="True">
+                <Setter TargetName="Body" Property="Visibility" Value="Visible"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- P1-shell: ячейки гридов без фокус-рамки -->
+    <Style TargetType="DataGridCell">
+      <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Background" Value="Transparent"/>
+    </Style>
+
+    <!-- P1-shell: кнопки навбар-рейла (иконка MDL2 из Tag + текст) -->
+    <Style x:Key="NavBtn" TargetType="Button">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="12,9"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="HorizontalContentAlignment" Value="Left"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22"
+                           TextAlignment="Center" VerticalAlignment="Center"
+                           Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"/>
+                <ContentPresenter VerticalAlignment="Center" Margin="10,0,0,0"/>
+              </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource BSubtle}"/>
+                <Setter Property="Foreground" Value="{StaticResource BText}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.5"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="NavBtnActive" TargetType="Button" BasedOn="{StaticResource NavBtn}">
+      <Setter Property="Background" Value="{StaticResource BAccentSoft}"/>
+      <Setter Property="Foreground" Value="{StaticResource BAccent}"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <!-- P1-shell: кнопки кастомного титулбара (SystemCommands — без кода) -->
+    <Style x:Key="TitleBarBtn" TargetType="Button">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Width" Value="46"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+      <Setter Property="FontSize" Value="10"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="{StaticResource BSubtle}"/>
+          <Setter Property="Foreground" Value="{StaticResource BText}"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="TitleBarCloseBtn" TargetType="Button" BasedOn="{StaticResource TitleBarBtn}">
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#C42B1C"/>
+          <Setter Property="Foreground" Value="White"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <!-- P1-shell: кастомный хром окон (DynamicResource — STA-тесты без ресурсов грузят голое окно) -->
+    <!-- x:Shared=False: WindowChrome не freezable — каждому окну свой экземпляр (иначе межпоточный InvalidOperation) -->
+    <Style x:Key="ChromeWindow" x:Shared="False" TargetType="Window">
+      <Setter Property="WindowStyle" Value="None"/>
+      <Setter Property="ResizeMode" Value="CanResize"/>
+      <Setter Property="Background" Value="{StaticResource BBg}"/>
+      <Setter Property="WindowChrome.WindowChrome">
+        <Setter.Value>
+          <WindowChrome CaptionHeight="44" ResizeBorderThickness="6"
+                        GlassFrameThickness="0" UseAeroCaptionButtons="False"/>
+        </Setter.Value>
+      </Setter>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Window">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{StaticResource BBorder}" BorderThickness="0,0,0,1">
+              <DockPanel>
+                <Grid DockPanel.Dock="Top" Height="44" Background="{StaticResource BCard}">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Border Width="26" Height="26" CornerRadius="7" Background="{StaticResource BAccent}" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Border Width="4" Height="9" CornerRadius="2" Background="White" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                        <Border Width="4" Height="14" CornerRadius="2" Background="White" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                        <Border Width="4" Height="11" CornerRadius="2" Background="White" VerticalAlignment="Center"/>
+                      </StackPanel>
+                    </Border>
+                    <TextBlock Text="АМСУР" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BText}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    <Border Width="1" Background="{StaticResource BBorder}" Margin="10,8" VerticalAlignment="Stretch"/>
+                    <TextBlock Text="{TemplateBinding Title}" FontSize="12" Foreground="{StaticResource BTextSoft}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Style="{StaticResource TitleBarBtn}" Content="&#xE921;" Command="{x:Static SystemCommands.MinimizeWindowCommand}" ToolTip="Свернуть"/>
+                    <Button x:Name="MaxBtn" Style="{StaticResource TitleBarBtn}" Content="&#xE922;" Command="{x:Static SystemCommands.MaximizeWindowCommand}" ToolTip="Развернуть"/>
+                    <Button x:Name="RestoreBtn" Style="{StaticResource TitleBarBtn}" Content="&#xE923;" Command="{x:Static SystemCommands.RestoreWindowCommand}" ToolTip="Восстановить" Visibility="Collapsed"/>
+                    <Button Style="{StaticResource TitleBarCloseBtn}" Content="&#xE8BB;" Command="{x:Static SystemCommands.CloseWindowCommand}" ToolTip="Закрыть"/>
+                  </StackPanel>
+                </Grid>
+                <AdornerDecorator>
+                  <ContentPresenter/>
+                </AdornerDecorator>
+              </DockPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="WindowState" Value="Maximized">
+                <Setter TargetName="MaxBtn" Property="Visibility" Value="Collapsed"/>
+                <Setter TargetName="RestoreBtn" Property="Visibility" Value="Visible"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <!-- P0-9: кнопка без явного Style получает скруглённый BtnSecondary (лечит прямоугольный Hero) -->
     <Style TargetType="Button" BasedOn="{StaticResource BtnSecondary}"/>
   </Application.Resources>
