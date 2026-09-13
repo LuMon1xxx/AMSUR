@@ -1,0 +1,289 @@
+<Application x:Class="Amsur.Wpf.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml"
+             ShutdownMode="OnMainWindowClose">
+  <Application.Resources>
+    <!-- Этап C: visual system — светлая спокойная тема, сине-фиолетовый акцент -->
+    <!-- P0-0: токены выровнены под Stitch-handoff (S5 decision: честные значения, ключи сохранены) -->
+    <Color x:Key="CAccent">#4F46E5</Color>
+    <Color x:Key="CAccentDark">#4338CA</Color>
+    <Color x:Key="CAccentPressed">#3730A3</Color>
+    <Color x:Key="CAccentSoft">#EEF2FF</Color>
+    <Color x:Key="CAccentBorder">#C7D2FE</Color>
+    <Color x:Key="CBg">#F8FAFC</Color>
+    <Color x:Key="CCard">#FFFFFF</Color>
+    <Color x:Key="CSubtle">#F1F5F9</Color>
+    <Color x:Key="CBorder">#E2E8F0</Color>
+    <Color x:Key="CBorderStrong">#CBD5E1</Color>
+    <Color x:Key="CText">#0F172A</Color>
+    <Color x:Key="CTextSoft">#475569</Color>
+    <Color x:Key="CTextSecondary">#475569</Color>
+    <Color x:Key="CTextMuted">#94A3B8</Color>
+    <Color x:Key="CGood">#059669</Color>
+    <Color x:Key="CWarn">#D97706</Color>
+    <Color x:Key="CBad">#DC2626</Color>
+    <Color x:Key="CGoodBg">#ECFDF5</Color>
+    <Color x:Key="CWarnBg">#FFFBEB</Color>
+    <Color x:Key="CBadBg">#FEF2F2</Color>
+
+    <SolidColorBrush x:Key="BAccent" Color="{StaticResource CAccent}"/>
+    <SolidColorBrush x:Key="BAccentDark" Color="{StaticResource CAccentDark}"/>
+    <SolidColorBrush x:Key="BAccentPressed" Color="{StaticResource CAccentPressed}"/>
+    <SolidColorBrush x:Key="BAccentSoft" Color="{StaticResource CAccentSoft}"/>
+    <SolidColorBrush x:Key="BAccentBorder" Color="{StaticResource CAccentBorder}"/>
+    <SolidColorBrush x:Key="BBg" Color="{StaticResource CBg}"/>
+    <SolidColorBrush x:Key="BCard" Color="{StaticResource CCard}"/>
+    <SolidColorBrush x:Key="BSubtle" Color="{StaticResource CSubtle}"/>
+    <SolidColorBrush x:Key="BBorder" Color="{StaticResource CBorder}"/>
+    <SolidColorBrush x:Key="BBorderStrong" Color="{StaticResource CBorderStrong}"/>
+    <SolidColorBrush x:Key="BText" Color="{StaticResource CText}"/>
+    <SolidColorBrush x:Key="BTextSoft" Color="{StaticResource CTextSoft}"/>
+    <SolidColorBrush x:Key="BTextSecondary" Color="{StaticResource CTextSecondary}"/>
+    <SolidColorBrush x:Key="BTextMuted" Color="{StaticResource CTextMuted}"/>
+    <SolidColorBrush x:Key="BGood" Color="{StaticResource CGood}"/>
+    <SolidColorBrush x:Key="BWarn" Color="{StaticResource CWarn}"/>
+    <SolidColorBrush x:Key="BBad" Color="{StaticResource CBad}"/>
+    <SolidColorBrush x:Key="BGoodBg" Color="{StaticResource CGoodBg}"/>
+    <SolidColorBrush x:Key="BWarnBg" Color="{StaticResource CWarnBg}"/>
+    <SolidColorBrush x:Key="BBadBg" Color="{StaticResource CBadBg}"/>
+
+    <CornerRadius x:Key="RCard">12</CornerRadius>
+    <CornerRadius x:Key="RControl">8</CornerRadius>
+    <CornerRadius x:Key="RTag">4</CornerRadius>
+    <Thickness x:Key="TCardPadding">16</Thickness>
+
+    <!-- P0-0: hero-градиент Stitch (135deg #2563EB → #4F46E5) -->
+    <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="#2563EB" Offset="0"/>
+      <GradientStop Color="#4F46E5" Offset="1"/>
+    </LinearGradientBrush>
+
+    <Style x:Key="TH1" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="22"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+    </Style>
+    <Style x:Key="TH2" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="16"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+    </Style>
+    <Style x:Key="THint" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- P0-0: дополнительные текстовые стили handoff -->
+    <Style x:Key="THBody" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style x:Key="THCaption" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style x:Key="TBMono" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Consolas"/>
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+    </Style>
+
+    <Style x:Key="Card" TargetType="Border">
+      <Setter Property="Background" Value="{StaticResource BCard}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="{StaticResource RCard}"/>
+      <Setter Property="Padding" Value="{StaticResource TCardPadding}"/>
+    </Style>
+
+    <Style x:Key="BtnPrimary" TargetType="Button">
+      <Setter Property="Background" Value="{StaticResource BAccent}"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Padding" Value="16,10"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}"
+                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="{StaticResource BAccentDark}"/>
+        </Trigger>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.5"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="BtnSecondary" TargetType="Button">
+      <Setter Property="Background" Value="{StaticResource BCard}"/>
+      <Setter Property="Foreground" Value="{StaticResource BAccent}"/>
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Padding" Value="12,7"/>
+      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="{StaticResource BAccentSoft}"/>
+        </Trigger>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.5"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="Badge" TargetType="Border">
+      <Setter Property="CornerRadius" Value="6"/>
+      <Setter Property="Padding" Value="8,2"/>
+    </Style>
+
+    <!-- Карточка-режим: RadioButton как выбираемая панель -->
+    <Style x:Key="RadioCard" TargetType="RadioButton">
+      <Setter Property="Background" Value="{StaticResource BCard}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="12,10"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Frame" Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="10" Padding="{TemplateBinding Padding}">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+                <Setter TargetName="Frame" Property="BorderThickness" Value="2"/>
+                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentSoft}"/>
+              </Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+              </Trigger>
+              <Trigger Property="IsEnabled" Value="False">
+                <Setter TargetName="Frame" Property="Opacity" Value="0.5"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- P0-9: современные тонкие скроллбары без стрелок (implicit — все ScrollViewer/DataGrid) -->
+    <Style x:Key="ScrollBarPageButton" TargetType="RepeatButton">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RepeatButton">
+            <Border Background="Transparent"/>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="ScrollBarThumb" TargetType="Thumb">
+      <Setter Property="Background" Value="{StaticResource BBorderStrong}"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Thumb">
+            <Border Background="{TemplateBinding Background}" CornerRadius="6"/>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="{StaticResource BTextMuted}"/>
+        </Trigger>
+        <Trigger Property="IsDragging" Value="True">
+          <Setter Property="Background" Value="{StaticResource BAccent}"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <ControlTemplate x:Key="VerticalScrollBar" TargetType="ScrollBar">
+      <Border Background="{TemplateBinding Background}">
+        <Track x:Name="PART_Track" IsDirectionReversed="True">
+          <Track.DecreaseRepeatButton>
+            <RepeatButton Style="{StaticResource ScrollBarPageButton}" Command="ScrollBar.PageUpCommand"/>
+          </Track.DecreaseRepeatButton>
+          <Track.Thumb>
+            <Thumb Style="{StaticResource ScrollBarThumb}" Margin="3,2"/>
+          </Track.Thumb>
+          <Track.IncreaseRepeatButton>
+            <RepeatButton Style="{StaticResource ScrollBarPageButton}" Command="ScrollBar.PageDownCommand"/>
+          </Track.IncreaseRepeatButton>
+        </Track>
+      </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="HorizontalScrollBar" TargetType="ScrollBar">
+      <Border Background="{TemplateBinding Background}">
+        <Track x:Name="PART_Track" IsDirectionReversed="False" Orientation="Horizontal">
+          <Track.DecreaseRepeatButton>
+            <RepeatButton Style="{StaticResource ScrollBarPageButton}" Command="ScrollBar.PageLeftCommand"/>
+          </Track.DecreaseRepeatButton>
+          <Track.Thumb>
+            <Thumb Style="{StaticResource ScrollBarThumb}" Margin="2,3"/>
+          </Track.Thumb>
+          <Track.IncreaseRepeatButton>
+            <RepeatButton Style="{StaticResource ScrollBarPageButton}" Command="ScrollBar.PageRightCommand"/>
+          </Track.IncreaseRepeatButton>
+        </Track>
+      </Border>
+    </ControlTemplate>
+
+    <Style TargetType="ScrollBar">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Width" Value="12"/>
+      <Setter Property="MinWidth" Value="12"/>
+      <Setter Property="Template" Value="{StaticResource VerticalScrollBar}"/>
+      <Style.Triggers>
+        <Trigger Property="Orientation" Value="Horizontal">
+          <Setter Property="Width" Value="Auto"/>
+          <Setter Property="MinWidth" Value="0"/>
+          <Setter Property="Height" Value="12"/>
+          <Setter Property="MinHeight" Value="12"/>
+          <Setter Property="Template" Value="{StaticResource HorizontalScrollBar}"/>
+        </Trigger>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.4"/>
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <!-- P0-9: кнопка без явного Style получает скруглённый BtnSecondary (лечит прямоугольный Hero) -->
+    <Style TargetType="Button" BasedOn="{StaticResource BtnSecondary}"/>
+  </Application.Resources>
+</Application>

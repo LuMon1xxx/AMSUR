@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+
+<html lang="ru"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-variant":"#dae2fd","tertiary-container":"#007b71","error":"#ba1a1a","inverse-surface":"#283044","surface-container-highest":"#dae2fd","on-primary-fixed-variant":"#003ea8","tertiary":"#006058","secondary":"#4b41e1","on-secondary-fixed-variant":"#3323cc","on-primary":"#ffffff","on-secondary-fixed":"#0f0069","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#005049","on-primary-container":"#eeefff","outline":"#737686","background":"#faf8ff","tertiary-fixed":"#89f5e7","secondary-fixed-dim":"#c3c0ff","surface-container-high":"#e2e7ff","error-container":"#ffdad6","inverse-primary":"#b4c5ff","on-tertiary":"#ffffff","secondary-fixed":"#e2dfff","surface":"#faf8ff","on-tertiary-container":"#b3fff3","primary":"#004ac6","tertiary-fixed-dim":"#6bd8cb","surface-dim":"#d2d9f4","outline-variant":"#c3c6d7","on-surface":"#131b2e","on-tertiary-fixed":"#00201d","surface-bright":"#faf8ff","on-secondary":"#ffffff","secondary-container":"#645efb","surface-tint":"#0053db","primary-fixed-dim":"#b4c5ff","inverse-on-surface":"#eef0ff","primary-container":"#2563eb","surface-container":"#eaedff","on-primary-fixed":"#00174b","primary-fixed":"#dbe1ff","on-error-container":"#93000a","on-background":"#131b2e","surface-container-low":"#f2f3ff","on-error":"#ffffff","on-surface-variant":"#434655","on-secondary-container":"#fffbff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-xs":"0.25rem","space-xl":"1.5rem","space-md":"0.75rem","space-sm":"0.5rem","space-lg":"1rem","gutter":"0.75rem","margin":"1rem"},"fontFamily":{"label-md":["JetBrains Mono"],"body-lg":["JetBrains Mono"],"body-md":["JetBrains Mono"],"headline-lg":["Geist"],"display-lg":["Geist"],"label-sm":["JetBrains Mono"],"headline-md":["Geist"],"headline-sm":["Geist"],"code-cell":["JetBrains Mono"],"body-sm":["JetBrains Mono"]},"fontSize":{"label-md":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0.02em","fontWeight":"500"}],"body-lg":["0.875rem",{"lineHeight":"1.375rem","fontWeight":"400"}],"body-md":["0.8125rem",{"lineHeight":"1.25rem","fontWeight":"400"}],"headline-lg":["1.375rem",{"lineHeight":"1.875rem","letterSpacing":"-0.015em","fontWeight":"600"}],"display-lg":["1.75rem",{"lineHeight":"2.25rem","letterSpacing":"-0.02em","fontWeight":"600"}],"label-sm":["0.6875rem",{"lineHeight":"0.875rem","letterSpacing":"0.04em","fontWeight":"500"}],"headline-md":["1.125rem",{"lineHeight":"1.625rem","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-sm":["0.9375rem",{"lineHeight":"1.375rem","letterSpacing":"-0.005em","fontWeight":"600"}],"code-cell":["0.75rem",{"lineHeight":"1rem","fontWeight":"400"}],"body-sm":["0.75rem",{"lineHeight":"1.125rem","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface select-none antialiased"><header class="fixed top-0 left-0 right-0 h-10 bg-surface-container-lowest border-b border-outline-variant z-50 flex items-center justify-between px-space-md shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]"><div class="flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #2563eb - Font: geist - Mode: light - Roundness: rounded-sm" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XMHZabfKU2H3eOZKuVE-6hWrqlHXWvGWGYPPGe9Y9SGz7-IjU0oq87baNuwUbdamcxorhY1yq1596QACnYMY86yes_dTQl-GlqJInfSIjSK7mPkhl9IzW-yAULY5TVbuuxj0Xm74a_G2wG1OxKB6tP2k4sMAdfxrvvMYdRrq7eVpKkoBskmUq4YogrSdY4URlMftj3kgwRNIbIOW9wzem4wE-OskcgsDWXn1r9w02GhyWAXufAro0YNqk"/><span class="font-headline-sm text-headline-sm text-on-surface">АМСУР</span><span class="font-body-sm text-body-sm text-outline hidden xl:inline">— Автоматический модуль составления учебных расписаний</span><div class="ml-space-sm flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant"><span class="h-2 w-2 rounded-full bg-tertiary-container"></span><span class="font-label-sm text-label-sm text-tertiary">БД: МБОУ СОШ №12 (синхронизировано)</span></div></div><div class="flex items-center gap-space-md"><button class="p-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col text-left hidden lg:flex"><span class="font-headline-sm text-label-sm text-on-surface leading-tight">Иванова Е.В.</span><span class="font-label-sm text-[10px] text-on-surface-variant leading-tight">Зам. директора по УР</span></div></div><div class="flex items-center ml-space-sm border-l border-outline-variant pl-space-sm"><button class="h-8 w-8 flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[16px]">remove</span></button><button class="h-8 w-8 flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[14px]">crop_square</span></button><button class="h-8 w-8 flex items-center justify-center hover:bg-error hover:text-on-error text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[16px]">close</span></button></div></div></header><aside class="fixed left-0 top-10 bottom-8 w-[230px] bg-surface-container-lowest border-r border-outline-variant z-40 flex flex-col justify-between p-space-sm"><div class="flex flex-col gap-space-xs"><div class="px-space-sm py-1 font-label-sm text-label-sm text-outline uppercase tracking-wider">Модули</div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container text-primary font-headline-sm border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="glavnaya" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Главная</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="shkola-i-dannye" href="#"><span class="material-symbols-outlined text-[18px]">domain</span><span>Школа и данные</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="nastrojki-kachestva" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span>Настройки качества</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="generaciya-raspisaniya" href="#"><span class="material-symbols-outlined text-[18px]">memory</span><span>Генерация расписания</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="raspisanie" href="#"><span class="material-symbols-outlined text-[18px]">calendar_view_month</span><span>Расписание</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="eksport-i-pechat" href="#"><span class="material-symbols-outlined text-[18px]">print</span><span>Экспорт и печать</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="spravka" href="#"><span class="material-symbols-outlined text-[18px]">help_outline</span><span>Справка</span></a></nav></div><div class="flex flex-col gap-space-sm"><div class="p-space-sm rounded-lg bg-surface-container-low border border-outline-variant flex flex-col gap-1"><div class="flex items-center gap-1 text-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[16px]">info</span><span>Нужна помощь?</span></div><p class="font-body-sm text-body-sm text-on-surface-variant">Нажмите F1 для вызова контекстного руководства алгоритма.</p><button class="mt-1 text-left font-label-sm text-label-sm text-primary hover:text-on-primary-fixed-variant transition-colors flex items-center gap-1" type="button"><span class="material-symbols-outlined text-[14px]">open_in_new</span><span>Открыть справку (F1)</span></button></div><div class="px-space-xs font-label-sm text-[10px] text-outline flex items-center justify-between"><span>Версия 2.4.0</span><span>.NET 10 WPF</span></div></div></aside><div class="pl-[230px]"><main class="w-full pt-10 min-h-screen bg-surface-container-low pb-8 px-space-md"><div class="flex flex-col w-full gap-space-sm pb-10">
+<!-- 1. ВЕРХНЯЯ ИНФОРМАЦИОННАЯ ПОЛОСА (WPF Docked Toolstrip) -->
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-sm bg-surface-container-lowest p-space-sm rounded-xl shadow-sm">
+<!-- Индикатор качества расписания и СанПиН -->
+<div class="flex items-center flex-wrap gap-space-sm">
+<div class="flex items-center gap-2 px-space-sm py-1 rounded bg-surface-container-low">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-tertiary-container"></span>
+</span>
+<span class="font-headline-sm text-body-sm text-on-surface">Текущее расписание: Хорошее</span>
+<span class="h-3 w-px bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold">0 жёстких нарушений</span>
+<span class="h-3 w-px bg-outline-variant"></span>
+<span class="font-label-md text-label-md bg-surface-variant text-on-primary-fixed-variant px-1.5 py-0.5 rounded font-bold">96/100</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">schedule</span>
+<span>1-я смена (08:30 — 14:50)</span>
+</div>
+</div>
+<!-- Фильтры и навигация сетки -->
+<div class="flex items-center flex-wrap gap-space-sm">
+<!-- Сегментированный переключатель (WPF Segmented Button Bar) -->
+<div class="flex items-center p-0.5 bg-surface-container-high rounded-lg text-on-surface-variant font-label-md text-label-sm">
+<button class="px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface transition-colors" type="button">Все</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-primary font-bold shadow-sm flex items-center gap-1" type="button">
+<span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
+          Класс
+        </button>
+<button class="px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface transition-colors" type="button">Учитель</button>
+<button class="px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface transition-colors" type="button">Кабинет</button>
+</div>
+<!-- Селектор класса -->
+<div class="relative flex items-center">
+<select class="appearance-none bg-surface-container-low text-on-surface font-headline-sm text-body-sm pl-2.5 pr-8 py-1 rounded-lg focus:outline-none focus:bg-surface-container-lowest cursor-pointer shadow-sm">
+<option selected="">5А класс</option>
+<option>5Б класс</option>
+<option>6А класс</option>
+<option>7В класс</option>
+<option>9Б класс</option>
+<option>10А (Профиль)</option>
+</select>
+<span class="material-symbols-outlined absolute right-1.5 pointer-events-none text-on-surface-variant text-[18px]">arrow_drop_down</span>
+</div>
+<!-- Быстрый поиск -->
+<div class="relative flex items-center min-w-[220px]">
+<span class="material-symbols-outlined absolute left-2 text-outline text-[16px]">search</span>
+<input class="w-full bg-surface-container-low pl-7 pr-2.5 py-1 rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest shadow-sm" placeholder="Поиск предмета или учителя..." type="text"/>
+</div>
+<!-- Кнопка обновления -->
+<button class="p-1.5 bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-primary rounded-lg shadow-sm transition-colors" title="Пересчитать проекцию" type="button">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+</button>
+</div>
+</div>
+<!-- 2. ОСНОВНАЯ СЕТКА РАСПИСАНИЯ (WPF High-Density DataGrid) -->
+<div class="w-full overflow-x-auto bg-surface-container-lowest rounded-xl p-space-sm shadow-sm">
+<div class="min-w-[1040px] flex flex-col gap-1.5">
+<!-- Заголовки дней недели -->
+<div class="grid grid-cols-[100px_repeat(5,1fr)] gap-1.5 items-center bg-surface-container-low p-1.5 rounded-lg">
+<div class="text-center font-label-sm text-label-sm text-outline uppercase tracking-wider">Слот / Час</div>
+<div class="flex items-center justify-between px-3 py-1 bg-surface-container-lowest rounded shadow-xs">
+<span class="font-headline-sm text-body-sm text-on-surface font-semibold">Понедельник</span>
+<span class="font-label-sm text-label-sm text-outline">5 уроков</span>
+</div>
+<div class="flex items-center justify-between px-3 py-1 bg-surface-container-lowest rounded shadow-xs ring-1 ring-primary/20">
+<span class="font-headline-sm text-body-sm text-primary font-bold">Вторник</span>
+<span class="font-label-sm text-label-sm text-primary font-semibold">6 уроков</span>
+</div>
+<div class="flex items-center justify-between px-3 py-1 bg-surface-container-lowest rounded shadow-xs">
+<span class="font-headline-sm text-body-sm text-on-surface font-semibold">Среда</span>
+<span class="font-label-sm text-label-sm text-outline">5 уроков</span>
+</div>
+<div class="flex items-center justify-between px-3 py-1 bg-surface-container-lowest rounded shadow-xs">
+<span class="font-headline-sm text-body-sm text-on-surface font-semibold">Четверг</span>
+<span class="font-label-sm text-label-sm text-outline">6 уроков</span>
+</div>
+<div class="flex items-center justify-between px-3 py-1 bg-surface-container-lowest rounded shadow-xs">
+<span class="font-headline-sm text-body-sm text-on-surface font-semibold">Пятница</span>
+<span class="font-label-sm text-label-sm text-outline">5 уроков</span>
+</div>
+</div>
+<!-- Сетка строк уроков (1-7 уроки) -->
+<!-- УРОК 1 (08:30 - 09:15) -->
+<div class="grid grid-cols-[100px_repeat(5,1fr)] gap-1.5 items-stretch min-h-[58px]">
+<div class="flex flex-col justify-center items-center bg-surface-container-low rounded p-1 text-center">
+<span class="font-headline-sm text-body-md text-on-surface font-bold">1 урок</span>
+<span class="font-label-sm text-[10px] text-outline">08:30–09:15</span>
+</div>
+<!-- Пн -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Русский язык</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 201</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Смирнова А.В.</span>
+</div>
+<!-- Вт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Литература</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 201</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Смирнова А.В.</span>
+</div>
+<!-- Ср -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Математика</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 205</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Иванов С.П.</span>
+</div>
+<!-- Чт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">История</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 314</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Федорова Н.К.</span>
+</div>
+<!-- Пт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Русский язык</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 201</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Смирнова А.В.</span>
+</div>
+</div>
+<!-- УРОК 2 (09:25 - 10:10) -->
+<div class="grid grid-cols-[100px_repeat(5,1fr)] gap-1.5 items-stretch min-h-[58px]">
+<div class="flex flex-col justify-center items-center bg-surface-container-low rounded p-1 text-center">
+<span class="font-headline-sm text-body-md text-on-surface font-bold">2 урок</span>
+<span class="font-label-sm text-[10px] text-outline">09:25–10:10</span>
+</div>
+<!-- Пн -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Математика</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 205</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Иванов С.П.</span>
+</div>
+<!-- Вт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Биология</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 108</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Кузнецова О.М.</span>
+</div>
+<!-- Ср -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Русский язык</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 201</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Смирнова А.В.</span>
+</div>
+<!-- Чт - ЦЕЛЬ ПЕРЕМЕЩЕНИЯ (ПОДСВЕЧЕНА МЯГКИМ ТОНОМ) -->
+<div class="relative bg-secondary-fixed/50 p-2 rounded flex flex-col justify-between shadow-xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">География</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-lowest text-secondary font-mono">каб. 302</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Романов В.А.</span>
+<span class="font-label-sm text-[9px] text-secondary font-bold uppercase tracking-wider">Слот цели</span>
+</div>
+</div>
+<!-- Пт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Математика</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 205</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Иванов С.П.</span>
+</div>
+</div>
+<!-- УРОК 3 (10:20 - 11:05) — ВТОРНИК ВЫБРАН -->
+<div class="grid grid-cols-[100px_repeat(5,1fr)] gap-1.5 items-stretch min-h-[58px]">
+<div class="flex flex-col justify-center items-center bg-surface-container-low rounded p-1 text-center">
+<span class="font-headline-sm text-body-md text-on-surface font-bold">3 урок</span>
+<span class="font-label-sm text-[10px] text-outline">10:20–11:05</span>
+</div>
+<!-- Пн -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Родной язык</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 201</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Смирнова А.В.</span>
+</div>
+<!-- Вт (ВЫБРАННАЯ ЯЧЕЙКА) -->
+<div class="relative bg-on-primary-container p-2 rounded flex flex-col justify-between shadow-md ring-2 ring-secondary">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Математика</span>
+</div>
+<span class="font-label-sm text-[9px] px-1.5 py-0.5 rounded bg-surface-container-lowest text-secondary font-bold font-mono">каб. 205</span>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="font-label-sm text-label-sm font-semibold text-secondary truncate">Иванов С.П.</span>
+<span class="font-label-sm text-[9px] bg-secondary text-on-secondary px-1 rounded">ВЫБРАН</span>
+</div>
+</div>
+<!-- Ср (ДВЕ ПОДГРУППЫ - ИН. ЯЗЫК) -->
+<div class="grid grid-cols-2 gap-1 bg-surface-container-low p-1 rounded">
+<div class="bg-surface p-1 rounded flex flex-col justify-between text-[11px]">
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-[11px] font-bold text-on-surface">Англ. яз.</span>
+<span class="font-label-sm text-[8px] bg-secondary-fixed text-on-secondary-fixed px-1 rounded">Гр.1</span>
+</div>
+<span class="font-label-sm text-[9px] text-on-surface-variant">Браун · 402</span>
+</div>
+<div class="bg-surface p-1 rounded flex flex-col justify-between text-[11px]">
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-[11px] font-bold text-on-surface">Англ. яз.</span>
+<span class="font-label-sm text-[8px] bg-secondary-fixed text-on-secondary-fixed px-1 rounded">Гр.2</span>
+</div>
+<span class="font-label-sm text-[9px] text-on-surface-variant">Лисицына · 404</span>
+</div>
+</div>
+<!-- Чт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Физкультура</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">Спортзал 1</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Семенов Д.Л.</span>
+</div>
+<!-- Пт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">ИЗО</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 112</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Соколова Т.В.</span>
+</div>
+</div>
+<!-- УРОК 4 (11:20 - 12:05) -->
+<div class="grid grid-cols-[100px_repeat(5,1fr)] gap-1.5 items-stretch min-h-[58px]">
+<div class="flex flex-col justify-center items-center bg-surface-container-low rounded p-1 text-center">
+<span class="font-headline-sm text-body-md text-on-surface font-bold">4 урок</span>
+<span class="font-label-sm text-[10px] text-outline">11:20–12:05</span>
+</div>
+<!-- Пн -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">История</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 314</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Федорова Н.К.</span>
+</div>
+<!-- Вт -->
+<div class="grid grid-cols-2 gap-1 bg-surface-container-low p-1 rounded">
+<div class="bg-surface p-1 rounded flex flex-col justify-between">
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-[11px] font-bold text-on-surface">Информатика</span>
+<span class="font-label-sm text-[8px] bg-tertiary-fixed text-on-tertiary-fixed px-1 rounded">Гр.1</span>
+</div>
+<span class="font-label-sm text-[9px] text-on-surface-variant">Сергеев · 208</span>
+</div>
+<div class="bg-surface p-1 rounded flex flex-col justify-between">
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-[11px] font-bold text-on-surface">Информатика</span>
+<span class="font-label-sm text-[8px] bg-tertiary-fixed text-on-tertiary-fixed px-1 rounded">Гр.2</span>
+</div>
+<span class="font-label-sm text-[9px] text-on-surface-variant">Алексеев · 210</span>
+</div>
+</div>
+<!-- Ср -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Литература</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 201</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Смирнова А.В.</span>
+</div>
+<!-- Чт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Русский язык</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 201</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Смирнова А.В.</span>
+</div>
+<!-- Пт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Музыка</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 104</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Чайковская Л.М.</span>
+</div>
+</div>
+<!-- УРОК 5 (12:20 - 13:05) -->
+<div class="grid grid-cols-[100px_repeat(5,1fr)] gap-1.5 items-stretch min-h-[58px]">
+<div class="flex flex-col justify-center items-center bg-surface-container-low rounded p-1 text-center">
+<span class="font-headline-sm text-body-md text-on-surface font-bold">5 урок</span>
+<span class="font-label-sm text-[10px] text-outline">12:20–13:05</span>
+</div>
+<!-- Пн -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Физкультура</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">Спортзал 2</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Семенов Д.Л.</span>
+</div>
+<!-- Вт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">ОДНКНР</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 314</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Федорова Н.К.</span>
+</div>
+<!-- Ср -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Технология</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">Мастерская</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Громов П.А.</span>
+</div>
+<!-- Чт -->
+<div class="grid grid-cols-2 gap-1 bg-surface-container-low p-1 rounded">
+<div class="bg-surface p-1 rounded flex flex-col justify-between">
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-[11px] font-bold text-on-surface">Англ. яз.</span>
+<span class="font-label-sm text-[8px] bg-secondary-fixed text-on-secondary-fixed px-1 rounded">Гр.1</span>
+</div>
+<span class="font-label-sm text-[9px] text-on-surface-variant">Браун · 402</span>
+</div>
+<div class="bg-surface p-1 rounded flex flex-col justify-between">
+<div class="flex justify-between items-center">
+<span class="font-headline-sm text-[11px] font-bold text-on-surface">Англ. яз.</span>
+<span class="font-label-sm text-[8px] bg-secondary-fixed text-on-secondary-fixed px-1 rounded">Гр.2</span>
+</div>
+<span class="font-label-sm text-[9px] text-on-surface-variant">Лисицына · 404</span>
+</div>
+</div>
+<!-- Пт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Технология</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">Мастерская</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Громов П.А.</span>
+</div>
+</div>
+<!-- УРОК 6 (13:15 - 14:00) -->
+<div class="grid grid-cols-[100px_repeat(5,1fr)] gap-1.5 items-stretch min-h-[58px]">
+<div class="flex flex-col justify-center items-center bg-surface-container-low rounded p-1 text-center">
+<span class="font-headline-sm text-body-md text-on-surface font-bold">6 урок</span>
+<span class="font-label-sm text-[10px] text-outline">13:15–14:00</span>
+</div>
+<!-- Пн (ПУСТОЙ) -->
+<div class="bg-surface-container-low/40 rounded flex items-center justify-center border-dashed border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-outline select-none">— нет урока —</span>
+</div>
+<!-- Вт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Классный час</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 205</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Иванов С.П.</span>
+</div>
+<!-- Ср (ПУСТОЙ) -->
+<div class="bg-surface-container-low/40 rounded flex items-center justify-center border-dashed border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-outline select-none">— нет урока —</span>
+</div>
+<!-- Чт -->
+<div class="group bg-surface p-2 rounded flex flex-col justify-between hover:bg-surface-container transition-all cursor-pointer shadow-2xs">
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface">Математика</span>
+<span class="font-label-sm text-[9px] px-1 rounded bg-surface-container-high text-on-surface-variant font-mono">каб. 205</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Иванов С.П.</span>
+</div>
+<!-- Пт (ПУСТОЙ) -->
+<div class="bg-surface-container-low/40 rounded flex items-center justify-center border-dashed border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-outline select-none">— нет урока —</span>
+</div>
+</div>
+<!-- УРОК 7 (14:05 - 14:50) -->
+<div class="grid grid-cols-[100px_repeat(5,1fr)] gap-1.5 items-stretch min-h-[52px]">
+<div class="flex flex-col justify-center items-center bg-surface-container-low rounded p-1 text-center">
+<span class="font-headline-sm text-body-md text-on-surface font-bold">7 урок</span>
+<span class="font-label-sm text-[10px] text-outline">14:05–14:50</span>
+</div>
+<div class="bg-surface-container-low/40 rounded flex items-center justify-center border-dashed border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-outline select-none">— нет урока —</span>
+</div>
+<div class="bg-surface-container-low/40 rounded flex items-center justify-center border-dashed border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-outline select-none">— нет урока —</span>
+</div>
+<div class="bg-surface-container-low/40 rounded flex items-center justify-center border-dashed border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-outline select-none">— нет урока —</span>
+</div>
+<div class="bg-surface-container-low/40 rounded flex items-center justify-center border-dashed border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-outline select-none">— нет урока —</span>
+</div>
+<div class="bg-surface-container-low/40 rounded flex items-center justify-center border-dashed border border-outline-variant/60">
+<span class="font-label-sm text-label-sm text-outline select-none">— нет урока —</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. НИЖНЯЯ ПАНЕЛЬ РУЧНОГО ПЕРЕМЕЩЕНИЯ УРОКА (Move Lesson Panel) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<!-- Карточка статуса выбранного урока и контролы перемещения -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md bg-surface-container-low p-space-sm rounded-lg">
+<!-- Текущий выбранный урок -->
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-secondary text-on-secondary flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[20px]">swap_horiz</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Выбран урок:</span>
+<span class="font-headline-sm text-body-md text-on-surface font-bold">5А · Математика</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-high text-primary font-label-sm text-label-sm font-semibold">[Вт, 3 урок]</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Преподаватель: Иванов С.П. · Кабинет: 205</span>
+</div>
+</div>
+<!-- Форма ручного назначения координат -->
+<div class="flex items-center flex-wrap gap-space-sm">
+<div class="flex items-center gap-2">
+<label class="font-label-md text-label-sm text-on-surface-variant">Переместить на:</label>
+<div class="relative">
+<select class="appearance-none bg-surface-container-lowest text-on-surface font-headline-sm text-body-sm pl-2.5 pr-7 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-secondary shadow-xs">
+<option>Понедельник</option>
+<option>Вторник</option>
+<option>Среда</option>
+<option selected="">Четверг</option>
+<option>Пятница</option>
+</select>
+<span class="material-symbols-outlined absolute right-1 top-1.5 pointer-events-none text-outline text-[16px]">arrow_drop_down</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<label class="font-label-md text-label-sm text-on-surface-variant">Урок:</label>
+<div class="relative">
+<select class="appearance-none bg-surface-container-lowest text-on-surface font-headline-sm text-body-sm pl-2.5 pr-7 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-secondary shadow-xs">
+<option>1 урок (08:30)</option>
+<option selected="">2 урок (09:25)</option>
+<option>3 урок (10:20)</option>
+<option>4 урок (11:20)</option>
+<option>5 урок (12:20)</option>
+<option>6 урок (13:15)</option>
+<option>7 урок (14:05)</option>
+</select>
+<span class="material-symbols-outlined absolute right-1 top-1.5 pointer-events-none text-outline text-[16px]">arrow_drop_down</span>
+</div>
+</div>
+<!-- Кнопки действий -->
+<div class="flex items-center gap-1.5 ml-auto">
+<button class="px-3 py-1.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-body-sm font-semibold transition-colors shadow-xs" type="button">
+            Проверить ход
+          </button>
+<button class="px-3.5 py-1.5 rounded bg-secondary hover:bg-on-secondary-fixed-variant text-on-secondary font-headline-sm text-body-sm font-semibold transition-colors shadow-xs flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">save</span>
+<span>Сохранить ход</span>
+</button>
+<button class="p-1.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors shadow-xs" title="Выгрузить в Excel" type="button">
+<span class="material-symbols-outlined text-[18px]">table_view</span>
+</button>
+</div>
+</div>
+</div>
+<!-- БЛОК ВЕРДИКТОВ ВАЛИДАТОРА (Анализ конфликтов и правил) -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Диагностика планировщика и правила СанПиН</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Правило 2.4.3648-20 (Трудность предметов: 11 баллов)</span>
+</div>
+<!-- Варианты вердиктов (В реальном UI показывается активный; здесь показаны состояния с активным сценарием проверки) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<!-- Состояние: Зеленый вердикт (АКТИВЕН ДЛЯ ТЕКУЩЕЙ ЦЕЛИ) -->
+<div class="p-space-sm rounded-lg bg-surface-container-low ring-1 ring-tertiary-container/30 flex flex-col gap-1">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary text-[18px]">check_circle</span>
+<span class="font-headline-sm text-body-sm font-bold text-tertiary">Ход разрешён</span>
+<span class="ml-auto font-label-sm text-[10px] bg-tertiary-fixed text-on-tertiary-fixed px-1.5 py-0.2 rounded font-bold">Оптимально</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+            Иванов С.П. свободен, кабинет 205 свободен. У класса нет окон, баланс нагрузки четверга в норме.
+          </p>
+</div>
+<!-- Состояние: Желтый вердикт (Предупреждение) -->
+<div class="p-space-sm rounded-lg bg-surface-container-low opacity-75 hover:opacity-100 transition-opacity flex flex-col gap-1">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[18px]">warning</span>
+<span class="font-headline-sm text-body-sm font-bold text-secondary">С замечанием (+2 штрафа)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+            Создаст «окно» у учителя Иванова С.П. на 3-м уроке. Допустимо по регламенту школы.
+          </p>
+</div>
+<!-- Состояние: Красный вердикт (Жёсткий конфликт) -->
+<div class="p-space-sm rounded-lg bg-surface-container-low opacity-60 hover:opacity-100 transition-opacity flex flex-col gap-1">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-error text-[18px]">cancel</span>
+<span class="font-headline-sm text-body-sm font-bold text-error">Нельзя (Жёсткий конфликт)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+            В это время Иванов С.П. уже ведёт урок в 9Б классе (каб. 205 занят параллелью).
+          </p>
+</div>
+</div>
+</div>
+</div>
+</div></main></div><footer class="fixed bottom-0 left-0 right-0 h-8 bg-surface-container-lowest border-t border-outline-variant z-50 flex items-center justify-between px-space-md"><div class="flex items-center gap-space-md font-label-sm text-label-sm text-on-surface-variant"><span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-tertiary-container"></span>Движок: Оптимизатор активен</span><span class="border-l border-outline-variant pl-space-md">Память: 342 МБ</span><span class="border-l border-outline-variant pl-space-md">СанПиН: Валидация включена</span></div><div class="flex items-center gap-space-sm font-label-sm text-label-sm text-outline"><span>МБОУ СОШ №12 · 2024/2025 уч. год</span></div></footer></body></html>

@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="Amsur.Application/Amsur.Application.csproj" />
+  <Project Path="Amsur.Domain/Amsur.Domain.csproj" />
+  <Project Path="Amsur.Infrastructure/Amsur.Infrastructure.csproj" />
+  <Project Path="Amsur.Scheduling.Core/Amsur.Scheduling.Core.csproj" />
+  <Project Path="Amsur.Scheduling.OrTools/Amsur.Scheduling.OrTools.csproj" />
+  <Project Path="Amsur.Tests/Amsur.Tests.csproj" />
+  <Project Path="Amsur.Wpf/Amsur.Wpf.csproj" />
+</Solution>

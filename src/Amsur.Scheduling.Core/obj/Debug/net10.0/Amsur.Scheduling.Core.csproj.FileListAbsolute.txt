@@ -1,0 +1,15 @@
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\bin\Debug\net10.0\Amsur.Scheduling.Core.deps.json
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\bin\Debug\net10.0\Amsur.Scheduling.Core.dll
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\bin\Debug\net10.0\Amsur.Scheduling.Core.pdb
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\bin\Debug\net10.0\Amsur.Domain.dll
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\bin\Debug\net10.0\Amsur.Domain.pdb
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\Amsur.Scheduling.Core.csproj.AssemblyReference.cache
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\Amsur.Scheduling.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\Amsur.Scheduling.Core.AssemblyInfoInputs.cache
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\Amsur.Scheduling.Core.AssemblyInfo.cs
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\Amsur.Scheduling.Core.csproj.CoreCompileInputs.cache
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\Amsur.Sc.B935E300.Up2Date
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\Amsur.Scheduling.Core.dll
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\refint\Amsur.Scheduling.Core.dll
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\Amsur.Scheduling.Core.pdb
+D:\LuMon1x\AMSUR\src\Amsur.Scheduling.Core\obj\Debug\net10.0\ref\Amsur.Scheduling.Core.dll

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html lang="ru"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-variant":"#dae2fd","tertiary-container":"#007b71","error":"#ba1a1a","inverse-surface":"#283044","surface-container-highest":"#dae2fd","on-primary-fixed-variant":"#003ea8","tertiary":"#006058","secondary":"#4b41e1","on-secondary-fixed-variant":"#3323cc","on-primary":"#ffffff","on-secondary-fixed":"#0f0069","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#005049","on-primary-container":"#eeefff","outline":"#737686","background":"#faf8ff","tertiary-fixed":"#89f5e7","secondary-fixed-dim":"#c3c0ff","surface-container-high":"#e2e7ff","error-container":"#ffdad6","inverse-primary":"#b4c5ff","on-tertiary":"#ffffff","secondary-fixed":"#e2dfff","surface":"#faf8ff","on-tertiary-container":"#b3fff3","primary":"#004ac6","tertiary-fixed-dim":"#6bd8cb","surface-dim":"#d2d9f4","outline-variant":"#c3c6d7","on-surface":"#131b2e","on-tertiary-fixed":"#00201d","surface-bright":"#faf8ff","on-secondary":"#ffffff","secondary-container":"#645efb","surface-tint":"#0053db","primary-fixed-dim":"#b4c5ff","inverse-on-surface":"#eef0ff","primary-container":"#2563eb","surface-container":"#eaedff","on-primary-fixed":"#00174b","primary-fixed":"#dbe1ff","on-error-container":"#93000a","on-background":"#131b2e","surface-container-low":"#f2f3ff","on-error":"#ffffff","on-surface-variant":"#434655","on-secondary-container":"#fffbff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-xs":"0.25rem","space-xl":"1.5rem","space-md":"0.75rem","space-sm":"0.5rem","space-lg":"1rem","gutter":"0.75rem","margin":"1rem"},"fontFamily":{"label-md":["JetBrains Mono"],"body-lg":["JetBrains Mono"],"body-md":["JetBrains Mono"],"headline-lg":["Geist"],"display-lg":["Geist"],"label-sm":["JetBrains Mono"],"headline-md":["Geist"],"headline-sm":["Geist"],"code-cell":["JetBrains Mono"],"body-sm":["JetBrains Mono"]},"fontSize":{"label-md":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0.02em","fontWeight":"500"}],"body-lg":["0.875rem",{"lineHeight":"1.375rem","fontWeight":"400"}],"body-md":["0.8125rem",{"lineHeight":"1.25rem","fontWeight":"400"}],"headline-lg":["1.375rem",{"lineHeight":"1.875rem","letterSpacing":"-0.015em","fontWeight":"600"}],"display-lg":["1.75rem",{"lineHeight":"2.25rem","letterSpacing":"-0.02em","fontWeight":"600"}],"label-sm":["0.6875rem",{"lineHeight":"0.875rem","letterSpacing":"0.04em","fontWeight":"500"}],"headline-md":["1.125rem",{"lineHeight":"1.625rem","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-sm":["0.9375rem",{"lineHeight":"1.375rem","letterSpacing":"-0.005em","fontWeight":"600"}],"code-cell":["0.75rem",{"lineHeight":"1rem","fontWeight":"400"}],"body-sm":["0.75rem",{"lineHeight":"1.125rem","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface select-none antialiased"><header class="fixed top-0 left-0 right-0 h-10 bg-surface-container-lowest border-b border-outline-variant z-50 flex items-center justify-between px-space-md shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]"><div class="flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #2563eb - Font: geist - Mode: light - Roundness: rounded-sm" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XMHZabfKU2H3eOZKuVE-6hWrqlHXWvGWGYPPGe9Y9SGz7-IjU0oq87baNuwUbdamcxorhY1yq1596QACnYMY86yes_dTQl-GlqJInfSIjSK7mPkhl9IzW-yAULY5TVbuuxj0Xm74a_G2wG1OxKB6tP2k4sMAdfxrvvMYdRrq7eVpKkoBskmUq4YogrSdY4URlMftj3kgwRNIbIOW9wzem4wE-OskcgsDWXn1r9w02GhyWAXufAro0YNqk"/><span class="font-headline-sm text-headline-sm text-on-surface">АМСУР</span><span class="font-body-sm text-body-sm text-outline hidden xl:inline">— Автоматический модуль составления учебных расписаний</span><div class="ml-space-sm flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant"><span class="h-2 w-2 rounded-full bg-tertiary-container"></span><span class="font-label-sm text-label-sm text-tertiary">БД: МБОУ СОШ №12 (синхронизировано)</span></div></div><div class="flex items-center gap-space-md"><button class="p-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col text-left hidden lg:flex"><span class="font-headline-sm text-label-sm text-on-surface leading-tight">Иванова Е.В.</span><span class="font-label-sm text-[10px] text-on-surface-variant leading-tight">Зам. директора по УР</span></div></div><div class="flex items-center ml-space-sm border-l border-outline-variant pl-space-sm"><button class="h-8 w-8 flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[16px]">remove</span></button><button class="h-8 w-8 flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[14px]">crop_square</span></button><button class="h-8 w-8 flex items-center justify-center hover:bg-error hover:text-on-error text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[16px]">close</span></button></div></div></header><aside class="fixed left-0 top-10 bottom-8 w-[230px] bg-surface-container-lowest border-r border-outline-variant z-40 flex flex-col justify-between p-space-sm"><div class="flex flex-col gap-space-xs"><div class="px-space-sm py-1 font-label-sm text-label-sm text-outline uppercase tracking-wider">Модули</div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container text-primary font-headline-sm border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="glavnaya" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Главная</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="shkola-i-dannye" href="#"><span class="material-symbols-outlined text-[18px]">domain</span><span>Школа и данные</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="nastrojki-kachestva" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span>Настройки качества</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="generaciya-raspisaniya" href="#"><span class="material-symbols-outlined text-[18px]">memory</span><span>Генерация расписания</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="raspisanie" href="#"><span class="material-symbols-outlined text-[18px]">calendar_view_month</span><span>Расписание</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="eksport-i-pechat" href="#"><span class="material-symbols-outlined text-[18px]">print</span><span>Экспорт и печать</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="spravka" href="#"><span class="material-symbols-outlined text-[18px]">help_outline</span><span>Справка</span></a></nav></div><div class="flex flex-col gap-space-sm"><div class="p-space-sm rounded-lg bg-surface-container-low border border-outline-variant flex flex-col gap-1"><div class="flex items-center gap-1 text-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[16px]">info</span><span>Нужна помощь?</span></div><p class="font-body-sm text-body-sm text-on-surface-variant">Нажмите F1 для вызова контекстного руководства алгоритма.</p><button class="mt-1 text-left font-label-sm text-label-sm text-primary hover:text-on-primary-fixed-variant transition-colors flex items-center gap-1" type="button"><span class="material-symbols-outlined text-[14px]">open_in_new</span><span>Открыть справку (F1)</span></button></div><div class="px-space-xs font-label-sm text-[10px] text-outline flex items-center justify-between"><span>Версия 2.4.0</span><span>.NET 10 WPF</span></div></div></aside><div class="pl-[230px]"><main class="w-full pt-10 min-h-screen bg-surface-container-low pb-8 px-space-md"><div class="flex flex-col w-full">
+<div class="flex flex-col gap-space-lg py-space-sm">
+<!-- 1. Панель состояния генерации -->
+<section class="bg-surface-container-lowest rounded-full p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="relative flex items-center justify-center w-10 h-10 rounded-full bg-secondary/10">
+<span class="inline-block w-5 h-5 rounded-full border-2 border-secondary border-t-transparent animate-spin"></span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-sm">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Ищем подходящее расписание...</h2>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">
+                Итерация #14 820
+              </span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant">
+              Профиль: <span class="text-on-surface font-semibold">Стандарт</span> · Режим: <span class="text-on-surface font-semibold">Стандарт (CP-SAT Solvers v9.8)</span> · Потоков: <span class="text-on-surface font-semibold">8x</span>
+</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm self-start xl:self-auto">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Алгоритм:</span>
+<span class="font-label-sm text-label-sm px-2 py-1 rounded bg-surface-container font-mono text-primary">Branch & Cut + LNS</span>
+</div>
+</div>
+<!-- Цепочка стадий расчета (Step indicator) -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-space-xs pt-space-xs">
+<!-- Шаг 1: Выполнено -->
+<div class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low">
+<div class="w-6 h-6 rounded-full bg-tertiary-container text-on-tertiary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm text-on-surface truncate">1. Поиск допустимого</span>
+<span class="font-label-sm text-label-sm text-tertiary">Выполнено (0.8с)</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px] ml-auto">arrow_forward</span>
+</div>
+<!-- Шаг 2: В процессе (Активный) -->
+<div class="flex items-center gap-space-sm p-space-sm rounded-lg bg-secondary text-on-secondary shadow-sm">
+<div class="w-6 h-6 rounded-full bg-on-secondary text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[14px] animate-pulse">autorenew</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm text-on-secondary truncate">2. Улучшение качества</span>
+<span class="font-label-sm text-label-sm text-on-secondary/80">В процессе... (96/100)</span>
+</div>
+<span class="material-symbols-outlined text-on-secondary/70 text-[16px] ml-auto">arrow_forward</span>
+</div>
+<!-- Шаг 3: Ожидание -->
+<div class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low opacity-75">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-outline flex items-center justify-center shrink-0">
+<span class="font-label-sm text-label-sm">3</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm text-on-surface truncate">3. Отбор Top-5</span>
+<span class="font-label-sm text-label-sm text-outline">Ожидание</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px] ml-auto">arrow_forward</span>
+</div>
+<!-- Шаг 4: Готово -->
+<div class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low opacity-50">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-outline flex items-center justify-center shrink-0">
+<span class="font-label-sm text-label-sm">4</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm text-on-surface truncate">4. Завершение</span>
+<span class="font-label-sm text-label-sm text-outline">Финализация</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Центральный мониторинг расчета (Метрики + График сходимости штрафа) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-stretch">
+<!-- Левый блок показателей -->
+<section class="lg:col-span-4 bg-surface-container-lowest rounded-full p-space-md shadow-sm flex flex-col justify-between gap-space-md">
+<div>
+<div class="flex items-center justify-between pb-space-sm">
+<h3 class="font-headline-md text-headline-md text-on-surface">Метрики решателя</h3>
+<span class="font-label-sm text-label-sm text-tertiary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-ping"></span>
+              Активен
+            </span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm pt-space-xs">
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Первое решение</span>
+<span class="font-headline-md text-headline-md text-on-surface mt-1">1.4 сек</span>
+<span class="font-label-sm text-[10px] text-outline">Оценка: 72 балла</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Лучшее сейчас</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-md text-headline-md text-secondary">96</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">/ 100</span>
+</div>
+<span class="font-label-sm text-[10px] text-tertiary font-medium">Отличное</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Вариантов в пуле</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-md text-headline-md text-on-surface">3</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">из 5</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline">Критерий Парето</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Время расчета</span>
+<span class="font-headline-md text-headline-md text-on-surface mt-1 font-mono tracking-tight" id="live-timer">00:00:18</span>
+<span class="font-label-sm text-[10px] text-outline">Лимит: ~20 сек</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs pt-space-xs">
+<button class="w-full h-9 rounded-lg bg-surface-container-lowest text-error hover:bg-error-container hover:text-on-error-container font-headline-sm text-body-sm transition-colors flex items-center justify-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[16px]">stop_circle</span>
+<span>Остановить расчет</span>
+</button>
+<p class="font-label-sm text-[10px] text-outline text-center">
+            Лучшее найденное решение автоматически сохраняется в локальной БД
+          </p>
+</div>
+</section>
+<!-- Правый блок: График оптимизации качества -->
+<section class="lg:col-span-8 bg-surface-container-lowest rounded-full p-space-md shadow-sm flex flex-col justify-between gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<h3 class="font-headline-md text-headline-md text-on-surface">Динамика минимизации штрафа и роста оценки</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Сходимость целевой функции в реальном времени (от 72 до 96 баллов)</span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-on-surface-variant">
+<span class="w-3 h-0.5 bg-secondary inline-block rounded"></span>
+<span>Оценка качества</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-outline">
+<span class="w-3 h-0.5 bg-outline-variant inline-block rounded"></span>
+<span>Штраф (Penalty)</span>
+</div>
+</div>
+</div>
+<!-- SVG График без рамок -->
+<div class="relative w-full h-44 mt-space-xs bg-surface-container-low rounded-lg p-space-sm flex flex-col justify-between overflow-hidden">
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 600 130">
+<!-- Сетка горизонтальная -->
+<line class="text-outline-variant/40" stroke="currentColor" stroke-dasharray="3 3" x1="40" x2="590" y1="20" y2="20"></line>
+<line class="text-outline-variant/40" stroke="currentColor" stroke-dasharray="3 3" x1="40" x2="590" y1="55" y2="55"></line>
+<line class="text-outline-variant/40" stroke="currentColor" stroke-dasharray="3 3" x1="40" x2="590" y1="90" y2="90"></line>
+<!-- Линия штрафа (спадает) -->
+<path class="text-outline-variant" d="M 45 35 Q 120 70, 200 95 T 380 112 T 580 118" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+<!-- Линия качества (растет с 72 до 96) -->
+<path class="text-secondary" d="M 45 105 Q 110 80, 210 50 T 360 30 T 490 22 T 580 18" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
+<!-- Точки на линии качества -->
+<circle class="fill-surface text-secondary" cx="45" cy="105" r="3.5" stroke="currentColor" stroke-width="2"></circle>
+<circle class="fill-surface text-secondary" cx="210" cy="50" r="3.5" stroke="currentColor" stroke-width="2"></circle>
+<circle class="fill-surface text-secondary" cx="360" cy="30" r="3.5" stroke="currentColor" stroke-width="2"></circle>
+<circle class="fill-secondary" cx="580" cy="18" r="4.5"></circle>
+</svg>
+<!-- Оси подписи -->
+<div class="flex justify-between items-center text-outline font-label-sm text-[10px] px-1">
+<span>0с (Старт)</span>
+<span>4с</span>
+<span>8с</span>
+<span>12с</span>
+<span>16с</span>
+<span class="text-secondary font-semibold">18с (96 б.)</span>
+</div>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant pt-space-xs">
+<span>Суммарный штраф окон: <span class="font-mono text-on-surface">12 единиц</span></span>
+<span>Нарушений жестких условий (Hard constraints): <span class="font-mono text-tertiary font-semibold">0</span></span>
+<span>Темп итераций: <span class="font-mono text-on-surface">820 / сек</span></span>
+</div>
+</section>
+</div>
+<!-- 3. Нижний блок: Отобранные варианты решений (Top-5) -->
+<section class="flex flex-col gap-space-sm mt-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<h3 class="font-headline-md text-headline-md text-on-surface">Отобранные варианты решений (Top-5)</h3>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">
+            3 готово
+          </span>
+</div>
+<div class="font-label-sm text-label-sm text-outline">
+          Сортировка по качеству СанПиН и плотности
+        </div>
+</div>
+<div class="grid grid-cols-1 gap-space-md">
+<!-- Карточка 1: Текущий фаворит (ЛУЧШИЙ ВАРИАНТ) -->
+<article class="bg-surface-container-lowest rounded-full p-space-md shadow-md flex flex-col gap-space-md relative overflow-hidden">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm pb-space-xs">
+<div class="flex flex-wrap items-center gap-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">star</span>
+                ЛУЧШИЙ ВАРИАНТ
+              </span>
+<h4 class="font-headline-md text-headline-md text-on-surface">Вариант №1 — Оценка: 96 / 100 (Хорошее)</h4>
+</div>
+<!-- Метрики варианта -->
+<div class="flex flex-wrap items-center gap-space-md font-label-md text-label-md text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">event_busy</span>
+                Окна учителей: <strong class="text-on-surface">12</strong>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">more_time</span>
+                Межсменные перерывы: <strong class="text-on-surface">4</strong>
+</span>
+<span class="flex items-center gap-1 text-tertiary font-semibold">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                Нарушений СанПиН: 0
+              </span>
+</div>
+</div>
+<!-- Разворачиваемый блок обоснования оценки -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Почему такая оценка:</span>
+<ul class="flex flex-col gap-1.5 font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container mt-1.5 shrink-0"></span>
+<span><strong class="text-on-surface">СанПиН 2.4.2 соблюден полностью:</strong> у всех классов 1–11 отсутствуют недопустимые окна, расписание первой смены сбалансировано.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container mt-1.5 shrink-0"></span>
+<span>Сложные предметы (математика, физика, химия) распределены строго на <strong class="text-on-surface">2–4 уроках</strong> в дни оптимальной работоспособности (вторник–четверг).</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary mt-1.5 shrink-0"></span>
+<span>Присутствует <strong class="text-on-surface">12 окон у учителей-предметников</strong> из-за жестких ограничений по вместимости специализированных кабинетов физики и информатики.</span>
+</li>
+</ul>
+</div>
+<!-- Кнопки действия -->
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-sm text-label-sm text-outline">
+              ID генерации: sol-96-a790 · 14.8 тыс. перестановок
+            </span>
+<div class="flex items-center gap-space-sm">
+<button class="h-9 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-headline-sm text-body-sm transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Открыть в редакторе</span>
+</button>
+<button class="h-9 px-space-lg rounded-lg bg-secondary hover:bg-secondary-container text-on-secondary font-headline-sm text-body-sm shadow-sm transition-all flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Принять этот вариант</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Карточка 2: Альтернативный вариант -->
+<article class="bg-surface-container-lowest rounded-full p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-sm pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<h4 class="font-headline-md text-headline-md text-on-surface">Вариант №2 — Оценка: 92 / 100 (Удовлетворительное)</h4>
+<span class="font-label-sm text-label-sm text-outline">Ранг #2</span>
+</div>
+<!-- Метрики варианта -->
+<div class="flex flex-wrap items-center gap-space-md font-label-md text-label-md text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">event_busy</span>
+                Окна учителей: <strong class="text-on-surface">16</strong>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">more_time</span>
+                Межсменные перерывы: <strong class="text-on-surface">6</strong>
+</span>
+<span class="flex items-center gap-1 text-tertiary font-semibold">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                Нарушений СанПиН: 0
+              </span>
+</div>
+</div>
+<!-- Блок обоснования оценки -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Почему такая оценка:</span>
+<ul class="flex flex-col gap-1.5 font-body-sm text-body-sm text-on-surface-variant">
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-outline mt-1.5 shrink-0"></span>
+<span>На <strong class="text-on-surface">4 окна у учителей больше</strong> по сравнению с Вариантом №1 (суммарно 16 окон).</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-outline mt-1.5 shrink-0"></span>
+<span>У 7Б класса геометрия поставлена <strong class="text-on-surface">6-м уроком в пятницу</strong>, что снижает индекс усвоения по методической шкале сложности.</span>
+</li>
+</ul>
+</div>
+<!-- Кнопки действия: Только сравнение, кнопки «Принять» нет -->
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-sm text-label-sm text-outline">
+              ID генерации: sol-92-f12b · 11.2 тыс. перестановок
+            </span>
+<button class="h-9 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-headline-sm text-body-sm transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">compare_arrows</span>
+<span>Открыть для сравнения</span>
+</button>
+</div>
+</article>
+</div>
+</section>
+</div>
+</div>
+<script>
+  (function() {
+    let seconds = 18;
+    const timerElem = document.getElementById('live-timer');
+    if (timerElem) {
+      setInterval(() => {
+        seconds++;
+        const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const secs = String(seconds % 60).padStart(2, '0');
+        timerElem.textContent = `00:${mins}:${secs}`;
+      }, 1000);
+    }
+  })();
+</script></main></div><footer class="fixed bottom-0 left-0 right-0 h-8 bg-surface-container-lowest border-t border-outline-variant z-50 flex items-center justify-between px-space-md"><div class="flex items-center gap-space-md font-label-sm text-label-sm text-on-surface-variant"><span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-tertiary-container"></span>Движок: Оптимизатор активен</span><span class="border-l border-outline-variant pl-space-md">Память: 342 МБ</span><span class="border-l border-outline-variant pl-space-md">СанПиН: Валидация включена</span></div><div class="flex items-center gap-space-sm font-label-sm text-label-sm text-outline"><span>МБОУ СОШ №12 · 2024/2025 уч. год</span></div></footer></body></html>

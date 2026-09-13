@@ -1,0 +1,136 @@
+<Window x:Class="Amsur.Wpf.ScheduleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="АМСУР — активное расписание" Height="720" Width="1200"
+        MinWidth="980" MinHeight="620" WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BBg}">
+  <DockPanel Margin="20">
+    <!-- Верх: заголовок + честный статус (имена сохранены для STA) -->
+    <StackPanel DockPanel.Dock="Top">
+      <TextBlock Style="{DynamicResource TH1}" FontSize="20" Text="Активное расписание"/>
+      <Border Style="{DynamicResource Card}" Margin="0,10,0,0" Padding="12">
+        <StackPanel>
+          <TextBlock x:Name="StatusText" x:FieldModifier="public" FontSize="14" FontWeight="SemiBold"
+                     Text="Загрузка…" TextWrapping="Wrap" Foreground="{DynamicResource BText}"/>
+          <TextBlock x:Name="QualityText" FontSize="13" Margin="0,4,0,0"
+                     TextWrapping="Wrap" Foreground="{DynamicResource BTextSoft}"/>
+          <TextBlock x:Name="CountText" Style="{DynamicResource THCaption}" Margin="0,4,0,0" Text=""/>
+        </StackPanel>
+      </Border>
+      <!-- Тулбар фильтров: вид + имя + поиск (всё UI-only, контракты не меняются) -->
+      <StackPanel Orientation="Horizontal" Margin="0,10,0,0" VerticalAlignment="Center">
+        <TextBlock Text="Показать:" VerticalAlignment="Center" FontSize="13"/>
+        <ComboBox x:Name="ViewBox" Width="150" Margin="6,0,0,0" SelectionChanged="OnViewChanged">
+          <ComboBoxItem Content="Всё расписание" IsSelected="True"/>
+          <ComboBoxItem Content="Класс…"/>
+          <ComboBoxItem Content="Учитель…"/>
+          <ComboBoxItem Content="Кабинет…"/>
+        </ComboBox>
+        <ComboBox x:Name="NameBox" Width="200" Margin="8,0,0,0" SelectionChanged="OnViewChanged"/>
+        <TextBox x:Name="SearchBox" Width="240" Margin="8,0,0,0"
+                 ToolTip="Поиск по предмету, учителю, классу или кабинету (фильтр на экране)"
+                 TextChanged="OnSearchChanged"/>
+        <Button x:Name="RefreshBtn" Content="Обновить" Style="{DynamicResource BtnSecondary}"
+                Margin="8,0,0,0" Click="OnRefreshClick"/>
+      </StackPanel>
+    </StackPanel>
+
+    <!-- Низ: панель перемещения + вердикт (имена кнопок сохранены) -->
+    <Border DockPanel.Dock="Bottom" Style="{DynamicResource Card}" Margin="0,10,0,0" Padding="12">
+      <StackPanel>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Border Background="{DynamicResource BAccent}" CornerRadius="8" Padding="10,8" VerticalAlignment="Center">
+            <TextBlock Text="⇄" FontSize="14" FontWeight="Bold" Foreground="White"/>
+          </Border>
+          <StackPanel Margin="10,0,0,0" VerticalAlignment="Center" MinWidth="220">
+            <TextBlock Text="ВЫБРАН УРОК" Style="{DynamicResource THCaption}"/>
+            <TextBlock x:Name="SelectedInfoText" FontSize="13" FontWeight="SemiBold"
+                       Text="Выберите урок в сетке или таблице" TextWrapping="Wrap"/>
+          </StackPanel>
+          <TextBlock Text="День:" VerticalAlignment="Center" Margin="16,0,0,0" FontSize="13"/>
+          <TextBox x:Name="DayBox" Width="40" Margin="6,0,12,0" VerticalAlignment="Center"
+                   ToolTip="Номер дня 1..N (дни недели слева направо в сетке)"/>
+          <TextBlock Text="Урок:" VerticalAlignment="Center" FontSize="13"/>
+          <TextBox x:Name="SlotBox" Width="40" Margin="6,0,12,0" VerticalAlignment="Center"
+                   ToolTip="Номер урока в день (строки сетки сверху вниз)"/>
+          <Button x:Name="PreviewBtn" Content="Проверить ход" Style="{DynamicResource BtnSecondary}" Click="OnPreviewClick"/>
+          <Button x:Name="CommitBtn" Content="Сохранить ход" Style="{DynamicResource BtnPrimary}"
+                  FontSize="13" Padding="12,7" Margin="8,0,0,0" Click="OnCommitClick"/>
+          <Button x:Name="ExportBtn" Content="Выгрузить в Excel" Style="{DynamicResource BtnSecondary}"
+                  Margin="8,0,0,0" Click="OnExportClick"/>
+        </StackPanel>
+        <TextBlock Style="{DynamicResource THCaption}" Margin="0,6,0,0"
+                   Text="День и урок — номера из сетки выше: дни идут слева направо, уроки — сверху вниз. Время звонков уточните у завуча."
+                   TextWrapping="Wrap"/>
+        <Border x:Name="VerdictBorder" CornerRadius="8" Padding="10,8" Margin="0,8,0,0"
+                Background="{DynamicResource BSubtle}" BorderBrush="{DynamicResource BBorder}" BorderThickness="1">
+          <TextBlock x:Name="VerdictText" FontSize="13" TextWrapping="Wrap" Text=""/>
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <!-- Центр: сетка-матрица (фильтрованный вид) + таблица (вид «Всё») -->
+    <!-- Horizontal Disabled: иначе DataGrid *-колонки схлопываются (замер в бесконечность) -->
+    <ScrollViewer Margin="0,10,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel>
+        <ScrollViewer x:Name="MatrixScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                      Visibility="Collapsed">
+          <Grid x:Name="MatrixGrid" Margin="0,0,0,4"/>
+        </ScrollViewer>
+        <TextBlock x:Name="EmptyText" Style="{DynamicResource THint}" Margin="0,8,0,0"
+                   Visibility="Collapsed" TextWrapping="Wrap"
+                   Text="По фильтру ничего не найдено — выберите другое имя или очистите поиск."/>
+        <DataGrid x:Name="Grid" AutoGenerateColumns="False" IsReadOnly="True"
+                  SelectionMode="Single" SelectionChanged="OnSelectionChanged"
+                  Background="{DynamicResource BCard}" BorderBrush="{DynamicResource BBorder}"
+                  RowBackground="{DynamicResource BCard}" AlternatingRowBackground="{DynamicResource BSubtle}"
+                  HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{DynamicResource BBorder}">
+          <DataGrid.ColumnHeaderStyle>
+            <Style TargetType="DataGridColumnHeader">
+              <Setter Property="Background" Value="{DynamicResource BSubtle}"/>
+              <Setter Property="Foreground" Value="{DynamicResource BTextSoft}"/>
+              <Setter Property="FontSize" Value="12"/>
+              <Setter Property="FontWeight" Value="SemiBold"/>
+              <Setter Property="Padding" Value="8,6"/>
+              <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
+              <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            </Style>
+          </DataGrid.ColumnHeaderStyle>
+          <DataGrid.RowStyle>
+            <Style TargetType="DataGridRow">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding Day}" Value="1">
+                  <Setter Property="Background" Value="#FFFFFF"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Day}" Value="2">
+                  <Setter Property="Background" Value="#FDFDFF"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Day}" Value="3">
+                  <Setter Property="Background" Value="#F8FAFF"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Day}" Value="4">
+                  <Setter Property="Background" Value="#FDFBF7"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Day}" Value="5">
+                  <Setter Property="Background" Value="#FAFDF9"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Day}" Value="6">
+                  <Setter Property="Background" Value="#FDF8FA"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </DataGrid.RowStyle>
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Класс" Binding="{Binding ClassName}" Width="70"/>
+            <DataGridTextColumn Header="Предмет" Binding="{Binding SubjectName}" Width="*"/>
+            <DataGridTextColumn Header="Учитель" Binding="{Binding TeacherName}" Width="*"/>
+            <DataGridTextColumn Header="День" Binding="{Binding Day}" Width="60"/>
+            <DataGridTextColumn Header="Урок" Binding="{Binding Slot}" Width="60"/>
+            <DataGridTextColumn Header="Кабинет" Binding="{Binding RoomName}" Width="90"/>
+          </DataGrid.Columns>
+        </DataGrid>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

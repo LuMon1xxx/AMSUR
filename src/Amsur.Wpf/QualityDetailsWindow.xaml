@@ -1,0 +1,20 @@
+<Window x:Class="Amsur.Wpf.QualityDetailsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Почему такая оценка" Height="520" Width="680"
+        MinWidth="560" MinHeight="440" WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BBg}">
+  <DockPanel Margin="20">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+      <Button Content="Понятно" Style="{StaticResource BtnPrimary}" Click="OnCloseClick"/>
+    </StackPanel>
+    <StackPanel DockPanel.Dock="Top">
+      <TextBlock x:Name="TitleText" Style="{StaticResource TH1}" FontSize="20" Text="Качество"/>
+      <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
+                 Text="Подробное объяснение: каждая строка — реальная причина из расчёта, без технических терминов. Группы — только оформление, чисел не добавляем."/>
+    </StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,12,0,0">
+      <StackPanel x:Name="GroupsPanel"/>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

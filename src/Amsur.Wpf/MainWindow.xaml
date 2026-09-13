@@ -1,0 +1,282 @@
+<Window x:Class="Amsur.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="АМСУР — школьное расписание" Height="720" Width="1200"
+        MinWidth="1100" MinHeight="700" WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BBg}">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="240"/>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="340"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- Левая навигация 240px (Stitch: иконки+актив; честно — текстовые кнопки, без Профили▾) -->
+    <Border Grid.Column="0" Background="{StaticResource BCard}"
+            BorderBrush="{StaticResource BBorder}" BorderThickness="0,0,1,0">
+      <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Top">
+          <TextBlock Text="АМСУР" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource BAccent}"/>
+          <TextBlock Text="школьное расписание" FontSize="11" Foreground="{StaticResource BTextSoft}" Margin="0,0,0,16"/>
+          <Button Content="Главная" Style="{StaticResource BtnSecondary}" Margin="0,0,0,6" IsEnabled="False"/>
+          <Button Content="Школа и данные" Style="{StaticResource BtnSecondary}" Margin="0,0,0,6" Click="OnDataInfoClick"/>
+          <Button Content="Настройки качества" Style="{StaticResource BtnSecondary}" Margin="0,0,0,6" Click="OnSettingsClick"/>
+          <Button Content="Генерация расписания" Style="{StaticResource BtnSecondary}" Margin="0,0,0,6" Click="OnGenerateClick"/>
+          <Button Content="Расписание" Style="{StaticResource BtnSecondary}" Margin="0,0,0,6" Click="OnScheduleClick"/>
+          <Button Content="Экспорт и печать" Style="{StaticResource BtnSecondary}" Margin="0,0,0,6" Click="OnExportClick"/>
+          <Button Content="Справка  (F1)" Style="{StaticResource BtnSecondary}" Margin="0,0,0,6" Click="OnHelpClick"/>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom">
+          <Border Style="{StaticResource Card}" Padding="12" Margin="0,0,0,8" Background="{StaticResource BAccentSoft}">
+            <StackPanel>
+              <TextBlock Text="Нужна помощь?" FontWeight="SemiBold" FontSize="13"/>
+              <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,8"
+                         Text="Быстрый старт и ответы — в справке. F1 открывает справку, F5 запускает генерацию."/>
+              <Button Content="Открыть справку" Style="{StaticResource BtnSecondary}" Click="OnHelpClick"/>
+            </StackPanel>
+          </Border>
+          <TextBlock Text="Версия 2.0 · .NET 10 WPF" FontSize="11" Foreground="{StaticResource BTextSoft}"/>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
+    <!-- Центр -->
+    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Margin="24" MaxWidth="1100">
+        <TextBlock x:Name="GreetText" Style="{StaticResource TH1}" Text="Добро пожаловать!"/>
+        <TextBlock x:Name="SubText" Style="{StaticResource THint}" Margin="0,4,0,0"
+                   Text="Загрузите данные школы, чтобы начать."/>
+
+        <!-- Степпер workflow -->
+        <WrapPanel x:Name="Stepper" Orientation="Horizontal" Margin="0,14,0,0"/>
+
+        <!-- Hero-баннер (Stitch: градиент + CTA; честно — без имени пользователя и F5-хинт реальный) -->
+        <Border Margin="0,14,0,0" CornerRadius="12" Background="{StaticResource HeroBrush}" Padding="20">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+              <TextBlock Text="Готовы создать расписание?" FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+              <TextBlock Margin="0,4,0,0" FontSize="13" Foreground="White" Opacity="0.9" TextWrapping="Wrap"
+                         Text="Убедитесь, что исходные данные проверены. Выберите режим справа и нажмите запуск."/>
+            </StackPanel>
+            <Button x:Name="HeroGenerateBtn" Grid.Column="1" VerticalAlignment="Center"
+                    Content="▶  Сгенерировать  (F5)" FontSize="15" FontWeight="SemiBold"
+                    Style="{StaticResource BtnSecondary}"
+                    Background="White" Foreground="{StaticResource BAccent}"
+                    Padding="20,12" BorderThickness="0" Cursor="Hand" Click="OnGenerateClick"/>
+          </Grid>
+        </Border>
+
+        <!-- Карточки Школа / Профиль -->
+        <UniformGrid Columns="2" Margin="0,14,0,0" Rows="1">
+          <Border Style="{StaticResource Card}" Margin="0,0,6,0">
+            <StackPanel>
+              <!-- P0-9: Grid вместо DockPanel — кнопка фиксированной ширины справа, текст не заходит под неё -->
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="ШКОЛА" Style="{StaticResource THCaption}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <Button Grid.Column="1" Content="Просмотреть" Style="{StaticResource BtnSecondary}" Padding="10,4" MinWidth="0" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OnDataInfoClick"/>
+              </Grid>
+              <TextBlock x:Name="SchoolCardText" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,0" Text="Данные не загружены" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SchoolCardDetail" Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" Text="Шаблон Excel → заполнить → загрузить."/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="6,0,0,0">
+            <StackPanel>
+              <!-- P0-9: Grid вместо DockPanel — см. карточку ШКОЛА выше -->
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="ТЕКУЩИЙ ПРОФИЛЬ" Style="{StaticResource THCaption}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <Button Grid.Column="1" Content="Изменить" Style="{StaticResource BtnSecondary}" Padding="10,4" MinWidth="0" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OnSettingsClick"/>
+              </Grid>
+              <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <TextBlock x:Name="ProfileNameText" FontSize="16" FontWeight="SemiBold" Text="Стандарт" VerticalAlignment="Center"/>
+                <Border Style="{StaticResource Badge}" Background="{StaticResource BAccentSoft}" Margin="8,0,0,0" VerticalAlignment="Center">
+                  <TextBlock x:Name="ProfileVersionText" Text="Каталог v3" FontSize="11" Foreground="{StaticResource BAccent}"/>
+                </Border>
+              </StackPanel>
+              <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0"
+                         Text="Строгие правила одни для всех профилей: ноль окон у учеников, старт не позже 2-го урока."/>
+            </StackPanel>
+          </Border>
+        </UniformGrid>
+
+        <!-- A: данных нет -->
+        <Border x:Name="StateNoData" x:FieldModifier="public" Style="{StaticResource Card}" Margin="0,14,0,0">
+          <StackPanel>
+            <TextBlock Text="Сначала загрузите данные школы" FontSize="17" FontWeight="SemiBold"/>
+            <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
+                       Text="Скачайте шаблон Excel, заполните нагрузку и загрузите файл. Это займёт несколько минут."/>
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+              <Button Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Click="OnTemplateClick"/>
+              <Button Content="Загрузить Excel" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0" Click="OnImportClick"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+              <TextBlock Text="Дней:" VerticalAlignment="Center"/>
+              <TextBox x:Name="DaysBox" Text="5" Width="40" Margin="6,0,16,0"/>
+              <TextBlock Text="Уроков в день:" VerticalAlignment="Center"/>
+              <TextBox x:Name="SlotsBox" Text="7" Width="40" Margin="6,0,0,0"/>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- B: данные есть -->
+        <Border x:Name="StateReady" x:FieldModifier="public" Style="{StaticResource Card}" Margin="0,14,0,0" Visibility="Collapsed">
+          <StackPanel>
+            <TextBlock Text="Всё готово к генерации" FontSize="17" FontWeight="SemiBold"/>
+            <TextBlock x:Name="ReadySummaryText" Style="{StaticResource THint}" Margin="0,4,0,0" Text=""/>
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+              <Button x:Name="GenerateBtn" x:FieldModifier="public" Content="Создать расписание"
+                      Style="{StaticResource BtnPrimary}" FontSize="16" Padding="28,12" Click="OnGenerateClick"/>
+              <Button Content="Настройки" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0"
+                      VerticalAlignment="Center" Click="OnSettingsClick"/>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- C: расписание есть -->
+        <Border x:Name="StateDone" x:FieldModifier="public" Style="{StaticResource Card}" Margin="0,14,0,0" Visibility="Collapsed">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="Расписание готово" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource Badge}" Background="{StaticResource BGoodBg}" Margin="10,0,0,0"
+                      VerticalAlignment="Center">
+                <TextBlock x:Name="DoneQualityBadge" Text="Хорошее" FontSize="11" Foreground="{StaticResource BGood}"/>
+              </Border>
+            </StackPanel>
+            <TextBlock x:Name="DoneSummaryText" Style="{StaticResource THint}" Margin="0,4,0,0" Text=""/>
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+              <Button Content="Открыть расписание" Style="{StaticResource BtnPrimary}" Click="OnScheduleClick"/>
+              <Button Content="Улучшить" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Click="OnGenerateClick"/>
+              <Button Content="В Excel" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Click="OnExportClick"/>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- D: ошибка импорта -->
+        <Border x:Name="ErrorCard" Style="{StaticResource Card}" Margin="0,14,0,0"
+                Background="{StaticResource BBadBg}" Visibility="Collapsed">
+          <StackPanel>
+            <TextBlock Text="Данные не приняты — что исправить:" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource BBad}"/>
+            <ItemsControl x:Name="ErrorList" Margin="0,6,0,0">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" FontSize="13" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Content="Выбрать другой файл" Style="{StaticResource BtnSecondary}"
+                    Margin="0,10,0,0" HorizontalAlignment="Left" Click="OnImportClick"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Мини-карточки (все кнопки — существующие хендлеры, без выдуманных статусов) -->
+        <UniformGrid Columns="4" Margin="0,14,0,0">
+          <Border Style="{StaticResource Card}" Margin="0,0,6,0">
+            <StackPanel>
+              <TextBlock Text="Данные школы" FontWeight="SemiBold" FontSize="14"/>
+              <TextBlock x:Name="MiniDataText" Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" Text="Не загружены"/>
+              <Button Content="Просмотреть" Style="{StaticResource BtnSecondary}" Margin="0,10,0,0" Click="OnDataInfoClick"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="3,0,3,0">
+            <StackPanel>
+              <TextBlock Text="Шаблон Excel" FontWeight="SemiBold" FontSize="14"/>
+              <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" Text="Классы, предметы, нагрузка, учителя"/>
+              <Button Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Margin="0,10,0,0" Click="OnTemplateClick"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="3,0,3,0">
+            <StackPanel>
+              <TextBlock Text="Профиль" FontWeight="SemiBold" FontSize="14"/>
+              <TextBlock x:Name="MiniProfileText" Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" Text="Стандарт"/>
+              <Button Content="Настроить" Style="{StaticResource BtnSecondary}" Margin="0,10,0,0" Click="OnSettingsClick"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}" Margin="6,0,0,0">
+            <StackPanel>
+              <TextBlock Text="Последнее расписание" FontWeight="SemiBold" FontSize="14"/>
+              <TextBlock x:Name="MiniLastText" Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" Text="Пока нет"/>
+              <Button Content="Перейти к сетке" Style="{StaticResource BtnSecondary}" Margin="0,10,0,0" Click="OnScheduleClick"/>
+            </StackPanel>
+          </Border>
+        </UniformGrid>
+
+        <!-- Быстрый старт (Stitch: 5 шагов; честно — статичные подписи пути) -->
+        <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+          <StackPanel>
+            <!-- P0-9: Grid вместо DockPanel — кнопка справа, отступ от заголовка -->
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <TextBlock Grid.Column="0" Text="⚡ Быстрый старт" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0"/>
+              <Button Grid.Column="1" Content="Подробнее о работе" Style="{StaticResource BtnSecondary}" Padding="10,4" MinWidth="0" HorizontalAlignment="Right" VerticalAlignment="Center" Click="OnHelpClick"/>
+            </Grid>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0"
+                       Text="1. Загрузите данные  →  2. Выберите профиль  →  3. Запустите расчёт  →  4. Проверьте результат  →  5. Экспортируйте в Excel"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Детали (имена сохранены для STA/совместимости) -->
+        <Expander x:Name="DataExpander" Header="Данные школы" FontSize="14" Margin="0,14,0,0">
+          <StackPanel Margin="8,4,0,0">
+            <TextBlock x:Name="DataStateText" FontSize="13" Text="Не загружены"/>
+            <TextBlock x:Name="DataDetailText" Style="{StaticResource THint}" FontSize="12" Text=""/>
+            <Button Content="Просмотреть состав" Style="{StaticResource BtnSecondary}" Margin="0,8,0,0"
+                    HorizontalAlignment="Left" Click="OnDataInfoClick"/>
+          </StackPanel>
+        </Expander>
+        <Expander x:Name="ProfileExpander" Header="Профиль качества" FontSize="14" Margin="0,8,0,0">
+          <StackPanel Margin="8,4,0,0">
+            <TextBlock Style="{StaticResource THint}" FontSize="12"
+                       Text="Баланс качества и времени для типовой школы. Строгие правила одни для всех профилей."/>
+            <Button Content="Изменить" Style="{StaticResource BtnSecondary}" Margin="0,8,0,0"
+                    HorizontalAlignment="Left" Click="OnSettingsClick"/>
+          </StackPanel>
+        </Expander>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- Правая колонка 340px -->
+    <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Margin="0,24,16,24">
+        <TextBlock Text="Режим" FontWeight="SemiBold" FontSize="14"/>
+        <TextBlock Text="лимит — честный бюджет поиска" Style="{StaticResource THCaption}" Margin="0,2,0,8"/>
+        <StackPanel x:Name="ModeCards"/>
+        <TextBlock Text="Качество" FontWeight="SemiBold" FontSize="14" Margin="0,16,0,8"/>
+        <Border Style="{StaticResource Card}">
+          <StackPanel>
+            <TextBlock x:Name="QualityLabelText" FontSize="15" FontWeight="SemiBold" Text="—"/>
+            <ItemsControl x:Name="QualityList" Margin="0,6,0,0">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <TextBlock Text="{Binding}" FontSize="13" Margin="0,2,0,0"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button x:Name="QualityDetailsBtn" Content="Почему так?" Style="{StaticResource BtnSecondary}"
+                    Margin="0,10,0,0" Click="OnQualityDetailsClick"/>
+          </StackPanel>
+        </Border>
+        <Border Style="{StaticResource Card}" Margin="0,12,0,0" Background="{StaticResource BAccentSoft}">
+          <StackPanel>
+            <TextBlock Text="Совет" FontWeight="SemiBold" FontSize="13"/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0"
+                       Text="Нестандартные требования — в «Настройках», код открывать не нужно."/>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</Window>

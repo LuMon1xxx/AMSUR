@@ -1,0 +1,84 @@
+<Window x:Class="Amsur.Wpf.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Справка" Height="620" Width="680"
+        MinWidth="560" MinHeight="500" WindowStartupLocation="CenterOwner"
+        Background="{StaticResource BBg}">
+  <DockPanel Margin="20">
+    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+      <Button Content="Закрыть" Style="{StaticResource BtnSecondary}" Click="OnCloseClick"/>
+    </StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel>
+        <TextBlock Style="{StaticResource TH1}" FontSize="20" Text="Справочный центр"/>
+        <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
+                   Text="Путь работы: Данные → Профиль → Генерация → Проверка → Печать."/>
+
+        <!-- 5 шагов: статика пути -->
+        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+          <StackPanel>
+            <TextBlock Text="Путь работы (5 шагов)" FontSize="16" FontWeight="SemiBold"/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"
+                       Text="1. Данные: скачайте шаблон Excel, заполните нагрузку, загрузите файл (дни и уроки в день)."/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                       Text="2. Профиль: оставьте «Стандарт» или выберите другой в настройках качества."/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                       Text="3. Генерация: выберите режим и нажмите «Сгенерировать» (F5)."/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                       Text="4. Проверка: примите лучший вариант, при желании поправьте урок вручную."/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
+                       Text="5. Печать: выгрузите активное расписание в Excel."/>
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+          <StackPanel>
+            <TextBlock Text="Профили" FontSize="16" FontWeight="SemiBold"/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"
+                       Text="Стандарт — рекомендуется. «Удобно ученикам» и «Удобно учителям» меняют только пожелания: строгие правила (ноль окон у учеников, старт не позже 2-го урока) одни для всех. «Наш профиль» — ваши сохранённые настройки."/>
+          </StackPanel>
+        </Border>
+
+        <!-- FAQ: только реализованное -->
+        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+          <StackPanel>
+            <TextBlock Text="Частые вопросы" FontSize="16" FontWeight="SemiBold"/>
+            <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="Что делать, если расписание не найдено за отведённое время?"/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                       Text="Это не «невозможно»: попробуйте режим «Максимальное качество» — больше времени на поиск."/>
+            <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="Где посмотреть, почему такая оценка?"/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                       Text="Кнопка «Почему так?» у оценки открывает подробное объяснение по строкам расчёта."/>
+            <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="Как поправить один урок вручную?"/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                       Text="В окне расписания выберите урок, укажите день и урок, нажмите «Проверить ход», затем «Сохранить ход»."/>
+            <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="Ошибки загрузки показывают список «что исправить»?"/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                       Text="Да — прямо на главном экране и в окне «Школа и данные», до 8 первых замечаний."/>
+          </StackPanel>
+        </Border>
+
+        <!-- Хоткеи: только реальные F1/F5 -->
+        <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+          <StackPanel>
+            <TextBlock Text="Горячие клавиши" FontSize="16" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+              <Border Style="{StaticResource Badge}" Background="{StaticResource BSubtle}">
+                <TextBlock Text="F1" FontSize="12" FontFamily="Consolas"/>
+              </Border>
+              <TextBlock Text="открыть справку" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>
+              <Border Style="{StaticResource Badge}" Background="{StaticResource BSubtle}" Margin="16,0,0,0">
+                <TextBlock Text="F5" FontSize="12" FontFamily="Consolas"/>
+              </Border>
+              <TextBlock Text="запустить генерацию" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

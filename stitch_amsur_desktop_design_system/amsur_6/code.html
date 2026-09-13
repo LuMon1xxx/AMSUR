@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+
+<html lang="ru"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-variant":"#dae2fd","tertiary-container":"#007b71","error":"#ba1a1a","inverse-surface":"#283044","surface-container-highest":"#dae2fd","on-primary-fixed-variant":"#003ea8","tertiary":"#006058","secondary":"#4b41e1","on-secondary-fixed-variant":"#3323cc","on-primary":"#ffffff","on-secondary-fixed":"#0f0069","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#005049","on-primary-container":"#eeefff","outline":"#737686","background":"#faf8ff","tertiary-fixed":"#89f5e7","secondary-fixed-dim":"#c3c0ff","surface-container-high":"#e2e7ff","error-container":"#ffdad6","inverse-primary":"#b4c5ff","on-tertiary":"#ffffff","secondary-fixed":"#e2dfff","surface":"#faf8ff","on-tertiary-container":"#b3fff3","primary":"#004ac6","tertiary-fixed-dim":"#6bd8cb","surface-dim":"#d2d9f4","outline-variant":"#c3c6d7","on-surface":"#131b2e","on-tertiary-fixed":"#00201d","surface-bright":"#faf8ff","on-secondary":"#ffffff","secondary-container":"#645efb","surface-tint":"#0053db","primary-fixed-dim":"#b4c5ff","inverse-on-surface":"#eef0ff","primary-container":"#2563eb","surface-container":"#eaedff","on-primary-fixed":"#00174b","primary-fixed":"#dbe1ff","on-error-container":"#93000a","on-background":"#131b2e","surface-container-low":"#f2f3ff","on-error":"#ffffff","on-surface-variant":"#434655","on-secondary-container":"#fffbff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"space-xs":"0.25rem","space-xl":"1.5rem","space-md":"0.75rem","space-sm":"0.5rem","space-lg":"1rem","gutter":"0.75rem","margin":"1rem"},"fontFamily":{"label-md":["JetBrains Mono"],"body-lg":["JetBrains Mono"],"body-md":["JetBrains Mono"],"headline-lg":["Geist"],"display-lg":["Geist"],"label-sm":["JetBrains Mono"],"headline-md":["Geist"],"headline-sm":["Geist"],"code-cell":["JetBrains Mono"],"body-sm":["JetBrains Mono"]},"fontSize":{"label-md":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0.02em","fontWeight":"500"}],"body-lg":["0.875rem",{"lineHeight":"1.375rem","fontWeight":"400"}],"body-md":["0.8125rem",{"lineHeight":"1.25rem","fontWeight":"400"}],"headline-lg":["1.375rem",{"lineHeight":"1.875rem","letterSpacing":"-0.015em","fontWeight":"600"}],"display-lg":["1.75rem",{"lineHeight":"2.25rem","letterSpacing":"-0.02em","fontWeight":"600"}],"label-sm":["0.6875rem",{"lineHeight":"0.875rem","letterSpacing":"0.04em","fontWeight":"500"}],"headline-md":["1.125rem",{"lineHeight":"1.625rem","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-sm":["0.9375rem",{"lineHeight":"1.375rem","letterSpacing":"-0.005em","fontWeight":"600"}],"code-cell":["0.75rem",{"lineHeight":"1rem","fontWeight":"400"}],"body-sm":["0.75rem",{"lineHeight":"1.125rem","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface select-none antialiased"><header class="fixed top-0 left-0 right-0 h-10 bg-surface-container-lowest border-b border-outline-variant z-50 flex items-center justify-between px-space-md shadow-[0_1px_2px_0_rgba(15,23,42,0.04)]"><div class="flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #2563eb - Font: geist - Mode: light - Roundness: rounded-sm" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XMHZabfKU2H3eOZKuVE-6hWrqlHXWvGWGYPPGe9Y9SGz7-IjU0oq87baNuwUbdamcxorhY1yq1596QACnYMY86yes_dTQl-GlqJInfSIjSK7mPkhl9IzW-yAULY5TVbuuxj0Xm74a_G2wG1OxKB6tP2k4sMAdfxrvvMYdRrq7eVpKkoBskmUq4YogrSdY4URlMftj3kgwRNIbIOW9wzem4wE-OskcgsDWXn1r9w02GhyWAXufAro0YNqk"/><span class="font-headline-sm text-headline-sm text-on-surface">АМСУР</span><span class="font-body-sm text-body-sm text-outline hidden xl:inline">— Автоматический модуль составления учебных расписаний</span><div class="ml-space-sm flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container-low border border-outline-variant"><span class="h-2 w-2 rounded-full bg-tertiary-container"></span><span class="font-label-sm text-label-sm text-tertiary">БД: МБОУ СОШ №12 (синхронизировано)</span></div></div><div class="flex items-center gap-space-md"><button class="p-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span></button><div class="flex items-center gap-space-sm pl-space-sm border-l border-outline-variant"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col text-left hidden lg:flex"><span class="font-headline-sm text-label-sm text-on-surface leading-tight">Иванова Е.В.</span><span class="font-label-sm text-[10px] text-on-surface-variant leading-tight">Зам. директора по УР</span></div></div><div class="flex items-center ml-space-sm border-l border-outline-variant pl-space-sm"><button class="h-8 w-8 flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[16px]">remove</span></button><button class="h-8 w-8 flex items-center justify-center hover:bg-surface-container-high text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[14px]">crop_square</span></button><button class="h-8 w-8 flex items-center justify-center hover:bg-error hover:text-on-error text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[16px]">close</span></button></div></div></header><aside class="fixed left-0 top-10 bottom-8 w-[230px] bg-surface-container-lowest border-r border-outline-variant z-40 flex flex-col justify-between p-space-sm"><div class="flex flex-col gap-space-xs"><div class="px-space-sm py-1 font-label-sm text-label-sm text-outline uppercase tracking-wider">Модули</div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container text-primary font-headline-sm border-l-2 border-primary"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="glavnaya" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Главная</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="shkola-i-dannye" href="#"><span class="material-symbols-outlined text-[18px]">domain</span><span>Школа и данные</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="nastrojki-kachestva" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span>Настройки качества</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="generaciya-raspisaniya" href="#"><span class="material-symbols-outlined text-[18px]">memory</span><span>Генерация расписания</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="raspisanie" href="#"><span class="material-symbols-outlined text-[18px]">calendar_view_month</span><span>Расписание</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="eksport-i-pechat" href="#"><span class="material-symbols-outlined text-[18px]">print</span><span>Экспорт и печать</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-sm text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="spravka" href="#"><span class="material-symbols-outlined text-[18px]">help_outline</span><span>Справка</span></a></nav></div><div class="flex flex-col gap-space-sm"><div class="p-space-sm rounded-lg bg-surface-container-low border border-outline-variant flex flex-col gap-1"><div class="flex items-center gap-1 text-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[16px]">info</span><span>Нужна помощь?</span></div><p class="font-body-sm text-body-sm text-on-surface-variant">Нажмите F1 для вызова контекстного руководства алгоритма.</p><button class="mt-1 text-left font-label-sm text-label-sm text-primary hover:text-on-primary-fixed-variant transition-colors flex items-center gap-1" type="button"><span class="material-symbols-outlined text-[14px]">open_in_new</span><span>Открыть справку (F1)</span></button></div><div class="px-space-xs font-label-sm text-[10px] text-outline flex items-center justify-between"><span>Версия 2.4.0</span><span>.NET 10 WPF</span></div></div></aside><div class="pl-[230px]"><main class="w-full pt-10 min-h-screen bg-surface-container-low pb-8 px-space-md"><div class="flex flex-col w-full gap-space-md">
+<!-- Desktop Header Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">print</span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Экспорт и печать расписания</h1>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">
+        Формирование официальных ведомостей, расписаний для классов, учителей и кабинетов
+      </p>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<div class="px-space-sm py-1 bg-surface-container rounded flex items-center gap-1.5">
+<span class="h-2 w-2 rounded-full bg-tertiary-container animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-tertiary">Движок экспорта: Готов (v2.4-xlsx)</span>
+</div>
+<button class="flex items-center gap-1 px-space-sm py-1.5 rounded bg-surface-container-high text-on-surface hover:bg-surface-variant font-label-md text-label-md transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">history</span>
+<span>Журнал выгрузок</span>
+</button>
+</div>
+</div>
+<!-- Main 2-Column Desktop Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start">
+<!-- Left Column: Export Controls (Width ~380px on desktop) -->
+<div class="lg:col-span-4 xl:col-span-4 flex flex-col gap-space-md">
+<!-- Export Parameters Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">tune</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Параметры выгрузки</h2>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Свод: Осень 2024</span>
+</div>
+<!-- Scope Selection -->
+<div class="flex flex-col gap-space-sm">
+<label class="font-label-md text-label-md text-on-surface font-semibold">Что включить в документ:</label>
+<label class="flex items-start gap-space-sm p-2 rounded hover:bg-surface-container-low cursor-pointer transition-colors">
+<input checked="" class="mt-0.5 h-4 w-4 rounded text-primary accent-[#004ac6] cursor-pointer" id="chk-classes" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Расписания по классам (Основной свод)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">40 классов, сетка 1–11 параллели</span>
+</div>
+</label>
+<label class="flex items-start gap-space-sm p-2 rounded hover:bg-surface-container-low cursor-pointer transition-colors">
+<input checked="" class="mt-0.5 h-4 w-4 rounded text-primary accent-[#004ac6] cursor-pointer" id="chk-teachers" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Персональные расписания учителей</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">100 преподавателей кафедр</span>
+</div>
+</label>
+<label class="flex items-start gap-space-sm p-2 rounded hover:bg-surface-container-low cursor-pointer transition-colors">
+<input class="mt-0.5 h-4 w-4 rounded text-primary accent-[#004ac6] cursor-pointer" id="chk-rooms" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Занятость кабинетов и лабораторий</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">24 специализированных помещения</span>
+</div>
+</label>
+</div>
+<div class="h-[1px] w-full bg-outline-variant"></div>
+<!-- Target Format Selector -->
+<div class="flex flex-col gap-space-sm">
+<label class="font-label-md text-label-md text-on-surface font-semibold">Формат экспорта:</label>
+<!-- Excel Option (Active) -->
+<div class="relative flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-high shadow-xs cursor-pointer">
+<div class="w-8 h-8 rounded bg-[#107c41] flex items-center justify-center shrink-0 text-white shadow-xs">
+<span class="font-label-sm font-bold tracking-tight">XLS</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Microsoft Excel (.xlsx)</span>
+<span class="h-3.5 w-3.5 rounded-full bg-primary flex items-center justify-center">
+<span class="h-1.5 w-1.5 rounded-full bg-surface-container-lowest"></span>
+</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                Редактируемые таблицы со стилями оформления, готовые формулы нагрузок и авто-фильтры.
+              </p>
+</div>
+</div>
+<!-- PDF Option (Disabled) -->
+<div class="flex items-start gap-space-sm p-space-sm rounded-lg bg-surface-container-low opacity-75 cursor-not-allowed">
+<div class="w-8 h-8 rounded bg-surface-dim flex items-center justify-center shrink-0 text-outline">
+<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface-variant">Печатная форма PDF (.pdf)</span>
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant uppercase tracking-wider font-semibold">Скоро</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline mt-0.5">
+                Готово к прямой отправке на плоттер/принтер с разметкой А3/А4.
+              </p>
+</div>
+</div>
+</div>
+<div class="h-[1px] w-full bg-outline-variant"></div>
+<!-- Directory & Title Page Options -->
+<div class="flex flex-col gap-space-sm">
+<label class="flex items-center gap-space-sm cursor-pointer">
+<input checked="" class="h-4 w-4 rounded accent-[#004ac6]" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface">Включить титульный лист школы (МБОУ СОШ №12)</span>
+</label>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Целевой каталог сохранения:</label>
+<div class="flex items-center bg-surface-container rounded px-space-sm py-1.5">
+<span class="material-symbols-outlined text-outline text-[16px] mr-1.5 shrink-0">folder_open</span>
+<input class="bg-transparent font-code-cell text-code-cell text-on-surface w-full focus:outline-none select-all truncate" readonly="" type="text" value="C:\Документы\Расписания_2024-2025\"/>
+<button class="ml-1 px-2 py-0.5 bg-surface-container-lowest hover:bg-surface-container-high rounded text-on-surface font-label-sm text-label-sm transition-colors shrink-0" type="button">
+                Обзор...
+              </button>
+</div>
+</div>
+</div>
+<!-- Main Action Trigger -->
+<div class="pt-2 flex flex-col gap-2">
+<button class="h-12 w-full bg-primary hover:bg-on-primary-fixed-variant active:bg-[#003185] text-on-primary rounded-lg font-headline-sm text-headline-sm flex items-center justify-center gap-2 shadow-sm transition-all duration-150" id="btn-export" type="button">
+<span class="material-symbols-outlined text-[20px]">file_download</span>
+<span>Выгрузить в Excel</span>
+</button>
+<div class="flex items-center justify-center gap-1 font-label-sm text-label-sm text-outline">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+<span>Ориентировочное время сборки: 1.2 сек</span>
+</div>
+</div>
+</div>
+<!-- Quick Tips Card -->
+<div class="bg-surface-container rounded-xl p-space-md flex flex-col gap-2">
+<div class="flex items-center gap-1.5 text-primary">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span class="font-headline-sm text-headline-sm">Стандарт оформления МО РФ</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+          Файл генерируется по ГОСТ Р 7.0.97-2016. Листы защищены от случайного редактирования формул, структура адаптирована для импорта в региональную систему Дневник.ру и АИС «Образование».
+        </p>
+</div>
+</div>
+<!-- Right Column: Preview & Quality Verification Engine (Fluid desktop width) -->
+<div class="lg:col-span-8 xl:col-span-8 flex flex-col gap-space-md">
+<!-- Verification & Structure Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<!-- Header with Live Status -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm pb-space-xs">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Предпросмотр структуры документа</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Синтез матричной сетки уроков на 1-ю четверть</p>
+</div>
+<div class="flex items-center gap-2 px-space-sm py-1 rounded-md bg-[#e6f4ea] text-[#137333] shrink-0">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span class="font-label-md text-label-md font-semibold">Проверка пройдена: 0 критических ошибок</span>
+</div>
+</div>
+<!-- Strict SanPiN Audit Alert Box -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">shield</span>
+<div class="flex flex-col gap-0.5">
+<span class="font-headline-sm text-label-md text-on-surface font-semibold">Контроль соответствия СанПиН 1.2.3685-21 и нагрузок учителей</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-normal">
+              Перед выгрузкой выполняется автоматическая проверка расписания. При наличии критических нарушений СанПиН или пересечений учителей файл блокируется и не создаётся. В текущей схеме конфликты отсутствуют.
+            </p>
+</div>
+</div>
+<!-- Excel Spreadsheet Stylized Mock Preview -->
+<div class="flex flex-col rounded-lg overflow-hidden bg-surface-container-lowest">
+<!-- Mock Excel Ribbon / Sheet Bar -->
+<div class="bg-[#107c41] text-white px-space-md py-1.5 flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm font-bold tracking-wider uppercase text-[11px] bg-white/20 px-1.5 py-0.5 rounded">XLSX PREVIEW</span>
+<span class="font-code-cell text-code-cell text-white/90">Лист 1: Свод_Классы_1-11</span>
+</div>
+<div class="flex items-center gap-2 text-white/80 font-label-sm text-[11px]">
+<span class="hidden sm:inline">Масштаб: 85%</span>
+<span class="px-1 bg-white/20 rounded">A1:F48</span>
+</div>
+</div>
+<!-- Interactive Realistic Excel Grid Canvas -->
+<div class="overflow-x-auto">
+<table class="w-full text-left font-body-sm text-body-sm border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-sm text-label-sm select-none">
+<th class="py-1.5 px-2 w-16 text-center bg-surface-container-high">#</th>
+<th class="py-1.5 px-3 font-semibold text-on-surface">Класс</th>
+<th class="py-1.5 px-3 font-semibold text-on-surface">Понедельник (02.09)</th>
+<th class="py-1.5 px-3 font-semibold text-on-surface">Вторник (03.09)</th>
+<th class="py-1.5 px-3 font-semibold text-on-surface">Среда (04.09)</th>
+<th class="py-1.5 px-3 font-semibold text-on-surface">Четверг (05.09)</th>
+<th class="py-1.5 px-3 font-semibold text-on-surface">Пятница (06.09)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant font-code-cell text-code-cell">
+<!-- Row 1: 5-А -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-2 text-center text-outline bg-surface-container-low font-label-sm">1</td>
+<td class="py-2 px-3 font-headline-sm text-headline-sm text-primary font-bold">5-А</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Рус. язык <span class="text-outline text-[10px]">каб. 204</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Математика <span class="text-outline text-[10px]">каб. 312</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Литература <span class="text-outline text-[10px]">каб. 204</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Биология <span class="text-outline text-[10px]">каб. 108</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Ин. язык <span class="text-outline text-[10px]">каб. 401</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Физ-ра <span class="text-outline text-[10px]">Спортзал</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Математика <span class="text-outline text-[10px]">каб. 312</span></span>
+<span class="text-on-surface-variant text-[11px]">2. История <span class="text-outline text-[10px]">каб. 215</span></span>
+<span class="text-on-surface-variant text-[11px]">3. География <span class="text-outline text-[10px]">каб. 210</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Рус. язык <span class="text-outline text-[10px]">каб. 204</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Музыка <span class="text-outline text-[10px]">Акт. зал</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Технология <span class="text-outline text-[10px]">Маст. 1</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Математика <span class="text-outline text-[10px]">каб. 312</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Рус. язык <span class="text-outline text-[10px]">каб. 204</span></span>
+<span class="text-on-surface-variant text-[11px]">3. ИЗО <span class="text-outline text-[10px]">каб. 102</span></span>
+</div>
+</td>
+</tr>
+<!-- Row 2: 9-Б -->
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-2 px-2 text-center text-outline bg-surface-container-low font-label-sm">2</td>
+<td class="py-2 px-3 font-headline-sm text-headline-sm text-primary font-bold">9-Б</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Алгебра <span class="text-outline text-[10px]">каб. 315</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Физика <span class="text-outline text-[10px]">каб. 308</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Химия <span class="text-outline text-[10px]">Лаб. 2</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Геометрия <span class="text-outline text-[10px]">каб. 315</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Информатика <span class="text-outline text-[10px]">каб. 405</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Обществозн. <span class="text-outline text-[10px]">каб. 215</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Литература <span class="text-outline text-[10px]">каб. 206</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Алгебра <span class="text-outline text-[10px]">каб. 315</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Физ-ра <span class="text-outline text-[10px]">Стадион</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Физика (практ) <span class="text-outline text-[10px]">каб. 308</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Ин. язык <span class="text-outline text-[10px]">каб. 402</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Биология <span class="text-outline text-[10px]">каб. 108</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Рус. язык <span class="text-outline text-[10px]">каб. 206</span></span>
+<span class="text-on-surface-variant text-[11px]">2. География <span class="text-outline text-[10px]">каб. 210</span></span>
+<span class="text-on-surface-variant text-[11px]">3. ОБЖ <span class="text-outline text-[10px]">каб. 114</span></span>
+</div>
+</td>
+</tr>
+<!-- Row 3: 11-А -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-2 text-center text-outline bg-surface-container-low font-label-sm">3</td>
+<td class="py-2 px-3 font-headline-sm text-headline-sm text-primary font-bold">11-А</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Проф. матем. <span class="text-outline text-[10px]">каб. 310</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Проф. матем. <span class="text-outline text-[10px]">каб. 310</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Физика <span class="text-outline text-[10px]">каб. 308</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Информатика <span class="text-outline text-[10px]">каб. 405</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Информатика <span class="text-outline text-[10px]">каб. 405</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Рус. язык <span class="text-outline text-[10px]">каб. 202</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. История <span class="text-outline text-[10px]">каб. 215</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Литература <span class="text-outline text-[10px]">каб. 202</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Ин. язык <span class="text-outline text-[10px]">каб. 403</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Проф. матем. <span class="text-outline text-[10px]">каб. 310</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Обществозн. <span class="text-outline text-[10px]">каб. 215</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Астрономия <span class="text-outline text-[10px]">каб. 308</span></span>
+</div>
+</td>
+<td class="py-2 px-3">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium">1. Химия <span class="text-outline text-[10px]">каб. 108</span></span>
+<span class="text-on-surface-variant text-[11px]">2. Биология <span class="text-outline text-[10px]">каб. 108</span></span>
+<span class="text-on-surface-variant text-[11px]">3. Физ-ра <span class="text-outline text-[10px]">Спортзал</span></span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Mock Sheet Selector Bar -->
+<div class="bg-surface-container px-space-sm py-1 flex items-center justify-between text-on-surface-variant font-label-sm text-[11px]">
+<div class="flex items-center gap-1">
+<span class="px-2 py-0.5 bg-surface-container-lowest rounded shadow-2xs font-semibold text-primary">Свод_Классы</span>
+<span class="px-2 py-0.5 hover:bg-surface-container-low rounded cursor-pointer">Свод_Учителя</span>
+<span class="px-2 py-0.5 hover:bg-surface-container-low rounded cursor-pointer">Кабинеты</span>
+<span class="px-2 py-0.5 hover:bg-surface-container-low rounded cursor-pointer">Титульный</span>
+</div>
+<div class="flex items-center gap-2">
+<span>Сетка 5-дневной недели</span>
+<span class="material-symbols-outlined text-[14px]">view_column</span>
+</div>
+</div>
+</div>
+<!-- Generated File Metadata Footnote Panel -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-sm pt-2">
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Имя файла:</span>
+<span class="font-code-cell text-body-sm text-on-surface font-semibold truncate" title="Расписание_МБОУ_СОШ_12_Осень_2024.xlsx">Расписание_МБОУ_СОШ_12_Осень_2024.xlsx</span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Размер и объем:</span>
+<span class="font-code-cell text-body-sm text-on-surface font-semibold">~142 КБ · 44 стр. при печати</span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Типографика и вёрстка:</span>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Segoe UI · Книжная A4</span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Автонастройка:</span>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Автоподбор колонок (Fit)</span>
+</div>
+</div>
+</div>
+<!-- Live Diagnostics / Ready Banner -->
+<div class="flex items-center justify-between p-space-md rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">task_alt</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Готовность пакета: 100%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Все 140 сущностей проверены алгоритмом оптимизации без коллизий.</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-1.5 rounded bg-surface-container text-on-surface hover:bg-surface-container-high font-label-md text-label-md transition-colors flex items-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Полноэкранный просмотр</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Toast Notification Container for Micro-interaction -->
+<div class="fixed bottom-12 right-6 bg-inverse-surface text-inverse-on-surface px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 transition-opacity duration-300 opacity-0 pointer-events-none z-50" id="export-toast">
+<span class="material-symbols-outlined text-tertiary-fixed text-[20px]">check_circle</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-label-md text-inverse-on-surface">Выгрузка успешно завершена!</span>
+<span class="font-body-sm text-[11px] text-inverse-on-surface/80">Файл сохранён в C:\Документы\Расписания_2024-2025\</span>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const btn = document.getElementById('btn-export');
+    const toast = document.getElementById('export-toast');
+    
+    if (btn && toast) {
+      btn.addEventListener('click', function() {
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span><span>Формирование XLSX...</span>';
+        
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          
+          toast.classList.remove('opacity-0', 'pointer-events-none');
+          toast.classList.add('opacity-100');
+          
+          setTimeout(() => {
+            toast.classList.add('opacity-0', 'pointer-events-none');
+            toast.classList.remove('opacity-100');
+          }, 4000);
+        }, 1100);
+      });
+    }
+  })();
+</script></main></div><footer class="fixed bottom-0 left-0 right-0 h-8 bg-surface-container-lowest border-t border-outline-variant z-50 flex items-center justify-between px-space-md"><div class="flex items-center gap-space-md font-label-sm text-label-sm text-on-surface-variant"><span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-tertiary-container"></span>Движок: Оптимизатор активен</span><span class="border-l border-outline-variant pl-space-md">Память: 342 МБ</span><span class="border-l border-outline-variant pl-space-md">СанПиН: Валидация включена</span></div><div class="flex items-center gap-space-sm font-label-sm text-label-sm text-outline"><span>МБОУ СОШ №12 · 2024/2025 уч. год</span></div></footer></body></html>
