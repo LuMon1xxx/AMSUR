@@ -11,6 +11,18 @@ public sealed record QualityProfileRecord(
     DateTime UpdatedAt,
     bool IsActive)
 {
-    public EffectiveRuleSet ToRuleSet() =>
-        RuleResolver.Resolve("CUSTOM", Weights);
+    /// <summary>
+    /// B2: восстановление с загруженным согласием. v5+ (разреженные снимки):
+    /// present dangerous = явное намерение. ≤v4 (полные словари): намерение =
+    /// только веса, отличные от дефолта (дефолтные строгие остаются строгими).
+    /// </summary>
+    public EffectiveRuleSet ToRuleSet()
+    {
+        var confirmed = Weights
+            .Where(kv => RuleCatalog.IsDangerous(kv.Key) &&
+                (CatalogVersion >= 5 || kv.Value != RuleCatalog.DefaultWeight(kv.Key)))
+            .Select(kv => kv.Key)
+            .ToHashSet(StringComparer.Ordinal);
+        return RuleResolver.Resolve("CUSTOM", Weights, confirmed);
+    }
 }

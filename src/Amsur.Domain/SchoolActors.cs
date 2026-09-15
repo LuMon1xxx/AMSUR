@@ -10,6 +10,8 @@ public sealed class SchoolClass : Entity
     public int StudentCount { get; set; }
     /// <summary>СанПиН-максимум уроков в день (SANPIN_RB.md §3): 1→5, 2–4→5, 5–6→6, 7–11→7. HARD.</summary>
     public int MaxLessonsPerDay { get; set; } = 7;
+    /// <summary>R4: классный руководитель (источник учителя для общего урока R3).</summary>
+    public Guid? ClassTeacherId { get; set; }
 }
 
 // Подгруппа — только для реальных сплитов; привязка к классу.
@@ -56,7 +58,16 @@ public sealed class Room : Entity
     public int Floor { get; set; }
     public int PhysicalCapacity { get; set; } = 30;     // Hard: MaxSimultaneousGroups-sweep
     public int ComfortableCapacity { get; set; } = 28;  // Soft
-    public int MaxSimultaneousGroups { get; set; } = 1; // Hard
+    public int MaxSimultaneousGroups { get; set; } = 1; // Hard (R5 MaxGroups)
+    /// <summary>R1: только ручное назначение — solver сам сюда не ставит, ручная правка разрешена.</summary>
+    public bool IsManualOnly { get; set; }
+    /// <summary>R1: ONLY-предмет — никакой другой урок solver сюда не ставит (чужой = hard).</summary>
+    public Guid? OnlySubjectId { get; set; }
+    /// <summary>R5: желательно групп одновременно (soft; превышение = штраф room-crowding).
+    /// 0 = не задано → = MaxSimultaneousGroups (без претензий, см. RoomPolicy).</summary>
+    public int DesiredGroups { get; set; }
+    /// <summary>R5: подгруппа считается отдельной единицей вместимости (спортзал: класс со сплитом = 2).</summary>
+    public bool CountSubgroupAsGroup { get; set; } = true;
 }
 
 public sealed class RoomCapability : Entity

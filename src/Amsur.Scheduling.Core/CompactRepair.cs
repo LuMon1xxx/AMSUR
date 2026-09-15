@@ -231,15 +231,12 @@ public static class CompactRepair
         Guid? prefer)
     {
         if (problem.Rooms.Count == 0) return null;
-        int students = problem.Classes.TryGetValue(occ.ClassId, out var cls) ? cls.StudentCount : 0;
-        int need = occ.GroupId.HasValue ? (students + 1) / 2 : students;
         int Used(Guid r) => roomUsers.GetValueOrDefault((r, day, slot)) + planRoomUse.GetValueOrDefault((r, day, slot));
         bool Fits(Guid r)
         {
             if (!problem.Rooms.TryGetValue(r, out var room)) return false;
-            if (problem.RoomCaps.TryGetValue((r, occ.SubjectId), out var cap) && cap == RoomCapabilityKind.Forbidden)
-                return false;
-            if (room.PhysicalCapacity < need) return false;
+            // P2/R1: общий фильтр кандидатов; подсчёт — консервативный по размещениям.
+            if (!RoomPolicy.IsCandidate(problem, room, occ)) return false;
             return Used(r) + 1 <= Math.Max(1, room.MaxSimultaneousGroups);
         }
         if (prefer.HasValue && Fits(prefer.Value)) return prefer;

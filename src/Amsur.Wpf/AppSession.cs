@@ -1,5 +1,6 @@
 using System.IO;
 using Amsur.Application;
+using Amsur.Domain;
 using Amsur.Infrastructure;
 using Amsur.Scheduling.Core;
 
@@ -20,6 +21,19 @@ public sealed class AppSession
     public ManualEditService EditService { get; }
     private readonly SqliteQualityProfileStore _profiles;
     private readonly SqliteSchoolDataStore _schoolData;
+    private readonly SqliteFlexStore _flexStore;
+    private readonly SqliteAppSettingsStore _appSettings;
+
+    /// <summary>B1: показывать предупреждения об опасных изменениях (дефолт true, персист).</summary>
+    public bool ConfirmDangerous { get; private set; } = true;
+
+    /// <summary>A3: InitAsync завершён (данные восстановлены или их нет).
+    /// Окна показывают «Загрузка…», пока false.</summary>
+    public bool IsReady { get; private set; }
+
+    /// <summary>P3/R1–R9: гибкие настройки школы (нормы, кабинеты, классруки,
+    /// общий урок, закрепления, веса). Источник — FlexStore; дефолт — Empty.</summary>
+    public FlexDataset Flex { get; private set; } = FlexDataset.Empty;
 
     /// <summary>Активный набор весов (S5): обычный завуч не трогает (STANDARD).</summary>
     public EffectiveRuleSet QualityRules { get; private set; } = EffectiveRuleSet.Default;
@@ -42,10 +56,33 @@ public sealed class AppSession
     public void SetGenerateMode(string code) =>
         GenerateMode = GenerateModes.ByCode(code);
 
-    /// <summary>Применить правки настроек без сохранения (предпросмотр CUSTOM).</summary>
-    public void ApplyOverrides(IReadOnlyDictionary<string, long> overrides)
+    /// <summary>B1: переключить глобальные предупреждения (персист).</summary>
+    public async Task SetConfirmDangerousAsync(bool value, CancellationToken ct = default)
     {
-        QualityRules = RuleResolver.Resolve("CUSTOM", overrides);
+        ConfirmDangerous = value;
+        await _appSettings.SetBoolAsync("ui.confirmDangerous", value, ct);
+    }
+
+    /// <summary>B1+B2: опасное изменение через подтверждение (глобал-офф = сразу да).</summary>
+    /// <returns>true — продолжать.</returns>
+    public async Task<bool> ConfirmDangerousAsync(
+        System.Windows.Window? owner, string code, string title, string consequence)
+    {
+        if (!ConfirmDangerous) return true;
+        var (proceed, dontAsk) = DangerConfirm.Show(owner, code, title, consequence);
+        if (dontAsk) await SetConfirmDangerousAsync(false);
+        return proceed;
+    }
+
+    /// <summary>Применить правки настроек без сохранения (предпросмотр CUSTOM).</summary>
+    public void ApplyOverrides(IReadOnlyDictionary<string, long> overrides) =>
+        ApplyOverrides(overrides, null);
+
+    /// <summary>B2: применить с явным набором подтверждённых опасных кодов.</summary>
+    public void ApplyOverrides(
+        IReadOnlyDictionary<string, long> overrides, IReadOnlySet<string>? confirmedDangerous)
+    {
+        QualityRules = RuleResolver.Resolve("CUSTOM", overrides, confirmedDangerous);
         CustomProfileName = null;
     }
 
@@ -58,6 +95,8 @@ public sealed class AppSession
         EditService = new ManualEditService(new AcceptScheduleService(Store));
         _profiles = new SqliteQualityProfileStore($"Data Source={DbPath}");
         _schoolData = new SqliteSchoolDataStore($"Data Source={DbPath}");
+        _flexStore = new SqliteFlexStore($"Data Source={DbPath}");
+        _appSettings = new SqliteAppSettingsStore($"Data Source={DbPath}");
     }
 
     public async Task InitAsync()
@@ -66,6 +105,14 @@ public sealed class AppSession
         await Store.RepairAsync(); // честная починка после нештатных завершений
         await _profiles.InitializeAsync();
         await _schoolData.InitializeAsync();
+        await _flexStore.InitializeAsync();
+        await _appSettings.InitializeAsync();
+        // B1: глобальный тумблер предупреждений (дефолт true).
+        try { ConfirmDangerous = await _appSettings.GetBoolAsync("ui.confirmDangerous", true); }
+        catch { ConfirmDangerous = true; }
+        // P3: гибкие настройки переживают перезапуск (старые БД — дефолты).
+        try { Flex = await _flexStore.LoadAsync(); }
+        catch { Flex = FlexDataset.Empty; }
         // Восстанавливаем сохранённый CUSTOM (промт §18); версия каталога новее —
         // профиль устарел: остаёмся на STANDARD, молча не перезаписываем.
         var saved = await _profiles.GetActiveAsync();
@@ -85,21 +132,23 @@ public sealed class AppSession
             {
                 AcademicYearId = stored.AcademicYearId;
                 AcceptRows(FromStored(stored.Rows), stored.DaysCount, stored.SlotsPerDay, stored.Source);
-                File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+                // A3: year.txt при restore НЕ перезаписываем (там уже тот же год).
             }
         }
         catch (Exception ex)
         {
             LastImportErrors = [$"Сохранённые данные не восстановились: {ex.Message}"];
         }
+        IsReady = true;
     }
 
     /// <summary>Сохранить «Моя школа» (промт §18): валидация до записи, single-active.</summary>
     public async Task SaveCustomProfileAsync(
         string name, string baseProfile, IReadOnlyDictionary<string, long> overrides,
+        IReadOnlySet<string>? confirmedDangerous = null,
         CancellationToken ct = default)
     {
-        await _profiles.SaveCustomAsync(name, baseProfile, overrides, ct);
+        await _profiles.SaveCustomAsync(name, baseProfile, overrides, confirmedDangerous, ct);
         var saved = await _profiles.GetActiveAsync(ct);
         if (saved is not null)
         {
@@ -155,6 +204,30 @@ public sealed class AppSession
         File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
     }
 
+    /// <summary>
+    /// P3/R1–R9: применить гибкие настройки: перепроверка текущего входа с новым
+    /// flex (fail-loud — при ошибке старые данные и настройки нетронуты) + персист.
+    /// </summary>
+    public async Task ApplyFlexAsync(FlexDataset flex, CancellationToken ct = default)
+    {
+        if (Data is null)
+        {
+            // Данных нет — только сохраняем (применятся при импорте).
+            Flex = flex;
+            await _flexStore.SaveAsync(flex, ct);
+            return;
+        }
+        // Сухой прогон через AcceptRows: сначала всё проверяется, Data/Flex
+        // меняются только при успехе (внутри AcceptRows — после gate).
+        var rows = LoadRows.ToList();
+        int days = Data.DaysCount, slots = Data.SlotsPerDay;
+        string source = DataSource;
+        AcceptRows(rows, days, slots, source, flex);
+        Flex = flex;
+        await _flexStore.SaveAsync(flex, ct);
+        await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
+            Data.DaysCount, Data.SlotsPerDay, DataSource, ct);
+    }
     private static IReadOnlyList<StoredLoadRow> ToStored(IReadOnlyList<LoadRow> rows) =>
         rows.Select(r => new StoredLoadRow(r.ClassName, r.SubjectName, r.HoursPerWeek,
             r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName)).ToList();
@@ -163,10 +236,15 @@ public sealed class AppSession
         rows.Select(r => new LoadRow(r.ClassName, r.SubjectName, r.HoursPerWeek,
             r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName)).ToList();
 
-    private void AcceptRows(IReadOnlyList<LoadRow> rows, int days, int slots, string source)
+    private void AcceptRows(IReadOnlyList<LoadRow> rows, int days, int slots, string source) =>
+        AcceptRows(rows, days, slots, source, null);
+
+    /// <summary>P3: импорт с гибкими настройками (null — текущие Flex сессии).</summary>
+    private void AcceptRows(
+        IReadOnlyList<LoadRow> rows, int days, int slots, string source, FlexDataset? flex)
     {
         LastImportErrors = [];
-        var data = SchoolDataImporter.Import(AcademicYearId, rows, days, slots);
+        var data = SchoolDataImporter.Import(AcademicYearId, rows, days, slots, flex ?? Flex);
         // Fail-loud ДО принятия данных: вход обязан строиться.
         var (problem, errors) = ProblemBuilder.Build(data.ToProblemInput());
         if (problem is null)
@@ -209,13 +287,17 @@ public sealed class AppSession
         catch { return null; } // данные сменились — честно нет оценки
     }
 
-    public async Task ExportActiveAsync(string path, CancellationToken ct = default)
+    public async Task ExportActiveAsync(string path, CancellationToken ct = default) =>
+        await ExportActiveAsync(path, includeTeacherSheet: true, ct);
+
+    /// <summary>P4/R9: выгрузка с опциональным листом «Учителя».</summary>
+    public async Task ExportActiveAsync(string path, bool includeTeacherSheet, CancellationToken ct = default)
     {
         var active = await GetActiveAsync(ct);
         if (active is null)
             throw new InvalidOperationException("Нет активного расписания — нечего выгружать.");
         var problem = BuildProblem();
         await using var fs = File.Create(path);
-        ScheduleExcelExporter.ExportGrid(problem, active.Placements, fs);
+        ScheduleExcelExporter.ExportGrid(problem, active.Placements, fs, includeTeacherSheet);
     }
 }

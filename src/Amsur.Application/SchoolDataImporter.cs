@@ -23,11 +23,54 @@ public sealed record SchoolData(
     int SlotsPerDay,
     IReadOnlyList<string> Notes)
 {
-    public ProblemInput ToProblemInput() => new(
-        Classes, Teachers, Subjects, Curriculum, Groups, [], [],
-        DaysCount: DaysCount, SlotsPerDay: SlotsPerDay,
-        SplitTeachers: new Dictionary<Guid, (Guid, Guid)>(SplitTeachers),
-        rooms: Rooms); // P0-8: кабинеты из импорта обязаны доходить до solver (было: дроп в []).
+    /// <summary>P1: гибкие настройки R1–R9, применённые при импорте (дефолт — Empty).</summary>
+    public FlexDataset Flex { get; init; } = FlexDataset.Empty;
+
+    public ProblemInput ToProblemInput()
+    {
+        // P2: flex → problem (имена → Id; неизвестные имена назначений пропускаем:
+        // P3-UI предлагает только существующие; молчаливого создания сущностей нет).
+        TeacherAssignment? ResolveAssign(TeacherAssignRow a)
+        {
+            if (a.Scope == AssignmentScope.None) return null;
+            var t = Teachers.FirstOrDefault(x =>
+                string.Equals(x.Name, a.TeacherName, StringComparison.OrdinalIgnoreCase));
+            var s = Subjects.FirstOrDefault(x =>
+                string.Equals(x.Name, a.SubjectName, StringComparison.OrdinalIgnoreCase));
+            if (t is null || s is null) return null;
+            Guid? classId = null;
+            if (a.Scope == AssignmentScope.Class)
+            {
+                var c = Classes.FirstOrDefault(x =>
+                    a.ClassName is not null &&
+                    string.Equals(x.Name, a.ClassName, StringComparison.OrdinalIgnoreCase));
+                if (c is null) return null;
+                classId = c.Id;
+            }
+            if (a.Scope == AssignmentScope.Parallel && a.Grade is null) return null;
+            return new TeacherAssignment
+            {
+                TeacherId = t.Id, SubjectId = s.Id, Scope = a.Scope,
+                ClassId = classId, Grade = a.Grade,
+            };
+        }
+        var common = Flex.CommonLesson;
+        return new ProblemInput(
+            Classes, Teachers, Subjects, Curriculum, Groups, [], [],
+            DaysCount: DaysCount, SlotsPerDay: SlotsPerDay,
+            SplitTeachers: new Dictionary<Guid, (Guid, Guid)>(SplitTeachers),
+            rooms: Rooms, // P0-8: кабинеты из импорта обязаны доходить до solver (было: дроп в []).
+            commonLesson: common is null ? null : new CommonLesson
+            {
+                Enabled = common.Enabled, DayIndex = common.DayIndex,
+                SlotIndex = common.SlotIndex, SlotIndexShift2 = common.SlotIndexShift2,
+                GradesCsv = common.GradesCsv,
+                UseOwnRooms = common.UseOwnRooms,
+            },
+            assignments: Flex.Assignments
+                .Select(ResolveAssign).Where(a => a is not null).Cast<TeacherAssignment>().ToList(),
+            flex: Flex.Settings.ToSettings());
+    }
 }
 
 public static class SchoolDataImporter
@@ -39,12 +82,14 @@ public static class SchoolDataImporter
         Guid academicYearId,
         IReadOnlyList<LoadRow> rows,
         int daysCount = 5,
-        int slotsPerDay = 7)
+        int slotsPerDay = 7,
+        FlexDataset? flex = null)
     {
         if (rows.Count == 0)
             throw new InvalidOperationException("Файл не содержит строк нагрузки.");
         if (daysCount <= 0 || slotsPerDay <= 0)
             throw new InvalidOperationException("Дни и уроки в день должны быть положительными.");
+        flex ??= FlexDataset.Empty;
 
         var classes = new Dictionary<string, SchoolClass>(StringComparer.OrdinalIgnoreCase);
         var teachers = new Dictionary<string, Teacher>(StringComparer.OrdinalIgnoreCase);
@@ -60,10 +105,24 @@ public static class SchoolDataImporter
             var key = name.Trim();
             if (!classes.TryGetValue(key, out var c))
             {
+                // R2/R4: явная конфигурация класса бьёт автопарсинг имени.
+                var cfg = flex.Classes.FirstOrDefault(x =>
+                    string.Equals(x.ClassName, key, StringComparison.OrdinalIgnoreCase));
+                int grade = cfg?.Grade ?? HourResolution.ParseGrade(key);
+                if (grade < 0 || grade > 12)
+                    throw new InvalidOperationException(
+                        $"Класс '{key}': параллель — 0..12 (задано {grade}).");
+                int count = cfg?.StudentCount ?? 25;
+                if (count <= 0)
+                    throw new InvalidOperationException(
+                        $"Класс '{key}': учеников должно быть больше 0.");
                 c = new SchoolClass
                 {
-                    AcademicYearId = academicYearId, Name = key, Grade = 0, StudentCount = 25
+                    AcademicYearId = academicYearId, Name = key,
+                    Grade = grade, StudentCount = count
                 };
+                if (cfg?.ClassTeacherName is not null)
+                    c.ClassTeacherId = Teach(cfg.ClassTeacherName).Id;
                 classes[key] = c;
             }
             return c;
@@ -86,6 +145,16 @@ public static class SchoolDataImporter
             if (!subjects.TryGetValue(key, out var s))
             {
                 s = new Subject { Name = key, MaxPerDay = 2 };
+                // R6: явная сложность предмета (1..10) бьёт дефолт 5.
+                var diff = flex.SubjectDifficulty.FirstOrDefault(x =>
+                    string.Equals(x.SubjectName, key, StringComparison.OrdinalIgnoreCase));
+                if (diff is not null)
+                {
+                    if (diff.Difficulty < 1 || diff.Difficulty > 10)
+                        throw new InvalidOperationException(
+                            $"Предмет '{key}': сложность — 1..10 (задано {diff.Difficulty}).");
+                    s.Difficulty = diff.Difficulty;
+                }
                 subjects[key] = s;
             }
             return s;
@@ -96,10 +165,13 @@ public static class SchoolDataImporter
             var cls = Cls(r.ClassName);
             var subj = Subj(r.SubjectName);
             var teacher = Teach(r.TeacherName);
+            // R2: часы по приоритету Класс > Параллель > Предмет-дефолт > строка.
+            int hours = HourResolution.ResolveHours(cls.Name, cls.Grade, subj.Name,
+                r.HoursPerWeek, flex.HourNorms, flex.HourOverrides);
             var item = new CurriculumItem
             {
                 ClassId = cls.Id, SubjectId = subj.Id, TeacherId = teacher.Id,
-                HoursPerWeek = r.HoursPerWeek, SplitSubgroups = r.SplitSubgroups,
+                HoursPerWeek = hours, SplitSubgroups = r.SplitSubgroups,
             };
             if (r.RoomName is not null)
             {
@@ -107,6 +179,25 @@ public static class SchoolDataImporter
                 if (!rooms.TryGetValue(key, out var room))
                 {
                     room = new Room { Name = key, PhysicalCapacity = 30, MaxSimultaneousGroups = 1 };
+                    // R1/R5: конфигурация кабинета (режим + вместимость).
+                    var rcfg = flex.Rooms.FirstOrDefault(x =>
+                        string.Equals(x.RoomName, key, StringComparison.OrdinalIgnoreCase));
+                    if (rcfg is not null)
+                    {
+                        if (rcfg.MaxGroups < 1)
+                            throw new InvalidOperationException(
+                                $"Кабинет '{key}': максимум групп должен быть ≥ 1.");
+                        if (rcfg.DesiredGroups < 0 || rcfg.DesiredGroups > rcfg.MaxGroups)
+                            throw new InvalidOperationException(
+                                $"Кабинет '{key}': желательно групп — 0 (не задано) или 1..{rcfg.MaxGroups} " +
+                                $"(задано {rcfg.DesiredGroups}).");
+                        room.IsManualOnly = rcfg.IsManualOnly;
+                        if (rcfg.OnlySubjectName is not null)
+                            room.OnlySubjectId = Subj(rcfg.OnlySubjectName).Id;
+                        room.MaxSimultaneousGroups = rcfg.MaxGroups;
+                        room.DesiredGroups = rcfg.DesiredGroups;
+                        room.CountSubgroupAsGroup = rcfg.CountSubgroupAsGroup;
+                    }
                     rooms[key] = room;
                 }
                 item.RoomId = room.Id;
@@ -125,6 +216,36 @@ public static class SchoolDataImporter
             curriculum.Add(item);
         }
 
+        // R7: один учитель на (класс,предмет). Сплиты освобождены (A/B — штатно два учителя).
+        // Режим из FlexSettings (дефолт HardClass, D-34); Soft/Off — только заметка.
+        var mode = flex.Settings.AssignMode;
+        if (mode is TeacherAssignMode.HardClass or TeacherAssignMode.HardParallel)
+        {
+            var classNameOf = classes.ToDictionary(kv => kv.Value.Id, kv => kv.Value.Name);
+            var gradeOf = classes.ToDictionary(kv => kv.Value.Id, kv => kv.Value.Grade);
+            var teacherNameOf = teachers.ToDictionary(kv => kv.Value.Id, kv => kv.Value.Name);
+            var subjectNameOf = subjects.ToDictionary(kv => kv.Value.Id, kv => kv.Value.Name);
+            IEnumerable<IGrouping<string, CurriculumItem>> dupGroups = mode == TeacherAssignMode.HardClass
+                ? curriculum.Where(i => !i.SplitSubgroups)
+                    .GroupBy(i => $"{i.ClassId:D}|{i.SubjectId:D}")
+                : curriculum.Where(i => !i.SplitSubgroups)
+                    .GroupBy(i => $"{gradeOf[i.ClassId]}|{i.SubjectId:D}");
+            foreach (var g in dupGroups)
+            {
+                var who = g.Select(i => i.TeacherId).Distinct().ToList();
+                if (who.Count <= 1) continue;
+                var first = g.First();
+                string where = mode == TeacherAssignMode.HardClass
+                    ? $"класс '{classNameOf[first.ClassId]}', предмет '{subjectNameOf[first.SubjectId]}'"
+                    : $"параллель {gradeOf[first.ClassId]}, предмет '{subjectNameOf[first.SubjectId]}'";
+                throw new InvalidOperationException(
+                    $"Закрепление учителей ({(mode == TeacherAssignMode.HardClass ? "класс" : "параллель")}): " +
+                    $"{where} ведут несколько учителей: " +
+                    $"{string.Join(", ", who.Select(t => $"'{teacherNameOf[t]}'"))}. " +
+                    $"Оставьте одного или переключите режим в настройках.");
+            }
+        }
+
         notes.Add($"Классов: {classes.Count}, учителей: {teachers.Count}, " +
             $"предметов: {subjects.Count}, строк нагрузки: {curriculum.Count}, " +
             $"сплитов: {splitTeachers.Count}, кабинетов: {rooms.Count}.");
@@ -134,6 +255,7 @@ public static class SchoolDataImporter
         return new SchoolData(academicYearId,
             classes.Values.ToList(), teachers.Values.ToList(), subjects.Values.ToList(),
             curriculum, groups.Values.SelectMany(g => new[] { g.A, g.B }).ToList(),
-            rooms.Values.ToList(), splitTeachers, daysCount, slotsPerDay, notes);
+            rooms.Values.ToList(), splitTeachers, daysCount, slotsPerDay, notes)
+        { Flex = flex };
     }
 }

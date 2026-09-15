@@ -58,6 +58,76 @@ public sealed class WpfShellTests : IAsyncDisposable
         });
     }
 
+    // --- 1b. Top-5 с 1 карточкой рендерится без XamlParseException (repro 13.09.2026:
+    // GenerateWindow.xaml:182 BasedOn="{DynamicResource ...}" падал при первом кандидате,
+    // пустой VM тест 1 его не ловил — шаблон инстанцируется только при Cards.Count > 0). ---
+    [Fact]
+    public void GenerateWindow_RendersTop5Card()
+    {
+        RunSta(_ =>
+        {
+            EnsureApp();
+            var vm = new GenerateViewModel();
+            var card = new CandidateCardModel
+            {
+                Rank = 1, SoftTotal = 123, HardViolations = 0, Badge = "Лучший",
+                DifferenceLines = ["Лучшее найденное расписание"],
+                QualitySummary = "Soft 123",
+                QualityLines = ["Строка 1"],
+                CanAccept = true, Candidate = null!,
+            };
+            vm.Top5 = new Top5PanelModel { Cards = [card], TotalFound = 1 };
+            var win = new GenerateWindow(vm);
+            // Show off-screen: шаблон карточки Top-5 материализуется только
+            // в loaded-дереве при layout (Measure/Arrange после Show) — именно
+            // там падал прод (Event Viewer .NET 1026, XamlParseException BasedOn).
+            // LoadContent без Show ошибку НЕ воспроизводит (проверено 14.09.2026).
+            win.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
+            win.Left = -10000; win.Top = -10000;
+            win.Width = 1100; win.Height = 780;
+            win.Show();
+            win.UpdateLayout();
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
+                () => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            win.Close();
+            return Task.CompletedTask;
+        });
+    }
+
+    // --- 1c. E2E прод-пути в реальном окне (repro 13.09.2026): DemoSchool →
+    // GenerateHost (как MainWindow.OnGenerateClick) → RunAsync → рендер Top-5
+    // с НАСТОЯЩИМИ кандидатами в показанном окне → Accept. Бюджет 4с/1 сид:
+    // жадный старт даёт feasible сразу, узел краша (первая карточка) покрыт.
+    // STANDARD целиком покрыт DemoSchool_StandardRun_ProducesSchedule (33с). ---
+    [Fact]
+    public void DemoSchool_GenerateWindow_AcceptsBest()
+    {
+        RunSta(async _ =>
+        {
+            Directory.CreateDirectory(_dir);
+            EnsureApp();
+            var session = new AppSession(_dir);
+            await session.InitAsync();
+            await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
+            var (win, orch) = GenerateHost.Create(session.Data!.ToProblemInput(),
+                perSeedBudgetSeconds: 4, numWorkers: 1,
+                dbPath: session.DbPath, rules: session.QualityRules, modeName: "Быстро");
+            win.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
+            win.Left = -10000; win.Top = -10000;
+            win.Width = 1100; win.Height = 780;
+            win.Show();
+            var outcome = await orch.RunAsync([11]);
+            win.UpdateLayout();
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
+                () => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            Assert.True(outcome.HasFeasible);
+            Assert.NotNull(orch.ViewModel.Top5.Best);
+            var accepted = await orch.AcceptAsync(orch.ViewModel.Top5.Best);
+            Assert.True(accepted.Succeeded);
+            win.Close();
+        });
+    }
+
     // --- 2. ScheduleWindow: нет активного — честное пустое состояние ---
     [Fact]
     public void ScheduleWindow_EmptyStateWhenNoActive()
@@ -175,8 +245,8 @@ public sealed class WpfShellTests : IAsyncDisposable
             typeof(App).GetProperty("Session")!.SetValue(app, session);
             var main = new MainWindow();
             Assert.Equal(System.Windows.Visibility.Visible, main.StateNoData.Visibility);
-            Assert.Equal(System.Windows.Visibility.Collapsed, main.StateReady.Visibility);
-            Assert.Equal(System.Windows.Visibility.Collapsed, main.StateDone.Visibility);
+            Assert.Equal("Не загружены", main.MiniDataStatus.Text);
+            Assert.Equal("Нет данных", main.FooterRightText.Text);
             main.Close();
             var settings = new SettingsWindow(session);
             settings.Close();

@@ -29,6 +29,10 @@ public sealed class SchedulingProblem
     /// </summary>
     public List<ShiftBand> ShiftBands { get; init; } = [];
     public SolverOptions Options { get; init; } = new();
+    /// <summary>R6–R8 + режим R7 (P2): гибкие настройки; дефолт Neutral = поведение до R1–R9.</summary>
+    public FlexSettings Flex { get; init; } = FlexSettings.Neutral;
+    /// <summary>R7: явные закрепления учитель→класс/параллель (валидатор Hard*, P2).</summary>
+    public List<TeacherAssignment> Assignments { get; init; } = [];
 }
 
 public sealed class PlacedLesson

@@ -160,16 +160,14 @@ public static class GradeOneBalance
     {
         why = null;
         if (problem.Rooms.Count == 0) return null;
-        int students = problem.Classes.TryGetValue(occ.ClassId, out var cls) ? cls.StudentCount : 0;
         var ordered = problem.Rooms.Values.OrderBy(r => r.Name, StringComparer.Ordinal).ToList();
         if (prefer.HasValue)
             ordered = ordered.OrderByDescending(r => r.Id == prefer.Value).ThenBy(r => r.Name, StringComparer.Ordinal).ToList();
         foreach (var room in ordered)
         {
-            if (problem.RoomCaps.TryGetValue((room.Id, occ.SubjectId), out var cap) &&
-                cap == RoomCapabilityKind.Forbidden)
+            // P2/R1: общий фильтр кандидатов (подсчёт — консервативный по размещениям).
+            if (!RoomPolicy.IsCandidate(problem, room, occ))
                 continue;
-            if (room.PhysicalCapacity < students) continue;
             int concurrent = pos.Values.Count(x =>
                 x.RoomId == room.Id && x.DayIndex == dstDay && x.SlotIndex == append);
             if (concurrent + 1 <= Math.Max(1, room.MaxSimultaneousGroups))

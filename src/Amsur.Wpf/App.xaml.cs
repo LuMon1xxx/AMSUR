@@ -41,6 +41,10 @@ public partial class App : System.Windows.Application
             Directory.CreateDirectory(dir);
             Session = new AppSession(dir);
             await Session.InitAsync();
+            // A3: окно создаём ЯВНО после InitAsync (без StartupUri) — конструктор
+            // MainWindow больше не может отработать до готовых данных.
+            MainWindow = new MainWindow();
+            MainWindow.Show();
         }
         catch (Exception ex)
         {

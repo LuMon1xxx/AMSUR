@@ -28,13 +28,20 @@ public sealed class SqliteQualityProfileStore(string connectionString)
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
+    /// <summary>
+    /// B2: weights — РАЗРЕЖЕННЫЕ overrides (GetOverrides); confirmedDangerous —
+    /// подтверждённые опасные (иначе throw). Снимок v5: present = намерение.
+    /// </summary>
     public async Task SaveCustomAsync(
         string name, string baseProfile, IReadOnlyDictionary<string, long> weights,
+        IReadOnlySet<string>? confirmedDangerous = null,
         CancellationToken ct = default)
     {
-        // Валидация через резолвер (диапазоны + коды) до записи.
-        var rs = RuleResolver.Resolve("CUSTOM", weights);
-        var json = JsonSerializer.Serialize(rs.Weights);
+        // Валидация через резолвер (диапазоны + коды + подтверждения) до записи.
+        var rs = RuleResolver.Resolve("CUSTOM", weights, confirmedDangerous);
+        // B2: персистим overrides как есть (разреженно), а не полный словарь:
+        // иначе дефолтные строгие при загрузке выглядели бы ослабленными.
+        var json = JsonSerializer.Serialize(weights);
         await using var conn = await OpenAsync(ct);
         await using var tx = (SqliteTransaction)await conn.BeginTransactionAsync(ct);
         await using (var off = conn.CreateCommand())

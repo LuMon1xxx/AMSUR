@@ -24,6 +24,8 @@ public static class QualityRating
                 "teacher-cross-shift-gap" => RuleCatalog.TeacherCrossShiftGap,
                 "subject-maxperday" => RuleCatalog.SubjectMaxPerDay,
                 "room-preference" => RuleCatalog.RoomPreference,
+                "room-crowding" => RuleCatalog.RoomCrowding,
+                "teacher-split" => RuleCatalog.TeacherSplit,
                 "heavy-edge" => RuleCatalog.HeavyEdge,
                 "relation-violation" => RuleCatalog.RelationViolation,
                 _ => 0,

@@ -76,7 +76,7 @@ public partial class ExportWindow : Window
         {
             string path = PathBox.Text.Trim();
             if (path.Length == 0) throw new InvalidOperationException("Укажите путь файла.");
-            await _session.ExportActiveAsync(path);
+            await _session.ExportActiveAsync(path, TeacherSheetBox.IsChecked == true);
             ResultText.Text = "Выгружено: " + path;
             ResultText.Foreground = (Brush)FindResource("BGood");
         }

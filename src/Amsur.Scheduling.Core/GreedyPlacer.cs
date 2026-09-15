@@ -249,15 +249,12 @@ public static class GreedyPlacer
         Dictionary<(Guid, int, int), int> unitUse)
     {
         if (problem.Rooms.Count == 0) return [Guid.Empty];
-        int students = problem.Classes.TryGetValue(o.ClassId, out var cls) ? cls.StudentCount : 0;
-        int need = o.GroupId.HasValue ? (students + 1) / 2 : students;
         var res = new List<Guid>();
         foreach (var room in problem.Rooms.Values.OrderBy(r => r.Name, StringComparer.Ordinal))
         {
-            if (problem.RoomCaps.TryGetValue((room.Id, o.SubjectId), out var cap) &&
-                cap == RoomCapabilityKind.Forbidden)
-                continue;
-            if (room.PhysicalCapacity < need) continue;
+            // P2/R1: фильтр кандидатов общий (RoomPolicy); подсчёт мест —
+            // консервативный по размещениям (key-aware — в валидаторе/LS).
+            if (!RoomPolicy.IsCandidate(problem, room, o)) continue;
             int used = roomUsers.GetValueOrDefault((room.Id, day, slot)) +
                 unitUse.GetValueOrDefault((room.Id, day, slot));
             if (used + 1 > Math.Max(1, room.MaxSimultaneousGroups))

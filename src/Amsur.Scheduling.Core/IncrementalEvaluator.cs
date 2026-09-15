@@ -64,7 +64,7 @@ public static class IncrementalEvaluator
             });
         }
 
-        // Forbidden room capability (Hard).
+        // Forbidden room capability (Hard) + P2/R1 ONLY-кабинет (чужой предмет — hard).
         if (move.RoomId.HasValue &&
             problem.RoomCaps.TryGetValue((move.RoomId.Value, node.SubjectId), out var cap) &&
             cap == RoomCapabilityKind.Forbidden)
@@ -73,6 +73,17 @@ public static class IncrementalEvaluator
             {
                 Code = "forbidden-room",
                 Message = "Кабинет запрещён для этого предмета.",
+                OccurrenceId = node.Id, RoomId = move.RoomId
+            });
+        }
+        if (move.RoomId.HasValue &&
+            problem.Rooms.TryGetValue(move.RoomId.Value, out var onlyRoom) &&
+            onlyRoom.OnlySubjectId.HasValue && onlyRoom.OnlySubjectId.Value != node.SubjectId)
+        {
+            hard.Add(new ValidationIssue
+            {
+                Code = "forbidden-room",
+                Message = $"Кабинет «{onlyRoom.Name}» — только для своего предмета.",
                 OccurrenceId = node.Id, RoomId = move.RoomId
             });
         }
@@ -131,16 +142,19 @@ public static class IncrementalEvaluator
             }
         }
 
-        // Room scope.
+        // Room scope (P2/R5: единицы key-aware).
         if (move.RoomId.HasValue && problem.Rooms.TryGetValue(move.RoomId.Value, out var room))
         {
-            int concurrent = hypo.Count(p => p.RoomId == move.RoomId &&
-                p.DayIndex == move.DayIndex && p.SlotIndex == move.SlotIndex);
-            if (concurrent > room.MaxSimultaneousGroups)
+            var cell = hypo.Where(p => p.RoomId == move.RoomId &&
+                p.DayIndex == move.DayIndex && p.SlotIndex == move.SlotIndex).ToList();
+            int units = RoomPolicy.CellUnits(room, cell.Count,
+                cell.Select(p => occById.TryGetValue(p.OccurrenceId, out var o) ? o.ClassId : Guid.Empty)
+                    .Distinct().Count());
+            if (units > room.MaxSimultaneousGroups)
                 hard.Add(new ValidationIssue
                 {
                     Code = PhysicalRuleCodes.RoomOverflow,
-                    Message = $"Кабинет занят ({concurrent} при лимите {room.MaxSimultaneousGroups}).",
+                    Message = $"Кабинет занят ({units} при лимите {room.MaxSimultaneousGroups}).",
                     RoomId = room.Id, OccurrenceId = node.Id
                 });
         }
@@ -163,6 +177,30 @@ public static class IncrementalEvaluator
                     break;
                 }
             }
+        }
+
+        // P2/R7: один учитель на (класс,предмет)/(параллель,предмет) — по hypo.
+        var assignMode = problem.Flex.AssignMode;
+        if (!node.GroupId.HasValue &&
+            assignMode is TeacherAssignMode.HardClass or TeacherAssignMode.HardParallel)
+        {
+            string KeyOf(LessonOccurrence o) =>
+                assignMode == TeacherAssignMode.HardClass
+                    ? $"{o.ClassId:D}|{o.SubjectId:D}"
+                    : $"{(problem.Classes.TryGetValue(o.ClassId, out var c) ? c.Grade : 0)}|{o.SubjectId:D}";
+            string key = KeyOf(node);
+            var teachers = hypo
+                .Select(p => occById.TryGetValue(p.OccurrenceId, out var o) ? o : null)
+                .Where(o => o is not null && !o.GroupId.HasValue && KeyOf(o!) == key)
+                .Select(o => o!.TeacherId)
+                .Distinct().ToList();
+            if (teachers.Count > 1)
+                hard.Add(new ValidationIssue
+                {
+                    Code = "teacher-assign",
+                    Message = "Предмет в классе/параллели ведут несколько учителей.",
+                    ClassId = node.ClassId, OccurrenceId = node.Id, TeacherId = node.TeacherId
+                });
         }
 
         // Teacher MaxPerDay (Hard FROZEN D-04): скоупово.

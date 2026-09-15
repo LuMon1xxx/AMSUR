@@ -17,6 +17,7 @@ public partial class SettingsWindow : Window
 {
     private readonly AppSession _session;
     private QualitySettingsEditor _editor;
+    private readonly HashSet<string> _confirmedDangerous = new(StringComparer.Ordinal);
     private string _baseProfile = "STANDARD";
     private readonly List<(Guid Id, TextBox Box, int Min, int Max, string Label)> _entityBoxes = [];
     private readonly List<(string Code, TextBox Box)> _expertBoxes = [];
@@ -28,11 +29,16 @@ public partial class SettingsWindow : Window
         var cur = session.QualityRules.ProfileName;
         _baseProfile = cur == "CUSTOM" ? "STANDARD" : cur;
         _editor = QualitySettingsEditor.FromRules(session.QualityRules);
+        // B2: уже ослабленные в активном CUSTOM — считаем подтверждёнными
+        // (повторный попап при движении слайдера не нужен).
+        foreach (var c in session.QualityRules.RelaxedStrict)
+            _confirmedDangerous.Add(c);
         CheckPresetRadio();
         SavedNameText.Text = session.CustomProfileName is null ? "" : $"Сохранён: {session.CustomProfileName}";
         BuildQualityPanel();
         BuildEntityPanels();
         BuildExpertPanel();
+        BuildWarningsPanel();
         RefreshSectionCounts();
         MarkClean();
     }
@@ -55,6 +61,7 @@ public partial class SettingsWindow : Window
         SetSectionText(2, $"Классы ({d?.Classes.Count ?? 0})");
         SetSectionText(3, $"Учителя ({d?.Teachers.Count ?? 0})");
         SetSectionText(4, "Экспертный режим");
+        SetSectionText(5, "Предупреждения");
     }
 
     private void SetSectionText(int index, string text)
@@ -64,9 +71,13 @@ public partial class SettingsWindow : Window
     }
 
     // --- Качество ---
+    private CheckBox? _gradePrioBox;
+    private TextBox? _w11Box, _w9Box, _wOtherBox, _heavyBox;
+
     private void BuildQualityPanel()
     {
         QualityPanel.Children.Clear();
+        QualityPanel.Children.Add(BuildGradePriorityCard());
         foreach (var o in _editor.Options)
         {
             var card = new Border { Style = (Style)FindResource("Card"), Margin = new Thickness(0, 0, 0, 8) };
@@ -86,8 +97,8 @@ public partial class SettingsWindow : Window
                 Margin = new Thickness(8, 0, 0, 0),
                 Child = new TextBlock
                 {
-                    // P0-5: бейдж СТРОГОЕ — только для правил с диапазоном (0,0).
-                    Text = o.IsStrict ? "СТРОГОЕ" : "ПОЖЕЛАНИЕ", FontSize = 11,
+                    // B2: опасные — бейдж «СТРОГОЕ (по шаблону)», но настраиваются через подтверждение.
+                    Text = o.IsStrict ? "СТРОГОЕ (по шаблону)" : "ПОЖЕЛАНИЕ", FontSize = 11,
                     Foreground = o.IsStrict
                         ? new SolidColorBrush((Color)FindResource("CBad"))
                         : new SolidColorBrush((Color)FindResource("CAccent")),
@@ -103,12 +114,30 @@ public partial class SettingsWindow : Window
             sp.Children.Add(hint);
             if (o.Tunable)
             {
+                // B2: опасным — тумблер «Разрешить как пожелание» (слайдер disabled пока off).
+                bool isDanger = o.IsStrict;
+                bool relaxed = isDanger &&
+                    (_confirmedDangerous.Contains(o.Code) || o.Weight != o.DefaultWeight);
+                if (isDanger)
+                {
+                    var toggle = new CheckBox
+                    {
+                        Content = "Разрешить как пожелание",
+                        IsChecked = relaxed,
+                        Margin = new Thickness(0, 8, 0, 0), FontSize = 13,
+                        Tag = o.Code,
+                    };
+                    toggle.Checked += OnDangerToggleChanged;
+                    toggle.Unchecked += OnDangerToggleChanged;
+                    sp.Children.Add(toggle);
+                }
                 var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
                 var slider = new Slider
                 {
                     Minimum = 0, Maximum = 4, Value = o.Level, Width = 220,
                     TickFrequency = 1, IsSnapToTickEnabled = true,
                     VerticalAlignment = VerticalAlignment.Center, Tag = o.Code,
+                    IsEnabled = !isDanger || relaxed,
                 };
                 slider.ValueChanged += OnSliderChanged;
                 var level = new TextBlock
@@ -128,11 +157,10 @@ public partial class SettingsWindow : Window
                 row.Children.Add(level);
                 row.Children.Add(num);
                 sp.Children.Add(row);
-                // P0-5: честная подпись диапазона из WeightRange + дефолт (без выдуманных %).
+                // B2: честная подпись: вес + дефолт + «шаблон не так делает» для опасных.
                 var rangeCaption = new TextBlock
                 {
-                    Text = $"Вес {o.Weight} · диапазон {o.Min}..{o.Max} · дефолт {o.DefaultWeight}" +
-                        (RuleCatalog.NeedsConfirmation(o.Code) ? " · требует сверки с нормами" : ""),
+                    Text = DangerCaption(o),
                     FontSize = 11,
                     Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
                     Margin = new Thickness(0, 4, 0, 0),
@@ -158,22 +186,223 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private readonly Dictionary<string, (Slider S, TextBlock L, TextBlock N, TextBlock R)> _rows = [];
+    // B2: подпись опасной карточки: «Вес X · дефолт Y · шаблон не так делает».
+    private static string DangerCaption(QualityOption o)
+    {
+        string base_ = $"Вес {o.Weight} · диапазон {o.Min}..{o.Max} · дефолт {o.DefaultWeight}";
+        if (RuleCatalog.NeedsConfirmation(o.Code)) base_ += " · требует сверки с нормами";
+        if (o.IsStrict) base_ += " · шаблон не так делает";
+        return base_;
+    }
+
+    private static string DangerousConsequence(string code) => code switch
+    {
+        "student-gap" => "У учеников появятся окна посреди дня (пустые уроки). " +
+            "Варианты с окнами станут допустимыми (со штрафом в оценке).",
+        "student-late-start" => "Классы смогут начинать позже 2-го урока. " +
+            "Дни «со второго урока» станут допустимыми (со штрафом в оценке).",
+        "teacher-maxperday" => "Учителя смогут вести больше уроков в день, чем их лимит. " +
+            "Перегрузка станет допустимой (с предупреждением).",
+        "class-maxperday" => "У классов сможет быть больше уроков в день, чем норма " +
+            "(включая норму 1-х классов). Перегруз станет допустимым (с предупреждением).",
+        _ when code.StartsWith("sanpin-", StringComparison.Ordinal) =>
+            "Норма СанПиН будет ослаблена. Веса не проверены по НПА — сверьте с завучем и нормами.",
+        _ => "Строгое правило будет ослаблено.",
+    };
+
+    // B2: тумблер опасного — через DangerConfirm (глобал-офф = без попапа).
+    // Отмена → тумблер возвращается; Продолжить → слайдер включается.
+    private async void OnDangerToggleChanged(object sender, RoutedEventArgs e)
+    {
+        if (sender is not CheckBox box || box.Tag is not string code) return;
+        var o = _editor.Options.FirstOrDefault(x => x.Code == code);
+        if (o is null) return;
+        if (box.IsChecked == true)
+        {
+            bool ok = await _session.ConfirmDangerousAsync(
+                this, code, o.Title, DangerousConsequence(code));
+            if (!ok)
+            {
+                box.IsChecked = false; // попап «Отмена» → не применилось
+                return;
+            }
+            _confirmedDangerous.Add(code);
+            if (_rows.TryGetValue(code, out var r)) r.S.IsEnabled = true;
+            MarkDirty();
+        }
+        else
+        {
+            _confirmedDangerous.Remove(code);
+            try { _editor.SetWeight(code, o.DefaultWeight, confirmed: true); }
+            catch { /* дефолт всегда в диапазоне */ }
+            if (_rows.TryGetValue(code, out var r))
+            {
+                r.S.IsEnabled = false;
+                r.S.Value = o.Level;
+                r.L.Text = o.LevelName;
+                r.N.Text = $"({o.Weight})";
+                r.R.Text = DangerCaption(o);
+            }
+            RefreshExpertBoxes();
+            RefreshJsonPreview();
+            MarkDirty();
+        }
+        RefreshJsonPreview();
+    }
+
+    // P4/R8+R6: приоритет выпускных и порог тяжести (FlexSettings, не веса каталога).
+    private Border BuildGradePriorityCard()
+    {
+        var st = _session.Flex.Settings;
+        var card = new Border { Style = (Style)FindResource("Card"), Margin = new Thickness(0, 0, 0, 8) };
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Приоритет выпускных", FontSize = 15, FontWeight = FontWeights.SemiBold,
+        });
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Мягкие штрафы 11-х и 9-х классов умножаются на вес — генератор бережёт их первыми. Выключено = все равны.",
+            FontSize = 12, Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
+        });
+        _gradePrioBox = new CheckBox
+        {
+            Content = "Учитывать приоритет выпускных", IsChecked = st.GradePriorityEnabled,
+            Margin = new Thickness(0, 8, 0, 0), FontSize = 13,
+        };
+        _gradePrioBox.Checked += (_, _) => MarkDirty();
+        _gradePrioBox.Unchecked += (_, _) => MarkDirty();
+        sp.Children.Add(_gradePrioBox);
+        var grid = new Grid { Margin = new Thickness(0, 8, 0, 0) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(220) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(60) });
+        for (int i = 0; i < 4; i++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        string[] labels = ["Вес 11-х классов:", "Вес 9-х классов:", "Вес остальных:", "Порог тяжести (1..10):"];
+        string[] vals = [st.W11.ToString(), st.W9.ToString(), st.WOther.ToString(), st.IsHeavyThreshold.ToString()];
+        var boxes = new TextBox[4];
+        for (int i = 0; i < 4; i++)
+        {
+            var lb = new TextBlock
+            {
+                Text = labels[i], FontSize = 13, VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetRow(lb, i); Grid.SetColumn(lb, 0);
+            grid.Children.Add(lb);
+            var tb = new TextBox { Text = vals[i], Margin = new Thickness(0, 3, 0, 3) };
+            tb.TextChanged += (_, _) => MarkDirty();
+            Grid.SetRow(tb, i); Grid.SetColumn(tb, 1);
+            grid.Children.Add(tb);
+            boxes[i] = tb;
+        }
+        _w11Box = boxes[0]; _w9Box = boxes[1]; _wOtherBox = boxes[2]; _heavyBox = boxes[3];
+        sp.Children.Add(grid);
+        var apply = new Button
+        {
+            Content = "Применить приоритет", Style = (Style)FindResource("BtnSecondary"),
+            HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0),
+        };
+        apply.Click += OnGradePriorityApplyClick;
+        sp.Children.Add(apply);
+        card.Child = sp;
+        return card;
+    }
+
+    private async void OnGradePriorityApplyClick(object sender, RoutedEventArgs e)
+    {
+        if (_w11Box is null || _w9Box is null || _wOtherBox is null || _heavyBox is null) return;
+        if (!int.TryParse(_w11Box.Text, out int w11) || w11 < 1 || w11 > 5 ||
+            !int.TryParse(_w9Box.Text, out int w9) || w9 < 1 || w9 > 5 ||
+            !int.TryParse(_wOtherBox.Text, out int wo) || wo < 1 || wo > 5 ||
+            !int.TryParse(_heavyBox.Text, out int th) || th < 1 || th > 10)
+        {
+            Say("Веса — числа 1..5, порог тяжести — 1..10.", true);
+            return;
+        }
+        try
+        {
+            var st = _session.Flex.Settings with
+            {
+                GradePriorityEnabled = _gradePrioBox?.IsChecked == true,
+                W11 = w11, W9 = w9, WOther = wo, IsHeavyThreshold = th,
+            };
+            await _session.ApplyFlexAsync(_session.Flex with { Settings = st });
+            MarkClean();
+            Say("Приоритет применён — действует на следующие генерации.", false);
+        }
+        catch (Exception ex)
+        {
+            var errs = _session.LastImportErrors;
+            Say(errs.Count > 0 ? string.Join("; ", errs.Take(3)) : ex.Message, true);
+        }
+    }
+
+    // --- B1: глобальные предупреждения об опасных изменениях ---
+    private void BuildWarningsPanel()
+    {
+        WarningsPanel.Children.Clear();
+        var card = new Border { Style = (Style)FindResource("Card"), Margin = new Thickness(0, 0, 0, 8) };
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Предупреждения", FontSize = 15, FontWeight = FontWeights.SemiBold,
+        });
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Перед ослаблением строгих правил и другими опасными изменениями программа спрашивает подтверждение. Шаблонная школа так не делает.",
+            FontSize = 12, Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
+        });
+        var box = new CheckBox
+        {
+            Content = "Показывать предупреждения об опасных изменениях",
+            IsChecked = _session.ConfirmDangerous, Margin = new Thickness(0, 8, 0, 0), FontSize = 13,
+        };
+        box.Checked += async (_, _) => await SetWarningsAsync(true);
+        box.Unchecked += async (_, _) => await SetWarningsAsync(false);
+        sp.Children.Add(box);
+        var back = new Button
+        {
+            Content = "Вернуть предупреждения", Style = (Style)FindResource("BtnSecondary"),
+            HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0),
+        };
+        back.Click += async (_, _) =>
+        {
+            await _session.SetConfirmDangerousAsync(true);
+            BuildWarningsPanel();
+            Say("Предупреждения возвращены — опасные изменения снова спрашивают.", false);
+        };
+        sp.Children.Add(back);
+        card.Child = sp;
+        WarningsPanel.Children.Add(card);
+    }
+
+    private async Task SetWarningsAsync(bool value)
+    {
+        await _session.SetConfirmDangerousAsync(value);
+        Say(value ? "Предупреждения включены." : "Предупреждения выключены — опасные изменения без спроса.", false);
+    }
 
     private void RegisterRow(string code, Slider s, TextBlock l, TextBlock n, TextBlock r) =>
         _rows[code] = (s, l, n, r);
 
+    private readonly Dictionary<string, (Slider S, TextBlock L, TextBlock N, TextBlock R)> _rows = [];
+
     private void OnSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (sender is not Slider sl || sl.Tag is not string code) return;
-        _editor.SetLevel(code, (int)sl.Value);
+        var o0 = _editor.Options.First(x => x.Code == code);
+        // B2: слайдер опасного включён только после подтверждения (тумблер),
+        // поэтому здесь confirmed = уже подтверждён. Выключенный слайдер не двигается.
+        bool confirmed = !o0.IsStrict || _confirmedDangerous.Contains(code);
+        try { _editor.SetLevel(code, (int)sl.Value, confirmed); }
+        catch (InvalidOperationException ex) { Say(ex.Message, true); return; }
         if (_rows.TryGetValue(code, out var r))
         {
             var o = _editor.Options.First(x => x.Code == code);
             r.L.Text = o.LevelName;
             r.N.Text = $"({o.Weight})";
-            r.R.Text = $"Вес {o.Weight} · диапазон {o.Min}..{o.Max} · дефолт {o.DefaultWeight}" +
-                (RuleCatalog.NeedsConfirmation(o.Code) ? " · требует сверки с нормами" : "");
+            r.R.Text = DangerCaption(o);
         }
         MarkDirty();
         RefreshExpertBoxes();
@@ -199,7 +428,7 @@ public partial class SettingsWindow : Window
         foreach (var s in data.Subjects.OrderBy(x => x.Name))
             AddEntityRow(SubjectsPanel, s.Name, $"предмет «{s.Name}»", s.Id,
                 s.MaxPerDay, 1, 7, v => s.MaxPerDay = v);
-        ClassesPanel.Children.Add(SectionHint("Дневная норма класса. Начало дня: позже 2-го урока начинать нельзя (строгое правило, не меняется)."));
+        ClassesPanel.Children.Add(SectionHint("Дневная норма класса. Начало дня: позже 2-го урока начинать нельзя (строгое по шаблону — ослабляется в «Качестве» через подтверждение)."));
         foreach (var c in data.Classes.OrderBy(x => x.Name))
             AddEntityRow(ClassesPanel, $"{c.Name} (параллель {c.Grade})", $"класс {c.Name}", c.Id,
                 c.MaxLessonsPerDay, 1, 10, v => c.MaxLessonsPerDay = v);
@@ -327,6 +556,7 @@ public partial class SettingsWindow : Window
         ClassesPanel.Visibility = i == 2 ? Visibility.Visible : Visibility.Collapsed;
         TeachersPanel.Visibility = i == 3 ? Visibility.Visible : Visibility.Collapsed;
         ExpertPanel.Visibility = i == 4 ? Visibility.Visible : Visibility.Collapsed;
+        WarningsPanel.Visibility = i == 5 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnPresetChanged(object sender, RoutedEventArgs e)
@@ -375,7 +605,9 @@ public partial class SettingsWindow : Window
         foreach (var (code, box) in _expertBoxes)
         {
             if (!long.TryParse(box.Text, out long w)) return false;
-            try { _editor.SetWeight(code, w); }
+            var o0 = _editor.Options.First(x => x.Code == code);
+            bool confirmed = !o0.IsStrict || _confirmedDangerous.Contains(code);
+            try { _editor.SetWeight(code, w, confirmed); }
             catch { return false; }
         }
         BuildQualityPanel();
@@ -397,7 +629,8 @@ public partial class SettingsWindow : Window
         if (!ReadEntityBoxes(out string? err)) { Say(err!, true); return; }
         if (!ReadExpertBoxes()) { Say("В экспертном режиме — только числа из указанных диапазонов.", true); return; }
         ApplyEntities();
-        _session.ApplyOverrides(_editor.GetOverrides());
+        // B2: опасные — только с подтверждённым набором (тумблеры выше).
+        _session.ApplyOverrides(_editor.GetOverrides(), _confirmedDangerous);
         MarkClean();
         Say(_editor.IsModified
             ? "Применено: настройки будут действовать на следующие генерации (без сохранения)."
@@ -414,7 +647,7 @@ public partial class SettingsWindow : Window
         try
         {
             ApplyEntities();
-            await _session.SaveCustomProfileAsync(name, _baseProfile, _editor.GetOverrides());
+            await _session.SaveCustomProfileAsync(name, _baseProfile, _editor.GetOverrides(), _confirmedDangerous);
             SavedNameText.Text = $"Сохранён: {name}";
             PresetCustom.IsChecked = true;
             MarkClean();
@@ -443,7 +676,7 @@ public partial class SettingsWindow : Window
         Say("Профиль выгружен: " + dlg.FileName, false);
     }
 
-    private void OnImportJsonClick(object sender, RoutedEventArgs e)
+    private async void OnImportJsonClick(object sender, RoutedEventArgs e)
     {
         var dlg = new OpenFileDialog { Filter = "JSON (*.json)|*.json" };
         if (dlg.ShowDialog() != true) return;
@@ -451,9 +684,30 @@ public partial class SettingsWindow : Window
         {
             var ov = JsonSerializer.Deserialize<Dictionary<string, long>>(
                 File.ReadAllText(dlg.FileName)) ?? [];
-            _ = RuleResolver.Resolve("CUSTOM", ov); // валидация до применения
+            // B2: файл может содержать опасные — валидация до применения;
+            // «требуется подтверждение» → один попап на все опасные файла.
+            try
+            {
+                _ = RuleResolver.Resolve("CUSTOM", ov); // валидация до применения
+            }
+            catch (InvalidOperationException) when (ov.Keys.Any(RuleCatalog.IsDangerous))
+            {
+                string first = ov.Keys.First(RuleCatalog.IsDangerous);
+                var oh = QualityHints.For(first);
+                bool ok = await _session.ConfirmDangerousAsync(
+                    this, first, oh.Title,
+                    "Файл профиля ослабляет строгие правила. " + DangerousConsequence(first));
+                if (!ok) { Say("Импорт отменён — строгие правила не тронуты.", true); return; }
+                foreach (var c in ov.Keys.Where(RuleCatalog.IsDangerous))
+                    _confirmedDangerous.Add(c);
+                _ = RuleResolver.Resolve("CUSTOM", ov, _confirmedDangerous);
+            }
             _editor = QualitySettingsEditor.FromRules(EffectiveRuleSet.Default);
-            foreach (var (code, w) in ov) _editor.SetWeight(code, w);
+            foreach (var (code, w) in ov)
+            {
+                bool confirmed = _confirmedDangerous.Contains(code);
+                _editor.SetWeight(code, w, confirmed);
+            }
             BuildQualityPanel();
             RefreshExpertBoxes();
             MarkDirty();

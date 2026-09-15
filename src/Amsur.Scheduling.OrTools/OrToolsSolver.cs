@@ -21,8 +21,9 @@ public sealed class OrToolsSolver : IScheduleSolver
     private sealed record SlotPick(int Day, int Slot, Guid? RoomId);
 
     /// <summary>
-    /// Кандидаты-кабинеты occurrence (P0.5): исключены Forbidden + Seats &lt; need.
-    /// need = StudentCount класса (whole) или половина (подгруппа). Пусто → ModelInvalid.
+    /// Кандидаты-кабинеты occurrence (P0.5 + P2/R1): исключены Forbidden + Seats &lt; need
+    /// + IsManualOnly + ONLY-чужой. need = StudentCount класса (whole) или половина
+    /// (подгруппа). Пусто → ModelInvalid.
     /// </summary>
     private static List<int> RoomCandidates(
         SchedulingProblem problem, IList<Room> roomList,
@@ -30,15 +31,9 @@ public sealed class OrToolsSolver : IScheduleSolver
     {
         var res = new List<int>();
         if (roomList.Count == 0) return res;
-        int students = problem.Classes.TryGetValue(occ.ClassId, out var cls) ? cls.StudentCount : 0;
-        int need = occ.GroupId.HasValue ? (students + 1) / 2 : students;
         for (int r = 0; r < roomList.Count; r++)
         {
-            var room = roomList[r];
-            if (problem.RoomCaps.TryGetValue((room.Id, occ.SubjectId), out var cap) &&
-                cap == RoomCapabilityKind.Forbidden)
-                continue;
-            if (room.PhysicalCapacity < need) continue;
+            if (!RoomPolicy.IsCandidate(problem, roomList[r], occ)) continue;
             res.Add(r);
         }
         return res;

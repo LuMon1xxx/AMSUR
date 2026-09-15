@@ -49,8 +49,10 @@ public sealed class QualityUxTests
     public void Editor_MappingAndValidation()
     {
         var ed = QualitySettingsEditor.FromRules(EffectiveRuleSet.Default);
-        Assert.Equal(7, ed.Options.Count); // 2 строгих + 5 пожеланий
-        Assert.All(ed.Options.Where(o => o.IsStrict), o => Assert.False(o.Tunable));
+        // B2 (осознанно): строгие стали настраиваемыми через подтверждение —
+        // 9 опасных (student-gap/late-start, teacher/class-maxperday, 5×sanpin) + 7 пожеланий.
+        Assert.Equal(16, ed.Options.Count);
+        Assert.All(ed.Options.Where(o => o.IsStrict), o => Assert.True(o.Tunable));
         var tg = ed.Options.First(o => o.Code == "teacher-gap");
         Assert.Equal(2, tg.Level); // дефолт = Стандарт
         ed.SetLevel("teacher-gap", 4);
@@ -60,11 +62,18 @@ public sealed class QualityUxTests
         Assert.Single(ov);
         var rs = RuleResolver.Resolve("CUSTOM", ov);
         Assert.Equal(tg.Weight, rs.Weight("teacher-gap"));
-        Assert.Throws<InvalidOperationException>(() => ed.SetLevel("student-gap", 0));
+        // B2: опасное без confirmed — «требуется подтверждение»; с confirmed — ок.
+        var ex = Assert.Throws<InvalidOperationException>(() => ed.SetLevel("student-gap", 0));
+        Assert.Contains("требуется подтверждение", ex.Message);
+        ed.SetLevel("student-gap", 0, confirmed: true);
+        Assert.Equal(0, ed.Options.First(o => o.Code == "student-gap").Weight);
         Assert.Throws<ArgumentOutOfRangeException>(() => ed.SetWeight("teacher-gap", 9999));
         // Roundtrip уровень→вес→уровень.
         foreach (int lv in new[] { 0, 1, 2, 3, 4 })
             Assert.Equal(lv, QualitySettingsEditor.WeightToLevel("teacher-gap",
                 QualitySettingsEditor.LevelToWeight("teacher-gap", lv)));
+        // Опасная шкала: 0..4 ↔ 0..100 линейно, дефолт 100 = уровень 4.
+        Assert.Equal(100, QualitySettingsEditor.DangerousLevelToWeight(4));
+        Assert.Equal(4, QualitySettingsEditor.DangerousWeightToLevel(100));
     }
 }

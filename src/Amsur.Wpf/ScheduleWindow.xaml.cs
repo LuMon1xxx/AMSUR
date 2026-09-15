@@ -12,7 +12,7 @@ namespace Amsur.Wpf;
 
 public sealed record ScheduleRowVm(
     Guid OccurrenceId, string ClassName, string SubjectName, string TeacherName,
-    int Day, int Slot, string RoomName, int DayIndex, Guid? RoomId);
+    int Day, int Slot, string RoomName, int DayIndex, Guid? RoomId, string Badge = "");
 
 public partial class ScheduleWindow : Window
 {
@@ -61,13 +61,21 @@ public partial class ScheduleWindow : Window
                          .ThenBy(p => p.DayIndex).ThenBy(p => p.SlotIndex))
             {
                 if (!occById.TryGetValue(p.OccurrenceId, out var occ)) continue; // чужой год — пропускаем
+                string badge = "";
+                if (string.Equals(_problem.Subjects[occ.SubjectId].Name, "Классный час",
+                        StringComparison.OrdinalIgnoreCase))
+                    badge = "Классный час";
+                else if (p.RoomId.HasValue &&
+                    _problem.Rooms.TryGetValue(p.RoomId.Value, out var br))
+                    badge = br.IsManualOnly ? "Ручной кабинет"
+                        : br.OnlySubjectId.HasValue ? "ONLY" : "";
                 rows.Add(new ScheduleRowVm(occ.Id,
                     _problem.Classes[occ.ClassId].Name,
                     _problem.Subjects[occ.SubjectId].Name,
                     _problem.Teachers[occ.TeacherId].Name,
                     p.DayIndex + 1, p.SlotIndex,
                     p.RoomId.HasValue && _problem.Rooms.TryGetValue(p.RoomId.Value, out var r) ? r.Name : "—",
-                    p.DayIndex, p.RoomId));
+                    p.DayIndex, p.RoomId, badge));
             }
             _allRows = rows;
             StatusText.Text = $"Активна версия {_active.Number} ({_active.Reason}). Уроков: {rows.Count}.";

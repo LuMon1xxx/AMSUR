@@ -134,8 +134,11 @@
             <DataGridTextColumn Header="День" Binding="{Binding Day}" Width="60"/>
             <DataGridTextColumn Header="Урок" Binding="{Binding Slot}" Width="60"/>
             <DataGridTextColumn Header="Кабинет" Binding="{Binding RoomName}" Width="90"/>
+            <DataGridTextColumn Header="Метка" Binding="{Binding Badge}" Width="110"/>
           </DataGrid.Columns>
         </DataGrid>
+        <TextBlock Style="{DynamicResource THint}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap"
+                   Text="Метки: «Классный час» — общий урок · «ONLY» — кабинет только своего предмета · «Ручной кабинет» — назначен вручную, генератор туда не ставит."/>
       </StackPanel>
     </ScrollViewer>
   </DockPanel>

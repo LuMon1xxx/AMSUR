@@ -11,6 +11,10 @@ public sealed record EffectiveRuleSet(
     public long Weight(string code) =>
         Weights.TryGetValue(code, out long w) ? w : 0;
 
+    /// <summary>B2: ослабленные строгие (валидатор → Warnings, не Hard).</summary>
+    public IReadOnlySet<string> RelaxedStrict { get; init; } =
+        new HashSet<string>(StringComparer.Ordinal);
+
     public static EffectiveRuleSet Default => RuleResolver.Resolve("STANDARD");
 }
 
@@ -21,11 +25,14 @@ public static class RuleResolver
 
     /// <summary>
     /// Профиль + ручные переопределения школы → итоговый набор.
-    /// overrides: code → вес (валидируется по WeightRange; вне диапазона — ArgumentException).
+    /// overrides: code → вес (валидируется по EffectiveRange; вне диапазона — ArgumentException).
+    /// confirmedDangerous: подтверждённые опасные коды (B2) — override опасного
+    /// без подтверждения бросает InvalidOperationException («требуется подтверждение»).
     /// </summary>
     public static EffectiveRuleSet Resolve(
         string profileName,
-        IReadOnlyDictionary<string, long>? overrides = null)
+        IReadOnlyDictionary<string, long>? overrides = null,
+        IReadOnlySet<string>? confirmedDangerous = null)
     {
         string profile = (profileName ?? "STANDARD").ToUpperInvariant();
         var weights = new Dictionary<string, long>(StringComparer.Ordinal);
@@ -59,7 +66,12 @@ public static class RuleResolver
             {
                 if (!weights.ContainsKey(code))
                     throw new ArgumentException($"Код '{code}' неизвестен.", nameof(overrides));
-                var (min, max) = RuleCatalog.WeightRange(code);
+                // B2: опасный override — только с подтверждением.
+                if (RuleCatalog.IsDangerous(code) &&
+                    !(confirmedDangerous?.Contains(code) == true))
+                    throw new InvalidOperationException(
+                        $"Код '{code}' — строгое правило: требуется подтверждение.");
+                var (min, max) = RuleCatalog.EffectiveRange(code);
                 if (max == 0 && min == 0)
                 {
                     // Ненастраиваемый код (HARD-gate или заглушка): принимаем только дефолт
@@ -78,14 +90,19 @@ public static class RuleResolver
             }
 
         string name = profile == "CUSTOM" || overrides is not null ? "CUSTOM" : profile;
-        return new EffectiveRuleSet(weights, name, RuleCatalog.Version);
+        // B2: ослабленные = опасные коды из overrides (подтверждение проверено выше).
+        var relaxed = overrides is null
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : overrides.Keys.Where(RuleCatalog.IsDangerous).ToHashSet(StringComparer.Ordinal);
+        return new EffectiveRuleSet(weights, name, RuleCatalog.Version) { RelaxedStrict = relaxed };
     }
 
     /// <summary>Короткий детерминированный отпечаток весов (для Candidate snapshot).</summary>
     public static string WeightsFingerprint(EffectiveRuleSet rs)
     {
         string raw = string.Join("|", rs.Weights.OrderBy(kv => kv.Key, StringComparer.Ordinal)
-            .Select(kv => $"{kv.Key}={kv.Value}"));
+            .Select(kv => $"{kv.Key}={kv.Value}"))
+            + "|relaxed:" + string.Join(",", rs.RelaxedStrict.OrderBy(x => x, StringComparer.Ordinal));
         byte[] hash = System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes(raw));
         return Convert.ToHexString(hash)[..12];

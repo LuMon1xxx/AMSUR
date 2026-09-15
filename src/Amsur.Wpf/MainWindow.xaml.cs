@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using Amsur.Application;
 using Amsur.Scheduling.Core;
 using Microsoft.Win32;
@@ -13,8 +15,17 @@ public partial class MainWindow : Window
 {
     private AppSession Session => ((App)System.Windows.Application.Current).Session;
     private bool _suppressModeEvent;
+    private readonly Dictionary<string, Ellipse> _modeDots = [];
 
-    private static readonly string[] Steps = ["Данные", "Профиль", "Генерация", "Проверка", "Excel"];
+    // Честные подписи режимов: времена — производные BudgetSeconds/Seeds,
+    // STANDARD ~12с×3 сида + оверхед ≈ 40с; MAXIMUM 30с×5 ≈ 3 мин.
+    private static readonly Dictionary<string, (string Icon, string Time)> ModeMeta = new()
+    {
+        ["QUICK"] = ("&#xE768;", "~3 сек"),
+        ["STANDARD"] = ("&#xE735;", "~40 сек"),
+        ["MAXIMUM"] = ("&#xE8A5;", "~3 мин"),
+        ["EXPERT"] = ("&#xE713;", "Ручной"),
+    };
 
     public MainWindow()
     {
@@ -34,39 +45,82 @@ public partial class MainWindow : Window
     private void BuildModeCards()
     {
         ModeCards.Children.Clear();
+        _modeDots.Clear();
         var cardStyle = (Style)FindResource("RadioCard");
         foreach (var m in GenerateModes.All)
         {
-            var title = new StackPanel { Orientation = Orientation.Horizontal };
-            title.Children.Add(new TextBlock
+            var meta = ModeMeta.TryGetValue(m.Code, out var mm) ? mm : (Icon: "&#xE713;", Time: "");
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var dot = new Ellipse
+            {
+                Width = 16, Height = 16, StrokeThickness = 2,
+                Stroke = (Brush)FindResource("BTextMuted"), Fill = Brushes.Transparent,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(dot, 0);
+            grid.Children.Add(dot);
+            _modeDots[m.Code] = dot;
+
+            var icon = new Border
+            {
+                Width = 36, Height = 36, CornerRadius = new CornerRadius(18),
+                Background = (Brush)FindResource("BAccentSoft"),
+                Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center,
+                Child = new TextBlock
+                {
+                    Text = meta.Icon, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 16,
+                    Foreground = (Brush)FindResource("BAccent"),
+                    HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+                },
+            };
+            Grid.SetColumn(icon, 1);
+            grid.Children.Add(icon);
+
+            var texts = new StackPanel { Margin = new Thickness(10, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center };
+            var titleRow = new StackPanel { Orientation = Orientation.Horizontal };
+            titleRow.Children.Add(new TextBlock
             {
                 Text = m.Name, FontSize = 13, FontWeight = FontWeights.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
             });
             if (m.Code == "STANDARD")
-                title.Children.Add(new Border
+                titleRow.Children.Add(new Border
                 {
                     Style = (Style)FindResource("Badge"),
-                    Background = (Brush)FindResource("BAccentSoft"),
+                    Background = (Brush)FindResource("BAccent"),
                     Margin = new Thickness(6, 0, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
                     Child = new TextBlock
                     {
-                        Text = "Выбор АМСУР", FontSize = 10,
-                        Foreground = (Brush)FindResource("BAccent"),
+                        Text = "Рекомендуем", FontSize = 10, Foreground = Brushes.White,
                     },
                 });
-            var content = new StackPanel { MaxWidth = 280 };
-            content.Children.Add(title);
-            content.Children.Add(new TextBlock
+            texts.Children.Add(titleRow);
+            texts.Children.Add(new TextBlock
             {
                 Text = ModeHint(m.Code), FontSize = 12,
                 Foreground = (Brush)FindResource("BTextSoft"),
                 TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 2, 0, 0),
-                MaxWidth = 280,
             });
+            Grid.SetColumn(texts, 2);
+            grid.Children.Add(texts);
+
+            grid.Children.Add(new TextBlock
+            {
+                Text = meta.Time, FontSize = 11,
+                Foreground = (Brush)FindResource("BTextMuted"),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            Grid.SetColumn(grid.Children[^1], 3);
+
             var rb = new RadioButton
             {
-                Content = content, GroupName = "GenMode", Tag = m.Code,
+                Content = grid, GroupName = "GenMode", Tag = m.Code,
                 Style = cardStyle, Margin = new Thickness(0, 0, 0, 8),
                 ToolTip = m.Description,
             };
@@ -75,22 +129,14 @@ public partial class MainWindow : Window
         }
     }
 
-    // P0-1: подпись лимита — честная производная BudgetSeconds (S5: без выдуманных ~20с/~2мин).
-    private static string ModeHint(string code)
+    private static string ModeHint(string code) => code switch
     {
-        var mode = GenerateModes.ByCode(code);
-        string limit = mode.BudgetSeconds >= 60
-            ? $"лимит ~{mode.BudgetSeconds / 60:0} мин"
-            : $"лимит ~{mode.BudgetSeconds:0} сек";
-        return (code switch
-        {
-            "QUICK" => "Проверка / быстрый результат",
-            "STANDARD" => "Рекомендуется для большинства школ",
-            "MAXIMUM" => "Больше времени на лучший вариант",
-            "EXPERT" => "Полный контроль параметров",
-            _ => "",
-        }) + $" · {limit}";
-    }
+        "QUICK" => "Проверка / быстрый результат",
+        "STANDARD" => "Рекомендуется для большинства школ",
+        "MAXIMUM" => "Больше времени на лучший вариант",
+        "EXPERT" => "Полный контроль параметров",
+        _ => "",
+    };
 
     private void OnModeChecked(object sender, RoutedEventArgs e)
     {
@@ -98,83 +144,68 @@ public partial class MainWindow : Window
         if (sender is RadioButton rb && rb.Tag is string code)
         {
             Session.SetGenerateMode(code);
+            SyncModeCards();
             if (code == "EXPERT") OnSettingsClick(sender, e);
         }
     }
 
-    // --- Состояния A/B/C/D (§7) ---
-    private void RefreshAll()
+    // P3-restore финиширует после конструктора (App.OnStartup) — публичный
+    // рефреш, чтобы дашборд показал восстановленные данные, а не «пусто».
+    public void RefreshAll()
     {
+        // A3: сессия ещё грузится — честно «Загрузка…», а не «не загружены».
+        if (!Session.IsReady)
+        {
+            SubText.Text = "Загрузка данных…";
+            return;
+        }
         SyncModeCards();
         var s = Session.Summary;
         bool hasData = Session.HasData;
         bool noData = !hasData;
 
         StateNoData.Visibility = noData ? Visibility.Visible : Visibility.Collapsed;
-        StateReady.Visibility = Visibility.Collapsed;
-        StateDone.Visibility = Visibility.Collapsed;
 
         SubText.Text = noData
             ? "Загрузите данные школы, чтобы начать."
             : "Данные готовы. Проверьте режим и создавайте расписание.";
 
+        SchoolNavBadge.Text = s is null ? "" : $"{s.Classes} кл.";
         if (s is null)
         {
-            DataStateText.Text = "Не загружены";
-            DataDetailText.Text = "";
             SchoolCardText.Text = "Данные не загружены";
             SchoolCardDetail.Text = "Шаблон Excel → заполнить → загрузить.";
-            MiniDataText.Text = "Не загружены";
+            DataDetailText.Text = "";
+            MiniDataText.Text = "Шаблон Excel → заполнить → загрузить.";
+            MiniDataStatus.Text = "Не загружены";
+            MiniDataStatus.Foreground = (Brush)FindResource("BTextMuted");
+            MiniDataDot.Fill = (Brush)FindResource("BTextMuted");
         }
         else
         {
-            DataStateText.Text = "Загружены и проверены";
-            DataDetailText.Text =
-                $"{s.Classes} классов · {s.Teachers} учителей · {s.Lessons} уроков в неделю · {s.Days} дн. × {s.Slots} ур.";
-            ReadySummaryText.Text = DataDetailText.Text +
-                $" · Профиль «{ProfileShort()}» · Режим «{Session.GenerateMode.Name}»";
-            SchoolCardText.Text = DataDetailText.Text;
-            SchoolCardDetail.Text = $"Профиль «{ProfileShort()}» · Режим «{Session.GenerateMode.Name}»";
-            MiniDataText.Text = $"{s.Classes} классов · {s.Teachers} учителей";
+            string summary = $"{s.Classes} классов · {s.Teachers} учителей";
+            SchoolCardText.Text = summary;
+            SchoolCardDetail.Text = $"{s.Lessons} уроков в неделю";
+            DataDetailText.Text = $"{s.Days} дн. × {s.Slots} ур. · " +
+                (Session.DataSource == "manual" ? "Ручной ввод" : "Excel-импорт");
+            MiniDataText.Text = summary;
+            MiniDataStatus.Text = "Загружены";
+            MiniDataStatus.Foreground = (Brush)FindResource("BGood");
+            MiniDataDot.Fill = (Brush)FindResource("BGood");
         }
         ProfileNameText.Text = ProfileShort();
-        ProfileVersionText.Text = $"Каталог v{RuleCatalog.Version}";
+        ProfileVersionText.Text = Session.CustomProfileName is not null
+            ? "Наш профиль"
+            : Session.QualityRules.ProfileName == "STANDARD" ? "Рекомендуемый" : "Пресет";
         MiniProfileText.Text = ProfileShort();
         HeroGenerateBtn.IsEnabled = hasData;
-        GenerateBtn.IsEnabled = hasData;
-        BuildStepper(hasData ? 1 : 0);
         RefreshQuality();
+        RefreshFooter(s);
         _ = RefreshActiveAsync(hasData);
     }
 
     private string ProfileShort() =>
         Session.CustomProfileName ?? QualityHints.ProfileName(Session.QualityRules.ProfileName);
-
-    private void BuildStepper(int reached)
-    {
-        Stepper.Children.Clear();
-        for (int i = 0; i < Steps.Length; i++)
-        {
-            var tb = new TextBlock
-            {
-                Text = $"{i + 1}. {Steps[i]}",
-                FontSize = 12,
-                Margin = new Thickness(0, 0, 4, 0),
-                Foreground = i <= reached
-                    ? (Brush)FindResource("BAccent")
-                    : (Brush)FindResource("BTextSoft"),
-                FontWeight = i == reached ? FontWeights.Bold : FontWeights.Normal,
-                Opacity = i <= reached ? 1 : 0.7,
-            };
-            Stepper.Children.Add(tb);
-            if (i < Steps.Length - 1)
-                Stepper.Children.Add(new TextBlock
-                {
-                    Text = "→", FontSize = 12, Margin = new Thickness(0, 0, 4, 0),
-                    Foreground = (Brush)FindResource("BTextSoft"), Opacity = 0.6,
-                });
-        }
-    }
 
     private async Task RefreshActiveAsync(bool hasData)
     {
@@ -183,23 +214,27 @@ public partial class MainWindow : Window
             var active = hasData ? await Session.GetActiveAsync() : null;
             if (active is null)
             {
-                if (hasData) StateReady.Visibility = Visibility.Visible;
+                MiniLastStatus.Text = "Не создано";
+                MiniLastStatus.Foreground = (Brush)FindResource("BTextMuted");
+                MiniLastDot.Fill = (Brush)FindResource("BTextMuted");
+                MiniLastText.Text = "Пока нет";
                 return;
             }
-            StateDone.Visibility = Visibility.Visible;
-            DoneSummaryText.Text = $"Версия {active.Number} · {active.Reason}";
-            MiniLastText.Text = $"Версия {active.Number}";
+            MiniLastStatus.Text = $"Версия {active.Number}";
+            MiniLastStatus.Foreground = (Brush)FindResource("BGood");
+            MiniLastDot.Fill = (Brush)FindResource("BGood");
+            MiniLastText.Text = active.Reason;
             if (Session.LastQuality is null)
             {
                 var q = await Session.GetActiveQualityAsync();
                 if (q is not null) { Session.LastQuality = q; RefreshQuality(); }
             }
-            var lq = Session.LastQuality;
-            DoneQualityBadge.Text = lq?.Label ?? "—";
-            BuildStepper(4);
+            RefreshFooter(Session.Summary);
         }
         catch { /* dashboard не падает из-за превью */ }
     }
+
+    private sealed record QualityRow(string Name, string Count, Brush Dot);
 
     private void RefreshQuality()
     {
@@ -207,13 +242,50 @@ public partial class MainWindow : Window
         if (q is null)
         {
             QualityLabelText.Text = "—";
-            QualityList.ItemsSource = new[] { "Появится после генерации." };
+            QualityLabelText.Foreground = (Brush)FindResource("BTextMuted");
+            QualityBar.Value = 0;
+            QualityList.ItemsSource = new[]
+            {
+                new QualityRow("Появится после генерации.", "", Brushes.Transparent),
+            };
             QualityDetailsBtn.IsEnabled = false;
             return;
         }
         QualityLabelText.Text = q.Label;
-        QualityList.ItemsSource = q.Improvements;
+        var palette = new[] { "BWarn", "BGood", "BAccent" };
+        QualityLabelText.Foreground = (Brush)FindResource(q.Level switch
+        {
+            0 => "BGood",
+            1 => "BWarn",
+            _ => "BBad",
+        });
+        QualityBar.Value = q.Level switch { 0 => 1.0, 1 => 0.66, _ => 0.33 };
+        QualityBar.Foreground = QualityLabelText.Foreground;
+        var rows = new List<QualityRow>();
+        for (int i = 0; i < q.Improvements.Count; i++)
+        {
+            var parts = q.Improvements[i].Split(": ");
+            rows.Add(new QualityRow(
+                parts[0],
+                parts.Length > 1 ? parts[^1] : "",
+                (Brush)FindResource(palette[i % palette.Length])));
+        }
+        QualityList.ItemsSource = rows;
         QualityDetailsBtn.IsEnabled = Session.LastQualityLines is { Count: > 0 };
+    }
+
+    private void RefreshFooter(AppSession.SchoolSummary? s)
+    {
+        try
+        {
+            long mb = Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024;
+            FooterLeftText.Text =
+                $"Движок: CP-SAT + локальный поиск · Память: {mb} МБ · СанПиН: требует сверки с НПА №206/№35";
+        }
+        catch { /* честно оставляем стартовый текст */ }
+        FooterRightText.Text = s is null
+            ? "Нет данных"
+            : $"{s.Classes} классов · {s.Teachers} учителей · {s.Days} дн. × {s.Slots} ур.";
     }
 
     private void SyncModeCards()
@@ -222,8 +294,16 @@ public partial class MainWindow : Window
         try
         {
             foreach (var child in ModeCards.Children)
-                if (child is RadioButton rb && rb.Tag is string code)
-                    rb.IsChecked = code == Session.GenerateMode.Code;
+            {
+                if (child is not RadioButton rb || rb.Tag is not string code) continue;
+                bool on = code == Session.GenerateMode.Code;
+                rb.IsChecked = on;
+                if (_modeDots.TryGetValue(code, out var dot))
+                {
+                    dot.Fill = on ? (Brush)FindResource("BAccent") : Brushes.Transparent;
+                    dot.Stroke = (Brush)FindResource(on ? "BAccent" : "BTextMuted");
+                }
+            }
         }
         finally { _suppressModeEvent = false; }
     }
@@ -309,12 +389,17 @@ public partial class MainWindow : Window
         catch (Exception ex) { ShowError(ex); }
     }
 
+    // A1 (AppHangB1): тяжёлый solver — в фон через Task.Run, UI-поток свободен
+    // (окно двигается/ресайзится, Top-5 прилетают живьём ~3 Гц через throttled
+    // stream, Стоп — через RequestStop→Cancel, best-so-far живёт в архиве).
+    // Прямых касаний UI из фона нет: VM-свойства идут через биндинги (WPF
+    // маршалит сам), code-behind GenerateWindow — через Dispatcher.InvokeAsync.
     private async Task RunGuardedAsync(GenerationOrchestrator orch)
     {
         try
         {
             var mode = Session.GenerateMode;
-            await orch.RunAsync(mode.Seeds);
+            await Task.Run(() => orch.RunAsync(mode.Seeds));
             var best = orch.ViewModel.Top5.Best;
             if (best?.Candidate is not null)
             {
@@ -329,6 +414,9 @@ public partial class MainWindow : Window
                 "АМСУР", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
+
+    private void OnAdviceClose(object sender, RoutedEventArgs e) =>
+        AdviceCard.Visibility = Visibility.Collapsed;
 
     private void OnSettingsClick(object sender, RoutedEventArgs e)
     {

@@ -10,6 +10,11 @@ public enum LessonRelationKind
 public enum RoomCapabilityKind { Universal, Preferred, Required, Forbidden }
 public enum AvailabilityKind { Preferred, Neutral, Avoid, Forbidden }
 
+// R7: охват закрепления учителя (D-34: режимы переключаются, дефолт HardClass).
+public enum AssignmentScope { None, Class, Parallel }
+// R7: режим контроля «один учитель на (класс,предмет)».
+public enum TeacherAssignMode { Off, Soft, HardClass, HardParallel }
+
 // Статусы solver (D-10: новый enum НЕ вводим; маппинг — в Application through helper).
 public enum SolverStatus { Unknown, Optimal, Feasible, Infeasible, ModelInvalid }
 

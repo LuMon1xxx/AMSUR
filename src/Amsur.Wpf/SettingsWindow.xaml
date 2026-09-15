@@ -91,6 +91,7 @@
             <ListBoxItem Content="Классы"/>
             <ListBoxItem Content="Учителя"/>
             <ListBoxItem Content="Экспертный режим"/>
+            <ListBoxItem Content="Предупреждения"/>
           </ListBox>
           <Border Style="{StaticResource Badge}" Background="{StaticResource BGoodBg}" Margin="8,12,8,4">
             <TextBlock Style="{StaticResource THCaption}" TextWrapping="Wrap" Foreground="{StaticResource BGood}"
@@ -105,6 +106,7 @@
           <StackPanel x:Name="ClassesPanel" Visibility="Collapsed"/>
           <StackPanel x:Name="TeachersPanel" Visibility="Collapsed"/>
           <StackPanel x:Name="ExpertPanel" Visibility="Collapsed"/>
+          <StackPanel x:Name="WarningsPanel" Visibility="Collapsed"/>
         </StackPanel>
       </ScrollViewer>
     </Grid>

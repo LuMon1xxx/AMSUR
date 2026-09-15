@@ -25,6 +25,8 @@ public static class QualityExplainer
         "primary-early-start" => "Раннее начало у начальной школы",
         "heavy-edge" => "Тяжёлые уроки на краю дня",
         "room-preference" => "Неподходящие кабинеты",
+        "room-crowding" => "Переполнение кабинетов",
+        "teacher-split" => "Разрыв закрепления учителей",
         "subject-maxperday" => "Повторы предмета за день",
         "relation-violation" => "Нарушения связей уроков",
         "sanpin-peak-days" => "СанПиН: пиковые дни",
@@ -81,6 +83,35 @@ public static class QualityExplainer
                 units["subject-maxperday"] += g.Count() - subj.MaxPerDay;
         }
 
+        // P2/R5: теснота (единицы сверх «желательно», без весов).
+        foreach (var g in placements
+                     .Where(p => p.Placed.RoomId.HasValue)
+                     .GroupBy(p => (p.Placed.RoomId!.Value, p.Placed.DayIndex, p.Placed.SlotIndex)))
+        {
+            if (!reference.Rooms.TryGetValue(g.Key.Value, out var room)) continue;
+            int cellUnits = RoomPolicy.CellUnits(room, g.Count(),
+                g.Select(p => p.Occ.ClassId).Distinct().Count());
+            units["room-crowding"] += SoftUnits.Crowding(cellUnits, RoomPolicy.EffectiveDesired(room));
+        }
+
+        // P2/R6: тяжёлые на краю дня (без весов; порог из Flex).
+        foreach (var g in placements.GroupBy(p => (p.Occ.ClassId, p.Placed.DayIndex)))
+        {
+            var slots = g.Select(p => p.Placed.SlotIndex).Distinct().OrderBy(s => s).ToList();
+            bool HeavyAt(int s) => g.Where(p => p.Placed.SlotIndex == s)
+                .Any(p => reference.Subjects.TryGetValue(p.Occ.SubjectId, out var subj) &&
+                    subj.Difficulty >= reference.Flex.IsHeavyThreshold);
+            units["heavy-edge"] += SoftUnits.HeavyEdge(slots, HeavyAt);
+        }
+
+        // P2/R7-Soft: лишние учителя на (класс,предмет) среди целых (без весов).
+        if (reference.Flex.AssignMode != Amsur.Domain.TeacherAssignMode.Off)
+            foreach (var g in placements
+                         .Where(p => p.Occ.GroupId is null)
+                         .GroupBy(p => (p.Occ.ClassId, p.Occ.SubjectId)))
+                units["teacher-split"] += SoftUnits.Split(
+                    g.Select(p => p.Occ.TeacherId).Distinct().Count());
+
         return units;
     }
 
@@ -132,6 +163,15 @@ public static class QualityExplainer
                 case "subject-maxperday":
                     lines.AddRange(SubjectLines(reference, candidate));
                     break;
+                case "room-crowding":
+                    lines.AddRange(CrowdingLines(reference, candidate));
+                    break;
+                case "teacher-split":
+                    lines.AddRange(SplitLines(reference, candidate));
+                    break;
+                case "heavy-edge":
+                    lines.AddRange(HeavyLines(reference, candidate));
+                    break;
                 default:
                     lines.Add(OtherCodeLine(comp.Code, comp.Value));
                     break;
@@ -166,6 +206,9 @@ public static class QualityExplainer
                 ("teacher-gap", _) when du != 0 => $"окон у учителей {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 ("teacher-cross-shift-gap", _) when du != 0 => $"перерывов между сменами {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 ("subject-maxperday", _) when du != 0 => $"повторов {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
+                ("room-crowding", _) when du != 0 => $"тесноты в кабинетах {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
+                ("teacher-split", _) when du != 0 => $"разрывов закрепления {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
+                ("heavy-edge", _) when du != 0 => $"тяжёлых на краю дня {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 _ => HumanName(code).ToLowerInvariant(),
             };
             lines.Add($"Здесь {dir}: {detail} ({(db > 0 ? "+" : "")}{db} к оценке)");
@@ -276,6 +319,67 @@ public static class QualityExplainer
             if (g.Count() <= subj.MaxPerDay) continue;
             yield return $"Класс {ClassName(reference, classId)}, {subj.Name}: " +
                 $"{LessonWord(g.Count())} в день {day + 1} (норма {subj.MaxPerDay})";
+        }
+    }
+
+    // P2: теснота с привязкой к кабинету и дню.
+    private static IEnumerable<string> CrowdingLines(
+        SchedulingProblem reference, ScheduleCandidate candidate)
+    {
+        var placements = Resolve(reference, candidate);
+        foreach (var g in placements
+                     .Where(p => p.Placed.RoomId.HasValue)
+                     .GroupBy(p => (p.Placed.RoomId!.Value, p.Placed.DayIndex, p.Placed.SlotIndex))
+                     .OrderBy(g => g.Key.DayIndex))
+        {
+            if (!reference.Rooms.TryGetValue(g.Key.Value, out var room)) continue;
+            int units = RoomPolicy.CellUnits(room, g.Count(),
+                g.Select(p => p.Occ.ClassId).Distinct().Count());
+            int over = SoftUnits.Crowding(units, RoomPolicy.EffectiveDesired(room));
+            if (over > 0)
+                yield return $"Кабинет «{room.Name}», день {g.Key.DayIndex + 1}, урок {g.Key.SlotIndex}: " +
+                    $"занятий {units} при желательно {RoomPolicy.EffectiveDesired(room)}";
+        }
+    }
+
+    // P2: разрыв закрепления с привязкой к классу и предмету.
+    private static IEnumerable<string> SplitLines(
+        SchedulingProblem reference, ScheduleCandidate candidate)
+    {
+        var placements = Resolve(reference, candidate);
+        foreach (var g in placements
+                     .Where(p => p.Occ.GroupId is null)
+                     .GroupBy(p => (p.Occ.ClassId, p.Occ.SubjectId))
+                     .OrderBy(g => ClassName(reference, g.Key.ClassId)))
+        {
+            int extra = SoftUnits.Split(g.Select(p => p.Occ.TeacherId).Distinct().Count());
+            if (extra <= 0) continue;
+            reference.Subjects.TryGetValue(g.Key.SubjectId, out var subj);
+            yield return $"Класс {ClassName(reference, g.Key.ClassId)}, {subj?.Name ?? "предмет"}: " +
+                $"ведут {g.Select(p => p.Occ.TeacherId).Distinct().Count()} учителя";
+        }
+    }
+
+    // P2: тяжёлые на краю с привязкой к классу и дню.
+    private static IEnumerable<string> HeavyLines(
+        SchedulingProblem reference, ScheduleCandidate candidate)
+    {
+        var placements = Resolve(reference, candidate);
+        foreach (var g in placements
+                     .GroupBy(p => (p.Occ.ClassId, p.Placed.DayIndex))
+                     .OrderBy(g => ClassName(reference, g.Key.ClassId)))
+        {
+            var slots = g.Select(p => p.Placed.SlotIndex).Distinct().OrderBy(s => s).ToList();
+            if (slots.Count == 0) continue;
+            bool HeavyAt(int s) => g.Where(p => p.Placed.SlotIndex == s)
+                .Any(p => reference.Subjects.TryGetValue(p.Occ.SubjectId, out var subj) &&
+                    subj.Difficulty >= reference.Flex.IsHeavyThreshold);
+            var edges = new List<int>();
+            if (HeavyAt(slots[0])) edges.Add(slots[0]);
+            if (slots.Count > 1 && HeavyAt(slots[^1])) edges.Add(slots[^1]);
+            if (edges.Count > 0)
+                yield return $"Класс {ClassName(reference, g.Key.ClassId)}, день {g.Key.DayIndex + 1}: " +
+                    $"тяжёлый урок на краю дня (урок {string.Join(" и ", edges)})";
         }
     }
 

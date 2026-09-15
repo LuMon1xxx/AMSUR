@@ -31,6 +31,8 @@
               </StackPanel>
             </StackPanel>
           </Border>
+          <CheckBox x:Name="TeacherSheetBox" Content="Лист «Учителя» (кому когда какой класс)" FontSize="13"
+                    Margin="0,10,0,0" IsChecked="True" VerticalAlignment="Center"/>
 
           <TextBlock Text="Формат:" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
           <Border Background="{StaticResource BAccentSoft}" BorderBrush="{StaticResource BAccent}"
@@ -59,7 +61,7 @@
                     <TextBlock Text="Скоро" FontSize="10" Foreground="{StaticResource BTextSoft}"/>
                   </Border>
                 </StackPanel>
-                <TextBlock Style="{StaticResource THint}" FontSize="11" Text="Пока недоступно — выгрузите Excel."/>
+                <TextBlock Style="{StaticResource THint}" FontSize="11" Text="Скоро, пока Excel — выгрузите таблицу выше."/>
               </StackPanel>
             </StackPanel>
           </Border>

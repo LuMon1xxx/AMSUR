@@ -25,13 +25,23 @@ public sealed class SearchIndex
     private readonly Dictionary<(Guid Group, int Day, int Slot), int> _groupCell = [];
     private readonly Dictionary<(Guid Room, int Day, int Slot), int> _roomCell = [];
     private readonly Dictionary<(Guid Teacher, int Day), int> _teacherDay = [];
+    // P2/R5: классы в клетке — только для комнат с CountSubgroupAsGroup=false
+    // (cell → class → счётчик; сплит A/B одного класса = 1 единица).
+    private readonly Dictionary<(Guid Room, int Day, int Slot), Dictionary<Guid, int>> _roomKeys = [];
+    // P2/R6: счётчик тяжёлых occurrence в клетке класса (для heavy-edge дельты).
+    private readonly Dictionary<(Guid Class, int Day, int Slot), int> _heavyCount = [];
+    // P2/R7: учителя целых (GroupId==null) по (класс,предмет) и (параллель,предмет).
+    private readonly Dictionary<(Guid Class, Guid Subject), Dictionary<Guid, int>> _splitC = [];
+    private readonly Dictionary<(int Grade, Guid Subject), Dictionary<Guid, int>> _splitP = [];
 
-    // Настраиваемые веса (S5): дефолт = RuleCatalog v3; движение идёт только через них.
+    // Настраиваемые веса (S5): дефолт = RuleCatalog v4; движение идёт только через них.
     private long _wStudentGap = RuleCatalog.StudentGap;
     private long _wLate;
     private long _wOrdinary = RuleCatalog.TeacherGap;
     private long _wCross = RuleCatalog.TeacherCrossShiftGap;
     private long _wSubj = RuleCatalog.SubjectMaxPerDay;
+    private long _wCrowd = RuleCatalog.RoomCrowding;
+    private long _wHeavy = RuleCatalog.HeavyEdge;
 
     private SearchIndex(SchedulingProblem problem)
     {
@@ -54,6 +64,8 @@ public sealed class SearchIndex
             idx._wOrdinary = rules.Weight("teacher-gap");
             idx._wCross = rules.Weight("teacher-cross-shift-gap");
             idx._wSubj = rules.Weight("subject-maxperday");
+            idx._wCrowd = rules.Weight("room-crowding");
+            idx._wHeavy = rules.Weight("heavy-edge");
         }
         foreach (var p in placements)
             idx.Insert(p.OccurrenceId, p.DayIndex, p.SlotIndex, p.RoomId);
@@ -212,6 +224,17 @@ public sealed class SearchIndex
                 Message = "Кабинет запрещён для этого предмета.",
                 OccurrenceId = node.Id, RoomId = room
             });
+        // P2/R1: ONLY-кабинет — чужой предмет запрещён и вручную (hard).
+        // IsManualOnly здесь НЕ проверяем: ручное назначение разрешено.
+        if (room.HasValue &&
+            _problem.Rooms.TryGetValue(room.Value, out var rm) &&
+            rm.OnlySubjectId.HasValue && rm.OnlySubjectId.Value != node.SubjectId)
+            hard.Add(new ValidationIssue
+            {
+                Code = "forbidden-room",
+                Message = $"Кабинет «{rm.Name}» — только для своего предмета.",
+                OccurrenceId = node.Id, RoomId = room
+            });
     }
 
     private void CheckScopes(LessonOccurrence node, CandidateMove move, List<ValidationIssue> hard)
@@ -239,13 +262,31 @@ public sealed class SearchIndex
 
         if (move.RoomId.HasValue && _problem.Rooms.TryGetValue(move.RoomId.Value, out var room))
         {
-            int concurrent = _roomCell.GetValueOrDefault((move.RoomId.Value, move.DayIndex, move.SlotIndex)) + 1;
-            if (concurrent > room.MaxSimultaneousGroups)
+            // P2/R5: единицы key-aware (сплит одним классом = 1 при флаге false).
+            // Индекс — БЕЗ N (lift): +1 за двигаемый урок.
+            int units = CellUnitsWith(room,
+                (move.RoomId.Value, move.DayIndex, move.SlotIndex), node.ClassId);
+            if (units > room.MaxSimultaneousGroups)
                 hard.Add(new ValidationIssue
                 {
                     Code = PhysicalRuleCodes.RoomOverflow,
-                    Message = $"Кабинет занят ({concurrent} при лимите {room.MaxSimultaneousGroups}).",
+                    Message = $"Кабинет занят ({units} при лимите {room.MaxSimultaneousGroups}).",
                     RoomId = room.Id, OccurrenceId = node.Id
+                });
+        }
+
+        // P2/R7: один учитель на (класс,предмет) / (параллель,предмет).
+        // Ходы учителей не меняют (INV-02) → проверяем текущую группу с N.
+        var mode = _problem.Flex.AssignMode;
+        if (!node.GroupId.HasValue &&
+            mode is TeacherAssignMode.HardClass or TeacherAssignMode.HardParallel)
+        {
+            if (SplitDistinctWith(node) > 1)
+                hard.Add(new ValidationIssue
+                {
+                    Code = "teacher-assign",
+                    Message = "Предмет в классе/параллели ведут несколько учителей.",
+                    ClassId = node.ClassId, OccurrenceId = node.Id, TeacherId = node.TeacherId
                 });
         }
 
@@ -298,14 +339,23 @@ public sealed class SearchIndex
     private long SoftDelta(LessonOccurrence node, (int Day, int Slot, Guid? Room) old, CandidateMove move)
     {
         long delta = 0;
+        // P2/R8: вес параллели класса (student-сторона; учителя/кабинеты — без веса).
+        int gw = _problem.Flex.WeightForGrade(
+            _problem.Classes.TryGetValue(node.ClassId, out var clsg) ? clsg.Grade : 0);
         // Индекс сейчас — БЕЗ N (lift): old-множества уже без старого слота.
         int anchor = StudentCompactness.AnchorFor(_problem, node.ClassId);
         var csOld = _classSlots.GetValueOrDefault((node.ClassId, old.Day), []);
         var csNew = _classSlots.GetValueOrDefault((node.ClassId, move.DayIndex), []);
-        delta += (GapAfter(csNew, move.SlotIndex) - GapOf(csNew)) * _wStudentGap;
-        delta += (GapOf(csOld) - GapBefore(csOld, old.Slot)) * _wStudentGap;
-        delta += (LateAfter(csNew, move.SlotIndex, anchor) - LateOf(csNew, anchor)) * _wLate;
-        delta += (LateOf(csOld, anchor) - LateBefore(csOld, old.Slot, anchor)) * _wLate;
+        delta += (GapAfter(csNew, move.SlotIndex) - GapOf(csNew)) * _wStudentGap * gw;
+        delta += (GapOf(csOld) - GapBefore(csOld, old.Slot)) * _wStudentGap * gw;
+        delta += (LateAfter(csNew, move.SlotIndex, anchor) - LateOf(csNew, anchor)) * _wLate * gw;
+        delta += (LateOf(csOld, anchor) - LateBefore(csOld, old.Slot, anchor)) * _wLate * gw;
+        // P2/R6 heavy-edge дня (× вес параллели).
+        bool nodeHeavy = IsHeavy(node);
+        delta += (HeavyWith(csNew, node.ClassId, move.DayIndex, move.SlotIndex, nodeHeavy) -
+                  HeavyWithout(csNew, node.ClassId, move.DayIndex)) * _wHeavy * gw;
+        delta += (HeavyWithout(csOld, node.ClassId, old.Day) -
+                  HeavyWith(csOld, node.ClassId, old.Day, old.Slot, nodeHeavy)) * _wHeavy * gw;
 
         var tsOld = _teacherSlots.GetValueOrDefault((node.TeacherId, old.Day), []);
         var tsNew = _teacherSlots.GetValueOrDefault((node.TeacherId, move.DayIndex), []);
@@ -317,10 +367,44 @@ public sealed class SearchIndex
             int newC = _subjCount.GetValueOrDefault((node.ClassId, node.SubjectId, move.DayIndex));
             int oldC = _subjCount.GetValueOrDefault((node.ClassId, node.SubjectId, old.Day));
             // Lift: счётчики БЕЗ N. Было (с N): oldC+1 / newC+1; стало: oldC / newC+1.
-            delta += (Excess(newC + 1, subj.MaxPerDay) - Excess(newC, subj.MaxPerDay)) * _wSubj;
-            delta += (Excess(oldC, subj.MaxPerDay) - Excess(oldC + 1, subj.MaxPerDay)) * _wSubj;
+            delta += (Excess(newC + 1, subj.MaxPerDay) - Excess(newC, subj.MaxPerDay)) * _wSubj * gw;
+            delta += (Excess(oldC, subj.MaxPerDay) - Excess(oldC + 1, subj.MaxPerDay)) * _wSubj * gw;
         }
+
+        // P2/R5 room-crowding клеток (без веса параллели; снятие −, установка +).
+        if (old.Room.HasValue && _problem.Rooms.TryGetValue(old.Room.Value, out var oldRoom))
+            delta -= CrowdStep(oldRoom, (old.Room.Value, old.Day, old.Slot), node.ClassId) * _wCrowd;
+        if (move.RoomId.HasValue && _problem.Rooms.TryGetValue(move.RoomId.Value, out var newRoom))
+            delta += CrowdStep(newRoom, (move.RoomId.Value, move.DayIndex, move.SlotIndex), node.ClassId) * _wCrowd;
+        // P2/R7 teacher-split: состав учителей ходами не меняется (INV-02) → дельта 0.
         return delta;
+    }
+
+    // P2/R6: единицы heavy-edge дня БЕЗ N / С N (зеркало SoftUnits.HeavyEdge).
+    private int HeavyWithout(List<int> slots, Guid classId, int day) =>
+        SoftUnits.HeavyEdge(slots, s => _heavyCount.GetValueOrDefault((classId, day, s)) > 0);
+
+    private int HeavyWith(List<int> slots, Guid classId, int day, int slot, bool nodeHeavy) =>
+        SoftUnits.HeavyEdge([.. slots, slot], s =>
+            s == slot
+                ? nodeHeavy || _heavyCount.GetValueOrDefault((classId, day, s)) > 0
+                : _heavyCount.GetValueOrDefault((classId, day, s)) > 0);
+
+    // P2/R5: шаг тесноты клетки С N минус БЕЗ N (индекс БЕЗ N).
+    private int CellUnitsWithout(Room room, (Guid Room, int Day, int Slot) cell)
+    {
+        if (room.CountSubgroupAsGroup) return _roomCell.GetValueOrDefault(cell);
+        if (!_roomKeys.TryGetValue(cell, out var ks)) return 0;
+        int n = 0;
+        foreach (int cnt in ks.Values) if (cnt > 0) n++;
+        return n;
+    }
+
+    private long CrowdStep(Room room, (Guid Room, int Day, int Slot) cell, Guid classId)
+    {
+        int desired = RoomPolicy.EffectiveDesired(room);
+        return SoftUnits.Crowding(CellUnitsWith(room, cell, classId), desired) -
+               SoftUnits.Crowding(CellUnitsWithout(room, cell), desired);
     }
 
     // Взвешенная стоимость teacher-day через GapUtils (ordinary + cross, S5).
@@ -409,6 +493,27 @@ public sealed class SearchIndex
         if (room.HasValue) Bump(_roomCell, (room.Value, day, slot));
         var tk = (node.TeacherId, day);
         _teacherDay[tk] = _teacherDay.GetValueOrDefault(tk) + 1;
+        // P2: тяжёлые клетки, key-aware ключи комнат, split-индекс целых.
+        if (IsHeavy(node))
+            Bump(_heavyCount, (node.ClassId, day, slot));
+        if (room.HasValue && _problem.Rooms.TryGetValue(room.Value, out var rm) && !rm.CountSubgroupAsGroup)
+        {
+            var cell = (room.Value, day, slot);
+            if (!_roomKeys.TryGetValue(cell, out var ks)) _roomKeys[cell] = ks = [];
+            ks[node.ClassId] = ks.GetValueOrDefault(node.ClassId) + 1;
+        }
+        if (!node.GroupId.HasValue)
+        {
+            var ck = (node.ClassId, node.SubjectId);
+            if (!_splitC.TryGetValue(ck, out var cd)) _splitC[ck] = cd = [];
+            cd[node.TeacherId] = cd.GetValueOrDefault(node.TeacherId) + 1;
+            if (_problem.Classes.TryGetValue(node.ClassId, out var cls))
+            {
+                var pk = (cls.Grade, node.SubjectId);
+                if (!_splitP.TryGetValue(pk, out var pd)) _splitP[pk] = pd = [];
+                pd[node.TeacherId] = pd.GetValueOrDefault(node.TeacherId) + 1;
+            }
+        }
     }
 
     private void Remove(LessonOccurrence node, int day, int slot, Guid? room)
@@ -428,6 +533,76 @@ public sealed class SearchIndex
         if (room.HasValue) Drop(_roomCell, (room.Value, day, slot));
         var tk = (node.TeacherId, day);
         _teacherDay[tk] = _teacherDay[tk] - 1;
+        // P2: откат структур выше.
+        if (IsHeavy(node))
+            Drop(_heavyCount, (node.ClassId, day, slot));
+        if (room.HasValue && _problem.Rooms.TryGetValue(room.Value, out var rm) && !rm.CountSubgroupAsGroup)
+        {
+            var cell = (room.Value, day, slot);
+            if (_roomKeys.TryGetValue(cell, out var ks))
+            {
+                int v = ks.GetValueOrDefault(node.ClassId) - 1;
+                if (v <= 0) ks.Remove(node.ClassId);
+                else ks[node.ClassId] = v;
+                if (ks.Count == 0) _roomKeys.Remove(cell);
+            }
+        }
+        if (!node.GroupId.HasValue)
+        {
+            var ck = (node.ClassId, node.SubjectId);
+            if (_splitC.TryGetValue(ck, out var cd))
+            {
+                int v = cd.GetValueOrDefault(node.TeacherId) - 1;
+                if (v <= 0) cd.Remove(node.TeacherId);
+                else cd[node.TeacherId] = v;
+            }
+            if (_problem.Classes.TryGetValue(node.ClassId, out var cls))
+            {
+                var pk = (cls.Grade, node.SubjectId);
+                if (_splitP.TryGetValue(pk, out var pd))
+                {
+                    int v = pd.GetValueOrDefault(node.TeacherId) - 1;
+                    if (v <= 0) pd.Remove(node.TeacherId);
+                    else pd[node.TeacherId] = v;
+                }
+            }
+        }
+    }
+
+    // P2: тяжёлый ли occurrence (R6: Difficulty >= порога).
+    private bool IsHeavy(LessonOccurrence node) =>
+        _problem.Subjects.TryGetValue(node.SubjectId, out var s) &&
+        s.Difficulty >= _problem.Flex.IsHeavyThreshold;
+
+    // P2/R5: единицы клетки с двигаемым уроком (индекс БЕЗ N → +N вручную).
+    private int CellUnitsWith(Domain.Room room, (Guid Room, int Day, int Slot) cell, Guid classId)
+    {
+        if (room.CountSubgroupAsGroup)
+            return _roomCell.GetValueOrDefault(cell) + 1;
+        int n = 0;
+        bool has = false;
+        if (_roomKeys.TryGetValue(cell, out var ks))
+            foreach (var (c, cnt) in ks)
+                if (cnt > 0)
+                {
+                    n++;
+                    if (c == classId) has = true;
+                }
+        return n + (has ? 0 : 1);
+    }
+
+    // P2/R7: distinct учителей целой группы узла (индекс БЕЗ N → +N вручную).
+    private int SplitDistinctWith(LessonOccurrence node)
+    {
+        var mode = _problem.Flex.AssignMode;
+        if (mode == Domain.TeacherAssignMode.HardParallel &&
+            _problem.Classes.TryGetValue(node.ClassId, out var cls) &&
+            _splitP.TryGetValue((cls.Grade, node.SubjectId), out var pd))
+            return pd.Count + (pd.ContainsKey(node.TeacherId) ? 0 : 1);
+        if (mode == Domain.TeacherAssignMode.HardClass &&
+            _splitC.TryGetValue((node.ClassId, node.SubjectId), out var cd))
+            return cd.Count + (cd.ContainsKey(node.TeacherId) ? 0 : 1);
+        return 1;
     }
 
     private static void SortedInsert(List<int> list, int slot)

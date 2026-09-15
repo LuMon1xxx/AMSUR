@@ -179,7 +179,7 @@
                 <Button Content="✓  Принять этот вариант" FontSize="13"
                         Padding="12,7" Margin="8,0,0,0" Tag="{Binding}" Click="OnAcceptClick">
                   <Button.Style>
-                    <Style TargetType="Button" BasedOn="{DynamicResource BtnPrimary}">
+                    <Style TargetType="Button" BasedOn="{StaticResource BtnPrimary}">
                       <Setter Property="Visibility" Value="Collapsed"/>
                       <Style.Triggers>
                         <DataTrigger Binding="{Binding CanAccept}" Value="True">

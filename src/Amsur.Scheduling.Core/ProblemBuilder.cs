@@ -33,6 +33,12 @@ public sealed class ProblemInput
     // (14 → [(1,7),(8,14)], иначе одна полоса [(1,SP)] = старое поведение).
     public IReadOnlyList<ShiftBand>? ShiftBands { get; }
 
+    // R3–R8 (P2): общий урок (синтез occurrence), закрепления, гибкие настройки.
+    // null = выключено/нейтрально (поведение до R1–R9).
+    public CommonLesson? CommonLesson { get; }
+    public IReadOnlyList<TeacherAssignment> Assignments { get; }
+    public FlexSettings Flex { get; }
+
     // E3 perturbation: StableKey -> запрещённые (день, слот). Применяется ДО sync-пересечения.
     public IReadOnlyDictionary<string, IReadOnlySet<(int Day, int Slot)>> ExcludedPairs { get; }
 
@@ -52,7 +58,10 @@ public sealed class ProblemInput
         IReadOnlyList<RoomCapability>? roomCaps = null,
         IReadOnlyDictionary<string, IReadOnlySet<(int Day, int Slot)>>? excludedPairs = null,
         IReadOnlyDictionary<Guid, IReadOnlyList<int>>? classSlots = null,
-        IReadOnlyList<ShiftBand>? shiftBands = null)
+        IReadOnlyList<ShiftBand>? shiftBands = null,
+        CommonLesson? commonLesson = null,
+        IReadOnlyList<TeacherAssignment>? assignments = null,
+        FlexSettings? flex = null)
     {
         Classes = classes;
         Teachers = teachers;
@@ -70,6 +79,9 @@ public sealed class ProblemInput
         ExcludedPairs = excludedPairs ?? new Dictionary<string, IReadOnlySet<(int Day, int Slot)>>();
         ClassSlots = classSlots ?? new Dictionary<Guid, IReadOnlyList<int>>();
         ShiftBands = shiftBands;
+        CommonLesson = commonLesson;
+        Assignments = assignments ?? [];
+        Flex = flex ?? FlexSettings.Neutral;
     }
 
     /// <summary>Дефолтные смены по сетке (S5): 14 слотов → две смены, иначе одна.</summary>
@@ -157,6 +169,97 @@ public static class ProblemBuilder
 
         if (errors.Count > 0) return (null, errors);
 
+        // P2/R3: общий урок (классный час) — синтез occurrence с ОБЩИМ SyncGroupId
+        // на все классы параллелей. Дальше работает штатная N-механика: пересечение
+        // доменов, sync-equality в CP-SAT (= t), frozen в LS, same-start в валидаторе.
+        // Кабинет подбирает solver (каждому классу свой — greedy least-loaded);
+        // выбор конкретного кабинета — ручная правка (P3). UseOwnRooms=false
+        // (сбор всех в один зал) — только через P3-выбор зала, здесь fail-loud.
+        // Двухсменка (MidSchool): классы, чья смена не содержит SlotIndex, идут
+        // второй sync-группой в SlotIndexShift2 (0 = нет второй группы, как раньше).
+        // Группы в разное время → seenTeachers и syncId у каждой свои.
+        var commonLesson = input.CommonLesson;
+        var commonOccIds = new HashSet<Guid>();
+        var commonSlotByOcc = new Dictionary<Guid, int>();
+        if (commonLesson is not null && commonLesson.Enabled)
+        {
+            if (!commonLesson.UseOwnRooms)
+            {
+                errors.Add("CommonLesson: сбор всех классов в один зал задаётся выбором зала (P3).");
+                return (null, errors);
+            }
+            var targets = input.Classes.Where(c => commonLesson.Grades.Contains(c.Grade)).ToList();
+            if (targets.Count == 0)
+            {
+                errors.Add($"CommonLesson: классы параллелей [{commonLesson.GradesCsv}] не найдены.");
+                return (null, errors);
+            }
+            var hourSubject = subjById.Values.FirstOrDefault(s =>
+                string.Equals(s.Name, "Классный час", StringComparison.OrdinalIgnoreCase));
+            if (hourSubject is null)
+            {
+                hourSubject = new Subject { Name = "Классный час", Difficulty = 1, MaxPerDay = 1 };
+                subjById[hourSubject.Id] = hourSubject;
+            }
+            IReadOnlyList<int> BandOf(SchoolClass c) => input.ClassSlots.GetValueOrDefault(
+                c.Id, Enumerable.Range(1, input.SlotsPerDay).ToList());
+            var groupA = targets.Where(c => BandOf(c).Contains(commonLesson.SlotIndex)).ToList();
+            var groupB = commonLesson.SlotIndexShift2 > 0
+                ? targets.Except(groupA)
+                    .Where(c => BandOf(c).Contains(commonLesson.SlotIndexShift2)).ToList()
+                : new List<SchoolClass>();
+            var homeless = targets.Except(groupA).Except(groupB).ToList();
+            if (homeless.Count > 0)
+            {
+                string slots = commonLesson.SlotIndexShift2 > 0
+                    ? $"уроки {commonLesson.SlotIndex}/{commonLesson.SlotIndexShift2}"
+                    : $"урок {commonLesson.SlotIndex}";
+                foreach (var cls in homeless.OrderBy(c => c.Name, StringComparer.Ordinal))
+                    errors.Add($"CommonLesson: {slots} вне смены класса '{cls.Name}'.");
+                return (null, errors);
+            }
+            void Synthesize(IReadOnlyList<SchoolClass> group, Guid syncId, int slot)
+            {
+                var seenTeachers = new HashSet<Guid>();
+                foreach (var cls in group.OrderBy(c => c.Name, StringComparer.Ordinal))
+                {
+                    if (!cls.ClassTeacherId.HasValue ||
+                        !teacherById.ContainsKey(cls.ClassTeacherId.Value))
+                    {
+                        errors.Add($"CommonLesson: у класса '{cls.Name}' нет классного руководителя.");
+                        continue;
+                    }
+                    var tid = cls.ClassTeacherId.Value;
+                    if (!seenTeachers.Add(tid))
+                    {
+                        errors.Add($"CommonLesson: учитель ведёт классный час в двух классах " +
+                            $"(sync требует разных учителей; общий зал — P3).");
+                        continue;
+                    }
+                    var key = $"{cls.Name}|{hourSubject.Name}|{teacherById[tid].Name}|Whole#0";
+                    var co = new LessonOccurrence
+                    {
+                        Id = StableId(key),
+                        CurriculumItemId = StableId("amsur-common-item|" + cls.Name),
+                        ClassId = cls.Id, SubjectId = hourSubject.Id, TeacherId = tid,
+                        SyncGroupId = syncId, StableKey = key,
+                    };
+                    occurrences.Add(co);
+                    commonOccIds.Add(co.Id);
+                    commonSlotByOcc[co.Id] = slot;
+                }
+            }
+            var syncA = StableId($"amsur-common-sync|{commonLesson.DayIndex}|{commonLesson.SlotIndex}");
+            Synthesize(groupA, syncA, commonLesson.SlotIndex);
+            if (groupB.Count > 0)
+            {
+                var syncB = StableId(
+                    $"amsur-common-sync2|{commonLesson.DayIndex}|{commonLesson.SlotIndexShift2}");
+                Synthesize(groupB, syncB, commonLesson.SlotIndexShift2);
+            }
+            if (errors.Count > 0) return (null, errors);
+        }
+
         // Дубли StableKey (напр. два класса с одним именем) давали бы дублирующиеся
         // детерминированные Id → громкая ошибка вместо падения словарей ниже.
         foreach (var k in occurrences.GroupBy(o => o.StableKey)
@@ -199,6 +302,29 @@ public static class ProblemBuilder
                 continue;
             }
             allowedSlots[occ.Id] = slots;
+        }
+
+        // P2/R3: фиксация общего урока в заданной клетке (вне смены/доступности — громко).
+        if (commonLesson is not null && commonLesson.Enabled)
+        {
+            if (commonLesson.DayIndex < 0 || commonLesson.DayIndex >= input.DaysCount)
+                errors.Add($"CommonLesson: день {commonLesson.DayIndex + 1} вне сетки ({input.DaysCount} дн.).");
+            foreach (var occ in occurrences.Where(o => commonOccIds.Contains(o.Id)))
+            {
+                int slot = commonSlotByOcc.GetValueOrDefault(occ.Id, commonLesson.SlotIndex);
+                var band = input.ClassSlots.GetValueOrDefault(
+                    occ.ClassId, Enumerable.Range(1, input.SlotsPerDay).ToList());
+                if (!band.Contains(slot))
+                    errors.Add($"CommonLesson: урок {slot} вне смены класса '{clsById[occ.ClassId].Name}'.");
+                else if (IsForbidden(occ.TeacherId, commonLesson.DayIndex, slot))
+                    errors.Add($"CommonLesson: классный руководитель недоступен в заданной клетке.");
+                else
+                {
+                    allowedDays[occ.Id] = [commonLesson.DayIndex];
+                    allowedSlots[occ.Id] = [slot];
+                }
+            }
+            if (errors.Count > 0) return (null, errors);
         }
 
         // E3 perturbation-исключения (до sync-пересечения, по StableKey).
@@ -280,6 +406,8 @@ public static class ProblemBuilder
                 : ProblemInput.DefaultShiftBands(input.SlotsPerDay),
             Options = options ?? new SolverOptions(),
             BannedTimes = bannedTimes,
+            Flex = input.Flex,
+            Assignments = input.Assignments.ToList(),
             RoomCaps = input.RoomCaps
                 .GroupBy(c => (c.RoomId, c.SubjectId))
                 .ToDictionary(g => g.Key, g => g.First().Kind),

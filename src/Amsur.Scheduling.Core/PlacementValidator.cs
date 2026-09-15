@@ -6,10 +6,20 @@ using Amsur.Domain;
 // Независим от solver. Порт V1 PlacementValidator + фикс occupancy-ключа (HashSet, не string.Join).
 public static class PlacementValidator
 {
-    public static ValidationResult Validate(SchedulingProblem problem, IReadOnlyList<PlacedLesson> placements)
+    public static ValidationResult Validate(SchedulingProblem problem, IReadOnlyList<PlacedLesson> placements) =>
+        Validate(problem, placements, null);
+
+    /// <summary>
+    /// A4: чужие OccurrenceId — issue «not-placed», не throw. Последующие сверки
+    /// идут только по известным (placedByOcc/occById защищены везде).
+    /// rules: ослабленные строгие (B2) — в Warnings, не в Hard (null = как раньше).
+    /// </summary>
+    public static ValidationResult Validate(
+        SchedulingProblem problem, IReadOnlyList<PlacedLesson> placements, EffectiveRuleSet? rules)
     {
         var result = new ValidationResult();
         var occById = problem.Occurrences.ToDictionary(o => o.Id);
+        var relaxed = rules?.RelaxedStrict ?? (IReadOnlySet<string>)new HashSet<string>();
 
         // INV-06: полнота размещения.
         if (placements.Count != problem.Occurrences.Count)
@@ -22,7 +32,10 @@ public static class PlacementValidator
         var byTeacher = new Dictionary<(Guid, int, int), List<Guid>>();
         var byGroup = new Dictionary<(Guid, int, int), List<Guid>>(); // group-or-class key
         var byRoom = new Dictionary<(Guid, int, int), int>();
+        var byRoomClasses = new Dictionary<(Guid, int, int), HashSet<Guid>>(); // P2/R5 key-aware
         var placedByOcc = placements.ToDictionary(p => p.OccurrenceId);
+        // A4: дальше — только известные (чужие уже получили not-placed выше).
+        var known = placements.Where(p => occById.ContainsKey(p.OccurrenceId)).ToList();
 
         foreach (var p in placements)
         {
@@ -86,18 +99,38 @@ public static class PlacementValidator
             }
 
             // Room sweep: MaxSimultaneousGroups (Hard) + Forbidden capability (Hard).
+            // P2/R1: ONLY-кабинет — чужой предмет тоже hard (forbidden-room).
+            // IsManualOnly валидатор НЕ проверяет: ручное назначение разрешено.
+            // P2/R5: единицы key-aware (сплит одним классом = 1 при флаге false).
             if (p.RoomId.HasValue)
             {
                 var rk = (p.RoomId.Value, p.DayIndex, p.SlotIndex);
                 byRoom[rk] = byRoom.GetValueOrDefault(rk) + 1;
-                if (problem.Rooms.TryGetValue(p.RoomId.Value, out var room) &&
-                    byRoom[rk] > room.MaxSimultaneousGroups)
-                    result.HardViolations.Add(new ValidationIssue
+                if (problem.Rooms.TryGetValue(p.RoomId.Value, out var room))
+                {
+                    if (!room.CountSubgroupAsGroup)
                     {
-                        Code = PhysicalRuleCodes.RoomOverflow,
-                        Message = $"Room {room.Name} overflow at day {p.DayIndex} slot {p.SlotIndex}.",
-                        RoomId = room.Id, OccurrenceId = occ.Id
-                    });
+                        if (!byRoomClasses.TryGetValue(rk, out var set))
+                            byRoomClasses[rk] = set = [];
+                        set.Add(occ.ClassId);
+                    }
+                    int units = RoomPolicy.CellUnits(room, byRoom[rk],
+                        byRoomClasses.TryGetValue(rk, out var s) ? s.Count : byRoom[rk]);
+                    if (units > room.MaxSimultaneousGroups)
+                        result.HardViolations.Add(new ValidationIssue
+                        {
+                            Code = PhysicalRuleCodes.RoomOverflow,
+                            Message = $"Room {room.Name} overflow at day {p.DayIndex} slot {p.SlotIndex}.",
+                            RoomId = room.Id, OccurrenceId = occ.Id
+                        });
+                    if (room.OnlySubjectId.HasValue && room.OnlySubjectId.Value != occ.SubjectId)
+                        result.HardViolations.Add(new ValidationIssue
+                        {
+                            Code = "forbidden-room",
+                            Message = $"Room {room.Name} is reserved for another subject.",
+                            RoomId = room.Id, OccurrenceId = occ.Id, ClassId = occ.ClassId
+                        });
+                }
                 if (problem.RoomCaps.TryGetValue((p.RoomId.Value, occ.SubjectId), out var cap) &&
                     cap == RoomCapabilityKind.Forbidden)
                     result.HardViolations.Add(new ValidationIssue
@@ -132,12 +165,12 @@ public static class PlacementValidator
                 });
         }
 
-        // Teacher MaxPerDay (Hard FROZEN, D-04).
-        foreach (var g in placements.GroupBy(p => (occById[p.OccurrenceId].TeacherId, p.DayIndex)))
+        // Teacher MaxPerDay (Hard FROZEN, D-04) — или Warning при ослаблении (B2).
+        foreach (var g in known.GroupBy(p => (occById[p.OccurrenceId].TeacherId, p.DayIndex)))
         {
             var teacherId = g.Key.TeacherId;
             if (problem.Teachers.TryGetValue(teacherId, out var t) && g.Count() > t.MaxLessonsPerDay)
-                result.HardViolations.Add(new ValidationIssue
+                AddHardOrWarn(result, relaxed, "teacher-maxperday", new ValidationIssue
                 {
                     Code = "teacher-maxperday",
                     Message = $"Teacher {t.Name} has {g.Count()} lessons at day {g.Key.DayIndex} (max {t.MaxLessonsPerDay}).",
@@ -146,15 +179,15 @@ public static class PlacementValidator
         }
 
         // Компактность ученика (D-28, SANPIN_RB.md §5): внутренние окна запрещены,
-        // старт не позже anchor+1. Якорь = min AllowedSlots класса (смена 1→1, 2→8).
-        foreach (var g in placements.GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
+        // старт не позже anchor+1. B2: ослабленные пользователем — Warnings.
+        foreach (var g in known.GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
         {
             var classId = g.Key.ClassId;
             var slots = g.Select(p => p.SlotIndex).OrderBy(s => s).ToList();
             int anchor = StudentCompactness.AnchorFor(problem, classId);
             int gap = StudentCompactness.GapOf(slots);
             if (gap > 0)
-                result.HardViolations.Add(new ValidationIssue
+                AddHardOrWarn(result, relaxed, "student-gap", new ValidationIssue
                 {
                     Code = "student-gap",
                     Message = $"Окно у класса {ClassName(problem, classId)} в день {g.Key.DayIndex + 1}: {gap} пустых урока внутри дня.",
@@ -162,7 +195,7 @@ public static class PlacementValidator
                 });
             int late = StudentCompactness.LateExcess(slots, anchor);
             if (late > 0)
-                result.HardViolations.Add(new ValidationIssue
+                AddHardOrWarn(result, relaxed, "student-late-start", new ValidationIssue
                 {
                     Code = "student-late-start",
                     Message = $"Класс {ClassName(problem, classId)} в день {g.Key.DayIndex + 1} начинает с урока {slots[0]} (допустимо с {anchor} или {anchor + 1}).",
@@ -170,13 +203,13 @@ public static class PlacementValidator
                 });
         }
 
-        // Дневной максимум класса по СанПиН (SANPIN_RB.md §3): HARD.
+        // Дневной максимум класса по СанПиН (SANPIN_RB.md §3): HARD — или Warning (B2).
         // Считаем ЗАНЯТЫЕ СЛОТЫ (distinct), а не placements: сплит-час — 2 placements в 1 слоте.
-        foreach (var g in placements.GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
+        foreach (var g in known.GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
         {
             int slotCount = g.Select(p => p.SlotIndex).Distinct().Count();
             if (problem.Classes.TryGetValue(g.Key.ClassId, out var cls) && slotCount > cls.MaxLessonsPerDay)
-                result.HardViolations.Add(new ValidationIssue
+                AddHardOrWarn(result, relaxed, "class-maxperday", new ValidationIssue
                 {
                     Code = "class-maxperday",
                     Message = $"Класс {cls.Name}: {slotCount} уроков в день {g.Key.DayIndex + 1} (норма {cls.MaxLessonsPerDay}).",
@@ -185,12 +218,12 @@ public static class PlacementValidator
             // 1-е классы: дней с 5 уроками — не более 1 в неделю (норма «4 + 1×5»).
             if (problem.Classes.TryGetValue(g.Key.ClassId, out var cls1) && cls1.Grade == 1 && slotCount == 5)
             {
-                int fiveDays = placements
+                int fiveDays = known
                     .Where(p => occById[p.OccurrenceId].ClassId == g.Key.ClassId)
                     .GroupBy(p => p.DayIndex)
                     .Count(dg => dg.Select(p => p.SlotIndex).Distinct().Count() == 5);
                 if (fiveDays > 1)
-                    result.HardViolations.Add(new ValidationIssue
+                    AddHardOrWarn(result, relaxed, "class-maxperday", new ValidationIssue
                     {
                         Code = "class-maxperday",
                         Message = $"Класс {cls1.Name}: 5-урочных дней {fiveDays} (норма для 1-х классов — не более 1 в неделю).",
@@ -203,8 +236,7 @@ public static class PlacementValidator
         foreach (var grp in problem.Occurrences
                      .Where(o => o.SyncGroupId.HasValue)
                      .GroupBy(o => o.SyncGroupId!.Value))
-        {
-            var members = grp.ToList();
+        {            var members = grp.ToList();
             var times = members
                 .Where(m => placedByOcc.ContainsKey(m.Id))
                 .Select(m => (placedByOcc[m.Id].DayIndex, placedByOcc[m.Id].SlotIndex))
@@ -226,7 +258,47 @@ public static class PlacementValidator
                 });
         }
 
+        // P2/R7: один учитель на (класс,предмет) / (параллель,предмет).
+        // Целые уроки (GroupId==null); сплит-половины — штатно два учителя, исключены.
+        // Проверяем РАЗМЕЩЁННЫЕ (как остальной валидатор): неразмещённое не судим.
+        var assignMode = problem.Flex.AssignMode;
+        if (assignMode is TeacherAssignMode.HardClass or TeacherAssignMode.HardParallel)
+        {
+            var placedOccs = placements
+                .Select(p => occById.GetValueOrDefault(p.OccurrenceId))
+                .Where(o => o is not null && !o.GroupId.HasValue)
+                .Cast<LessonOccurrence>()
+                .ToList();
+            IEnumerable<IGrouping<string, LessonOccurrence>> agroups =
+                assignMode == TeacherAssignMode.HardClass
+                    ? placedOccs.GroupBy(o => $"{o.ClassId:D}|{o.SubjectId:D}")
+                    : placedOccs.GroupBy(o =>
+                        $"{(problem.Classes.TryGetValue(o.ClassId, out var c) ? c.Grade : 0)}|{o.SubjectId:D}");
+            foreach (var g in agroups)
+            {
+                var teachers = g.Select(o => o.TeacherId).Distinct().ToList();
+                if (teachers.Count <= 1) continue;
+                result.HardViolations.Add(new ValidationIssue
+                {
+                    Code = "teacher-assign",
+                    Message = assignMode == TeacherAssignMode.HardClass
+                        ? $"Класс {ClassName(problem, g.First().ClassId)}: предмет ведут несколько учителей."
+                        : $"Параллель: предмет ведут несколько учителей.",
+                    ClassId = g.First().ClassId, OccurrenceId = g.First().Id,
+                    TeacherId = teachers[0]
+                });
+            }
+        }
+
         return result;
+    }
+
+    // B2: ослабленное строгое уходит в Warnings (не блокирует Accept/Export).
+    private static void AddHardOrWarn(
+        ValidationResult result, IReadOnlySet<string> relaxed, string code, ValidationIssue issue)
+    {
+        if (relaxed.Contains(code)) result.Warnings.Add(issue);
+        else result.HardViolations.Add(issue);
     }
 
     // Маппинг (SolverStatus, cancelled, hasPlacements) → UserScheduleStatus (D-10, без нового enum solver).
