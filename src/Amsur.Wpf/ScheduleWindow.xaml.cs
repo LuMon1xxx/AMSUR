@@ -457,9 +457,26 @@ public partial class ScheduleWindow : Window
         }
     }
 
-    // P0-6: экспорт — через отдельное окно (Excel only, PDF «Скоро»).
+    // P0-6: экспорт — через отдельное окно (Excel 3 вида + HTML→PDF из браузера).
     private void OnExportClick(object sender, RoutedEventArgs e) =>
         new ExportWindow(_session) { Owner = this }.ShowDialog();
+
+    // P-SANPIN-UI: проверка активного расписания по нормам СанПиН РБ.
+    // Кнопка всегда жива: без активного — понятное сообщение, а не мёртвая кнопка.
+    private void OnSanPinClick(object sender, RoutedEventArgs e)
+    {
+        if (_problem is null || _active is null)
+        {
+            MessageBox.Show("Нет активного расписания — сгенерируйте варианты и нажмите «Принять расписание».",
+                "АМСУР", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var findings = SanPinChecker.Check(_problem, _active.Placements);
+        IReadOnlyList<string> lines = findings.Count == 0
+            ? ["Нарушений СанПиН не найдено. Проверены: нагрузка в день, 1-е классы, физкультура первым уроком. Цифры норм требуют сверки с НПА."]
+            : findings.Select(f => (f.IsError ? "Нарушение: " : "Пожелание: ") + f.Text).ToList();
+        new QualityDetailsWindow("СанПиН — проверка расписания", lines) { Owner = this }.ShowDialog();
+    }
 
     private async void OnRefreshClick(object sender, RoutedEventArgs e) => await ReloadAsync();
 

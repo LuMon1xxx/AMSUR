@@ -306,36 +306,36 @@
             </Grid>
             <UniformGrid Columns="5" Rows="1" Margin="0,12,0,0">
               <StackPanel Margin="0,0,6,0">
-                <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource BAccent}" HorizontalAlignment="Left">
-                  <TextBlock Text="1" FontSize="13" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border x:Name="Step1Circle" Width="28" Height="28" CornerRadius="14" Background="{StaticResource BAccent}" HorizontalAlignment="Left">
+                  <TextBlock x:Name="Step1Num" Tag="1" Text="1" FontSize="13" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <TextBlock Text="Загрузите данные" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" TextWrapping="Wrap"/>
                 <TextBlock Text="Классы и нагрузка" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Margin="3,0,3,0">
-                <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource BAccent}" HorizontalAlignment="Left">
-                  <TextBlock Text="2" FontSize="13" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border x:Name="Step2Circle" Width="28" Height="28" CornerRadius="14" Background="{StaticResource BAccent}" HorizontalAlignment="Left">
+                  <TextBlock x:Name="Step2Num" Tag="2" Text="2" FontSize="13" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <TextBlock Text="Выберите профиль" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" TextWrapping="Wrap"/>
                 <TextBlock Text="Стандарт / Требования" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Margin="3,0,3,0">
-                <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource BAccent}" HorizontalAlignment="Left">
-                  <TextBlock Text="3" FontSize="13" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border x:Name="Step3Circle" Width="28" Height="28" CornerRadius="14" Background="{StaticResource BAccent}" HorizontalAlignment="Left">
+                  <TextBlock x:Name="Step3Num" Tag="3" Text="3" FontSize="13" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <TextBlock Text="Запустите расчёт" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" TextWrapping="Wrap"/>
                 <TextBlock Text="Оптимизатор CP-SAT" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Margin="3,0,3,0">
-                <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource BSubtle}" HorizontalAlignment="Left">
-                  <TextBlock Text="4" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BTextSoft}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border x:Name="Step4Circle" Width="28" Height="28" CornerRadius="14" Background="{StaticResource BSubtle}" HorizontalAlignment="Left">
+                  <TextBlock x:Name="Step4Num" Tag="4" Text="4" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BTextSoft}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <TextBlock Text="Проверьте результат" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" TextWrapping="Wrap"/>
                 <TextBlock Text="Окна и накладки" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Margin="6,0,0,0">
-                <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource BSubtle}" HorizontalAlignment="Left">
-                  <TextBlock Text="5" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BTextSoft}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Border x:Name="Step5Circle" Width="28" Height="28" CornerRadius="14" Background="{StaticResource BSubtle}" HorizontalAlignment="Left">
+                  <TextBlock x:Name="Step5Num" Tag="5" Text="5" FontSize="13" FontWeight="Bold" Foreground="{StaticResource BTextSoft}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <TextBlock Text="Экспортируйте" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" TextWrapping="Wrap"/>
                 <TextBlock Text="В Excel" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap"/>

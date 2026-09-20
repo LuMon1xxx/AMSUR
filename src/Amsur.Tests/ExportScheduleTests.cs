@@ -105,4 +105,91 @@ public sealed class ExportScheduleTests
         Assert.Contains("Класс 5Б", flat);
         Assert.Contains("Петрова", flat);
     }
+
+    // --- 4. Три вида из ТЗ §22: классы + учителя + кабинеты; флаг выключает ---
+    [Fact]
+    public void ExportThreeViews_RoomsSheet()
+    {
+        var (p, placements) = Tiny();
+        using var ms = new MemoryStream();
+        ScheduleExcelExporter.ExportGrid(p, placements, ms,
+            includeTeacherSheet: true, includeRoomSheet: true);
+        using var wb = new XLWorkbook(new MemoryStream(ms.ToArray()));
+        Assert.Contains(wb.Worksheets, w => w.Name == "Расписание");
+        Assert.Contains(wb.Worksheets, w => w.Name == "Учителя");
+        var rooms = wb.Worksheets.Single(w => w.Name == "Кабинеты");
+        var flat = string.Join("\n",
+            rooms.RangeUsed()!.CellsUsed().Select(c => c.GetString()));
+        Assert.Contains("Кабинет", flat);
+        Assert.Contains("5А", flat);
+
+        using var ms2 = new MemoryStream();
+        ScheduleExcelExporter.ExportGrid(p, placements, ms2,
+            includeTeacherSheet: false, includeRoomSheet: false);
+        using var wb2 = new XLWorkbook(new MemoryStream(ms2.ToArray()));
+        Assert.DoesNotContain(wb2.Worksheets, w => w.Name == "Учителя");
+        Assert.DoesNotContain(wb2.Worksheets, w => w.Name == "Кабинеты");
+    }
+
+    // --- 5. Черновик: частичное размещение выгружается с листом «Неназначенные» ---
+    [Fact]
+    public void ExportDraft_PartialOk()
+    {
+        var (p, placements) = Tiny();
+        var partial = placements.Take(1).ToList();
+        var unplaced = placements.Skip(1).Select(x => x.OccurrenceId).ToList();
+        using var ms = new MemoryStream();
+        ScheduleExcelExporter.ExportDraftGrid(p, partial, unplaced, ms);
+        Assert.True(ms.Length > 0);
+        using var wb = new XLWorkbook(new MemoryStream(ms.ToArray()));
+        var names = wb.Worksheets.Select(w => w.Name).ToList();
+        Assert.Contains("Расписание", names);
+        Assert.Contains("Неназначенные", names);
+        var flat = string.Join("\n",
+            wb.Worksheet("Расписание").RangeUsed().CellsUsed().Select(c => c.GetString()));
+        Assert.Contains("ЧЕРНОВИК", flat);
+        var unflat = string.Join("\n",
+            wb.Worksheet("Неназначенные").RangeUsed().CellsUsed().Select(c => c.GetString()));
+        Assert.Contains("Мат", unflat);
+        Assert.Contains("Иванов", unflat);
+    }
+
+    // --- 6. Черновик с коллизией: отказ ---    [Fact]
+    public void ExportDraft_CollisionRefused()
+    {
+        var (p, placements) = Tiny();
+        // Второй урок в тот же слот, что первый: двойная бронь учителя.
+        var colliding = new List<PlacedLesson>
+        {
+            placements[0],
+            new PlacedLesson
+            {
+                OccurrenceId = placements[1].OccurrenceId,
+                DayIndex = placements[0].DayIndex,
+                SlotIndex = placements[0].SlotIndex,
+            },
+        };
+        using var ms = new MemoryStream();
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => ScheduleExcelExporter.ExportDraftGrid(p, colliding, [], ms));
+        Assert.Contains("жёстких", ex.Message);
+        Assert.Equal(0, ms.Length);
+    }
+
+    // --- 7. Персональное расписание учителя: его уроки с классами ---
+    [Fact]
+    public void ExportTeacher_PersonalGrid()
+    {
+        var (p, placements) = Tiny();
+        var teacherId = p.Teachers.Values.Single().Id;
+        using var ms = new MemoryStream();
+        ScheduleExcelExporter.ExportTeacherGrid(p, placements, teacherId, ms);
+        Assert.True(ms.Length > 0);
+        using var wb = new XLWorkbook(new MemoryStream(ms.ToArray()));
+        var flat = string.Join("\n",
+            wb.Worksheet("Расписание").RangeUsed().CellsUsed().Select(c => c.GetString()));
+        Assert.Contains("Иванов", flat);
+        Assert.Contains("5А", flat);
+        Assert.Contains("Мат", flat);
+    }
 }

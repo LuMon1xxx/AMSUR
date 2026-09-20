@@ -118,15 +118,27 @@ public static class ProblemBuilder
 
             if (!item.SplitSubgroups)
             {
+                // Профильные пары (наша школа 10А/11А: A→химия, B→английский одновременно):
+                // item несёт GroupId (+ общий SyncGroupId на пару); sync выводится
+                // пословно (per-hour), иначе часы пары слиплись бы в одну sync-группу.
+                Guid? itemGroup = item.GroupId;
+                if (itemGroup.HasValue &&
+                    (!groupParents.TryGetValue(itemGroup.Value, out var owner) || owner != item.ClassId))
+                { errors.Add($"CurriculumItem {item.Id}: group does not belong to class."); continue; }
+                if (item.SyncGroupId.HasValue && !itemGroup.HasValue)
+                { errors.Add($"CurriculumItem {item.Id}: sync needs a subgroup (GroupId)."); continue; }
                 for (int h = 0; h < item.HoursPerWeek; h++)
                     occurrences.Add(new LessonOccurrence
                     {
                         // E11: Id детерминирован из StableKey (пересборки одного входа
                         // дают те же Id → персист/правка переживают перезапуск).
-                        Id = StableId(Key(item.ClassId, item.SubjectId, item.TeacherId, null, h)),
+                        Id = StableId(Key(item.ClassId, item.SubjectId, item.TeacherId, itemGroup, h)),
                         CurriculumItemId = item.Id, ClassId = item.ClassId,
                         SubjectId = item.SubjectId, TeacherId = item.TeacherId,
-                        StableKey = Key(item.ClassId, item.SubjectId, item.TeacherId, null, h),
+                        GroupId = itemGroup,
+                        SyncGroupId = item.SyncGroupId.HasValue
+                            ? StableId($"{item.SyncGroupId.Value:N}|h{h}") : null,
+                        StableKey = Key(item.ClassId, item.SubjectId, item.TeacherId, itemGroup, h),
                     });
             }
             else
@@ -388,11 +400,41 @@ public static class ProblemBuilder
 
         if (errors.Count > 0) return (null, errors);
 
+        // D-39 «Разрешить перегрузку»: недельная нагрузка учителя из нагрузки
+        // (целые + вторые половины сплитов); кому 5 × MaxLessonsPerDay мало —
+        // клон с поднятым лимитом до cap (кламп к сетке дня). Остальных не трогаем.
+        // Входные сущности не мутируем — подменяем словарь для задачи.
+        var teachersForProblem = teacherById;
+        var flex = input.Flex;
+        if (flex is not null && flex.AllowTeacherOverload)
+        {
+            int cap = Math.Clamp(flex.TeacherOverloadCap, 1, input.SlotsPerDay);
+            var load = new Dictionary<Guid, int>();
+            foreach (var item in input.Curriculum)
+            {
+                load[item.TeacherId] = load.GetValueOrDefault(item.TeacherId) + item.HoursPerWeek;
+                if (item.SplitSubgroups && input.SplitTeachers.TryGetValue(item.Id, out var pair))
+                    load[pair.TeacherB] = load.GetValueOrDefault(pair.TeacherB) + item.HoursPerWeek;
+            }
+            teachersForProblem = new Dictionary<Guid, Teacher>(teacherById);
+            foreach (var (tid, hours) in load)
+            {
+                if (!teachersForProblem.TryGetValue(tid, out var t)) continue;
+                if (hours > 5 * t.MaxLessonsPerDay && cap > t.MaxLessonsPerDay)
+                    teachersForProblem[tid] = new Teacher
+                    {
+                        Id = t.Id, Name = t.Name, MaxLessonsPerDay = cap,
+                        PreferredStartSlot = t.PreferredStartSlot,
+                        PreferredEndSlot = t.PreferredEndSlot,
+                    };
+            }
+        }
+
         var problem = new SchedulingProblem
         {
             Occurrences = occurrences,
             Classes = clsById,
-            Teachers = teacherById,
+            Teachers = teachersForProblem,
             Rooms = input.Rooms.ToDictionary(r => r.Id),
             Subjects = subjById,
             AllowedDays = allowedDays,

@@ -230,11 +230,13 @@ public sealed class AppSession
     }
     private static IReadOnlyList<StoredLoadRow> ToStored(IReadOnlyList<LoadRow> rows) =>
         rows.Select(r => new StoredLoadRow(r.ClassName, r.SubjectName, r.HoursPerWeek,
-            r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName)).ToList();
+            r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName,
+            r.UnavailDays, r.UnavailSlots)).ToList();
 
     private static IReadOnlyList<LoadRow> FromStored(IReadOnlyList<StoredLoadRow> rows) =>
         rows.Select(r => new LoadRow(r.ClassName, r.SubjectName, r.HoursPerWeek,
-            r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName)).ToList();
+            r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName,
+            r.UnavailDays, r.UnavailSlots)).ToList();
 
     private void AcceptRows(IReadOnlyList<LoadRow> rows, int days, int slots, string source) =>
         AcceptRows(rows, days, slots, source, null);
@@ -291,13 +293,57 @@ public sealed class AppSession
         await ExportActiveAsync(path, includeTeacherSheet: true, ct);
 
     /// <summary>P4/R9: выгрузка с опциональным листом «Учителя».</summary>
-    public async Task ExportActiveAsync(string path, bool includeTeacherSheet, CancellationToken ct = default)
+    public async Task ExportActiveAsync(string path, bool includeTeacherSheet, CancellationToken ct = default) =>
+        await ExportActiveAsync(path, includeTeacherSheet, includeRoomSheet: true, ct);
+
+    /// <summary>Три вида из ТЗ §22: классы + учителя + кабинеты (опц.).</summary>
+    public async Task ExportActiveAsync(string path, bool includeTeacherSheet, bool includeRoomSheet, CancellationToken ct = default)
     {
         var active = await GetActiveAsync(ct);
         if (active is null)
             throw new InvalidOperationException("Нет активного расписания — нечего выгружать.");
         var problem = BuildProblem();
         await using var fs = File.Create(path);
-        ScheduleExcelExporter.ExportGrid(problem, active.Placements, fs, includeTeacherSheet);
+        ScheduleExcelExporter.ExportGrid(problem, active.Placements, fs, includeTeacherSheet, includeRoomSheet);
+    }
+
+    /// <summary>B4: HTML-выгрузка активного (просмотр/печать без Excel).</summary>
+    public async Task ExportActiveHtmlAsync(string path, CancellationToken ct = default)
+    {
+        var active = await GetActiveAsync(ct);
+        if (active is null)
+            throw new InvalidOperationException("Нет активного расписания — нечего выгружать.");
+        var problem = BuildProblem();
+        await using var fs = File.Create(path);
+        ScheduleHtmlExporter.ExportHtml(problem, active.Placements, fs);
+    }
+
+    /// <summary>A2: быстрый черновик из текущих данных (жадный старт, ~секунды,
+    /// без генерации). Честные дыры — листом «Неназначенные», gate ослаблен (D-42).</summary>
+    public async Task<(int Placed, int Total)> ExportDraftAsync(string path, CancellationToken ct = default)
+    {
+        var problem = BuildProblem();
+        var g = GreedyPlacer.Place(problem, 11);
+        var placements = g.Placed.Select(kv => new PlacedLesson
+        {
+            OccurrenceId = kv.Key,
+            DayIndex = kv.Value.Day,
+            SlotIndex = kv.Value.Slot,
+            RoomId = kv.Value.RoomId,
+        }).ToList();
+        await using var fs = File.Create(path);
+        ScheduleExcelExporter.ExportDraftGrid(problem, placements, g.Unplaced, fs);
+        return (g.Placed.Count, problem.Occurrences.Count);
+    }
+
+    /// <summary>A2: персональное расписание учителя из активного.</summary>
+    public async Task ExportTeacherAsync(string path, Guid teacherId, CancellationToken ct = default)
+    {
+        var active = await GetActiveAsync(ct);
+        if (active is null)
+            throw new InvalidOperationException("Нет активного расписания — нечего выгружать.");
+        var problem = BuildProblem();
+        await using var fs = File.Create(path);
+        ScheduleExcelExporter.ExportTeacherGrid(problem, active.Placements, teacherId, fs);
     }
 }

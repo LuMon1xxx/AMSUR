@@ -59,6 +59,9 @@
                   FontSize="13" Padding="12,7" Margin="8,0,0,0" Click="OnCommitClick"/>
           <Button x:Name="ExportBtn" Content="Выгрузить в Excel" Style="{DynamicResource BtnSecondary}"
                   Margin="8,0,0,0" Click="OnExportClick"/>
+          <Button x:Name="SanPinBtn" Content="Проверить СанПиН" Style="{DynamicResource BtnSecondary}"
+                  Margin="8,0,0,0" Click="OnSanPinClick"
+                  ToolTip="Проверка расписания по нормам СанПиН РБ (нагрузка/день, 1-е классы, физра первым уроком). Цифры требуют сверки с НПА."/>
         </StackPanel>
         <TextBlock Style="{DynamicResource THCaption}" Margin="0,6,0,0"
                    Text="День и урок — номера из сетки выше: дни идут слева направо, уроки — сверху вниз. Время звонков уточните у завуча."

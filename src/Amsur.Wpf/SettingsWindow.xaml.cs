@@ -205,6 +205,10 @@ public partial class SettingsWindow : Window
             "Перегрузка станет допустимой (с предупреждением).",
         "class-maxperday" => "У классов сможет быть больше уроков в день, чем норма " +
             "(включая норму 1-х классов). Перегруз станет допустимым (с предупреждением).",
+        "teacher-overload" => "Дневной лимит поднимется ТОЛЬКО у тех учителей, чья недельная " +
+            "нагрузка не влезает в норму. Это признание нехватки штата — будет видно в отчётах.",
+        "cap-raise" => "Дневные лимиты сверх СанПиН-норм: нагрузка сверх нормы. " +
+            "Снижение лимитов — без предупреждения.",
         _ when code.StartsWith("sanpin-", StringComparison.Ordinal) =>
             "Норма СанПиН будет ослаблена. Веса не проверены по НПА — сверьте с завучем и нормами.",
         _ => "Строгое правило будет ослаблено.",
@@ -433,11 +437,130 @@ public partial class SettingsWindow : Window
             AddEntityRow(ClassesPanel, $"{c.Name} (параллель {c.Grade})", $"класс {c.Name}", c.Id,
                 c.MaxLessonsPerDay, 1, 10, v => c.MaxLessonsPerDay = v);
         TeachersPanel.Children.Add(SectionHint("Дневной лимит учителя. Пожелания по конкретным дням/часам — следующая версия (зафиксировано в backlog)."));
+        BuildOverloadCard();
         foreach (var t in data.Teachers.OrderBy(x => x.Name).Take(200))
             AddEntityRow(TeachersPanel, t.Name, $"учитель {t.Name}", t.Id,
                 t.MaxLessonsPerDay, 1, 12, v => t.MaxLessonsPerDay = v);
         if (data.Teachers.Count > 200)
             TeachersPanel.Children.Add(SectionHint($"…и ещё {data.Teachers.Count - 200} (список обрезан для скорости)."));
+    }
+
+    // --- A1: перегрузка учителей (движок+персист D-39, проводка в UI) ---
+    private CheckBox? _overloadBox;
+    private Slider? _overloadCapSlider;
+    private TextBlock? _overloadCapText;
+    private TextBlock? _overloadStatus;
+
+    private void BuildOverloadCard()
+    {
+        var st = _session.Flex.Settings;
+        var card = new Border { Style = (Style)FindResource("Card"), Margin = new Thickness(0, 0, 0, 8) };
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Перегрузка учителей", FontSize = 15, FontWeight = FontWeights.SemiBold,
+        });
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Если учителям не хватает слотов (нехватка штата), движок поднимет дневной лимит " +
+                "ТОЛЬКО тем, чья недельная нагрузка не влезает в норму. Остальных не трогает. " +
+                "Действует на следующие генерации.",
+            FontSize = 12, Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
+        });
+        _overloadBox = new CheckBox
+        {
+            Content = "Разрешить перегрузку", IsChecked = st.AllowTeacherOverload,
+            Margin = new Thickness(0, 8, 0, 0), FontSize = 13,
+        };
+        _overloadBox.Checked += (_, _) => MarkDirty();
+        _overloadBox.Unchecked += (_, _) => MarkDirty();
+        sp.Children.Add(_overloadBox);
+        var capRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0) };
+        capRow.Children.Add(new TextBlock
+        {
+            Text = "Потолок, уроков в день:", FontSize = 13, VerticalAlignment = VerticalAlignment.Center,
+        });
+        _overloadCapSlider = new Slider
+        {
+            Minimum = 7, Maximum = 14, Value = Math.Clamp(st.TeacherOverloadCap, 7, 14),
+            Width = 200, Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center,
+            IsSnapToTickEnabled = true, TickFrequency = 1,
+        };
+        _overloadCapSlider.ValueChanged += (_, _) =>
+        {
+            if (_overloadCapText is not null)
+                _overloadCapText.Text = ((int)_overloadCapSlider.Value).ToString();
+            MarkDirty();
+        };
+        capRow.Children.Add(_overloadCapSlider);
+        _overloadCapText = new TextBlock
+        {
+            Text = Math.Clamp(st.TeacherOverloadCap, 7, 14).ToString(), FontSize = 13,
+            VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0),
+        };
+        capRow.Children.Add(_overloadCapText);
+        sp.Children.Add(capRow);
+        var apply = new Button
+        {
+            Content = "Применить перегрузку", Style = (Style)FindResource("BtnSecondary"),
+            HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0),
+        };
+        apply.Click += OnOverloadApplyClick;
+        sp.Children.Add(apply);
+        _overloadStatus = new TextBlock
+        {
+            Text = OverloadStatusText(), FontSize = 12,
+            Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
+            Margin = new Thickness(0, 6, 0, 0),
+        };
+        sp.Children.Add(_overloadStatus);
+        card.Child = sp;
+        TeachersPanel.Children.Add(card);
+    }
+
+    private string OverloadStatusText()
+    {
+        var st = _session.Flex.Settings;
+        return st.AllowTeacherOverload
+            ? $"Сейчас: перегрузка разрешена, потолок {st.TeacherOverloadCap}/день."
+            : "Сейчас: перегрузка запрещена (норма 6/день для всех).";
+    }
+
+    private async void OnOverloadApplyClick(object sender, RoutedEventArgs e)
+    {
+        bool want = _overloadBox?.IsChecked == true;
+        int cap = Math.Clamp((int)(_overloadCapSlider?.Value ?? 9), 7, 14);
+        var cur = _session.Flex.Settings;
+        bool raising = want && (!cur.AllowTeacherOverload || cap > cur.TeacherOverloadCap);
+        if (raising)
+        {
+            bool ok = await _session.ConfirmDangerousAsync(this, "teacher-overload",
+                "Перегрузка учителей", DangerousConsequence("teacher-overload") +
+                $" Потолок: {cap} уроков в день.");
+            if (!ok)
+            {
+                if (_overloadBox is not null) _overloadBox.IsChecked = cur.AllowTeacherOverload;
+                if (_overloadCapSlider is not null) _overloadCapSlider.Value = cur.TeacherOverloadCap;
+                Say("Перегрузка не применена.", true);
+                return;
+            }
+        }
+        try
+        {
+            var st = cur with { AllowTeacherOverload = want, TeacherOverloadCap = cap };
+            await _session.ApplyFlexAsync(_session.Flex with { Settings = st });
+            if (_overloadStatus is not null) _overloadStatus.Text = OverloadStatusText();
+            MarkClean();
+            Say(want
+                ? $"Перегрузка применена (потолок {cap}/день) — действует на следующие генерации."
+                : "Перегрузка выключена — все по норме 6/день.", false);
+        }
+        catch (Exception ex)
+        {
+            var errs = _session.LastImportErrors;
+            Say(errs.Count > 0 ? string.Join("; ", errs.Take(3)) : ex.Message, true);
+        }
     }
 
     private static TextBlock EmptyText(string s) => new()
@@ -624,10 +747,43 @@ public partial class SettingsWindow : Window
         }
     }
 
-    private void OnApplyClick(object sender, RoutedEventArgs e)
+    // B3: повышение дневных лимитов сверх СанПиН-норм — через подтверждение.
+    // Снижение и движение в пределах нормы — молча. Один попап на все строки.
+    private async Task<bool> ConfirmCapRaisesAsync()
+    {
+        var data = _session.Data;
+        if (data is null) return true;
+        var raises = new List<string>();
+        foreach (var (id, box, _, _, what) in _entityBoxes)
+        {
+            if (!int.TryParse(box.Text, out int v)) continue;
+            if (what.StartsWith("учитель ", StringComparison.Ordinal))
+            {
+                var t = data.Teachers.FirstOrDefault(x => x.Id == id);
+                if (t is not null && v > 6 && v > t.MaxLessonsPerDay)
+                    raises.Add($"{t.Name}: {t.MaxLessonsPerDay}→{v}/день");
+            }
+            else if (what.StartsWith("класс ", StringComparison.Ordinal))
+            {
+                var c = data.Classes.FirstOrDefault(x => x.Id == id);
+                if (c is null) continue;
+                int norm = c.Grade <= 4 ? 5 : c.Grade <= 6 ? 6 : 7;
+                if (v > norm && v > c.MaxLessonsPerDay)
+                    raises.Add($"{c.Name}: {c.MaxLessonsPerDay}→{v}/день (норма {norm})");
+            }
+        }
+        if (raises.Count == 0) return true;
+        return await _session.ConfirmDangerousAsync(this, "cap-raise", "Повышение дневных лимитов",
+            DangerousConsequence("cap-raise") + " Сверх нормы: " +
+            string.Join("; ", raises.Take(5)) +
+            (raises.Count > 5 ? $" и ещё {raises.Count - 5}." : "."));
+    }
+
+    private async void OnApplyClick(object sender, RoutedEventArgs e)
     {
         if (!ReadEntityBoxes(out string? err)) { Say(err!, true); return; }
         if (!ReadExpertBoxes()) { Say("В экспертном режиме — только числа из указанных диапазонов.", true); return; }
+        if (!await ConfirmCapRaisesAsync()) { Say("Отменено — лимиты не тронуты.", true); return; }
         ApplyEntities();
         // B2: опасные — только с подтверждённым набором (тумблеры выше).
         _session.ApplyOverrides(_editor.GetOverrides(), _confirmedDangerous);
@@ -646,6 +802,7 @@ public partial class SettingsWindow : Window
         if (name.Length == 0) { Say("Введите имя профиля.", true); return; }
         try
         {
+            if (!await ConfirmCapRaisesAsync()) { Say("Отменено — лимиты не тронуты.", true); return; }
             ApplyEntities();
             await _session.SaveCustomProfileAsync(name, _baseProfile, _editor.GetOverrides(), _confirmedDangerous);
             SavedNameText.Text = $"Сохранён: {name}";

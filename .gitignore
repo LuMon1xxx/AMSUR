@@ -1,0 +1,28 @@
+# .NET + AMSUR
+bin/
+obj/
+publish/
+publish-single/
+
+# Локальное хранилище чистки (большие бинарники, не для репо)
+_archive/
+
+# Временные файлы Office
+~$*
+*.tmp
+
+# Пользовательские и IDE-файлы
+*.user
+*.suo
+.vs/
+.idea/
+TestResults/
+*.trx
+
+# Локальные базы (прод-БД живёт в %LOCALAPPDATA%\Amsur, не в репо)
+*.db
+*.db-shm
+*.db-wal
+
+# Публикация single-exe
+*.publish.xml

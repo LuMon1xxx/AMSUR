@@ -86,8 +86,51 @@ public sealed class FlexP34Tests : IAsyncDisposable
         Assert.Equal(4, session2.Data!.Rooms.Single(r => r.Name == "Спортзал").MaxSimultaneousGroups);
     }
 
-    // Битый flex не роняет данные (fail-loud, старое живо).
+    // A1: перегрузка применяется, персистится, переживает перезапуск; задача строится.
     [Fact]
+    public async Task Session_Overload_Roundtrip()
+    {
+        Directory.CreateDirectory(_dir);
+        var session = new AppSession(_dir);
+        await session.InitAsync();
+        await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
+        Assert.False(session.Flex.Settings.AllowTeacherOverload);
+
+        var flex = session.Flex with
+        {
+            Settings = session.Flex.Settings with
+            {
+                AllowTeacherOverload = true, TeacherOverloadCap = 10,
+            },
+        };
+        await session.ApplyFlexAsync(flex);
+        Assert.True(session.Flex.Settings.AllowTeacherOverload);
+        Assert.Equal(10, session.Flex.Settings.TeacherOverloadCap);
+        var problem = session.BuildProblem(); // сбалансированная демо — никого не поднимает
+        Assert.All(problem.Teachers.Values, t => Assert.Equal(6, t.MaxLessonsPerDay));
+
+        var session2 = new AppSession(_dir);
+        await session2.InitAsync();
+        Assert.True(session2.Flex.Settings.AllowTeacherOverload);
+        Assert.Equal(10, session2.Flex.Settings.TeacherOverloadCap);
+    }
+
+    // A2: быстрый черновик из сессии пишется файлом (демо закрывается полностью).
+    [Fact]
+    public async Task Session_ExportDraft_WritesFile()
+    {
+        Directory.CreateDirectory(_dir);
+        var session = new AppSession(_dir);
+        await session.InitAsync();
+        await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
+        string path = Path.Combine(_dir, "draft.xlsx");
+        var (placed, total) = await session.ExportDraftAsync(path);
+        Assert.True(File.Exists(path));
+        Assert.Equal(total, placed);
+        Assert.True(new FileInfo(path).Length > 0);
+    }
+
+    // Битый flex не роняет данные (fail-loud, старое живо).    [Fact]
     public async Task Session_Flex_BadKeepsOldData()
     {
         Directory.CreateDirectory(_dir);

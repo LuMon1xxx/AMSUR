@@ -28,7 +28,7 @@
             <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
                        Text="4. Проверка: примите лучший вариант, при желании поправьте урок вручную."/>
             <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="5. Печать: выгрузите активное расписание в Excel."/>
+                       Text="5. Печать: выгрузите активное расписание в Excel/HTML. Нет времени ждать — кнопка «Собрать черновик» даст прикидку за секунды (с честными дырами)."/>
           </StackPanel>
         </Border>
 
@@ -52,6 +52,14 @@
                        Text="Где посмотреть, почему такая оценка?"/>
             <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
                        Text="Кнопка «Почему так?» у оценки открывает подробное объяснение по строкам расчёта."/>
+            <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="Что такое черновик?"/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                       Text="Быстрая прикидка без долгой генерации: размещённое — в сетку, неназначенные уроки — отдельным листом. Для оценки, не для печати на стену."/>
+            <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="Что такое перегрузка учителей?"/>
+            <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                       Text="Если учителям не хватает слотов (нехватка штата), в настройках можно разрешить перегрузку: дневной лимит поднимется только у тех, кому не хватает. Включается с предупреждением."/>
             <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
                        Text="Как поправить один урок вручную?"/>
             <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"

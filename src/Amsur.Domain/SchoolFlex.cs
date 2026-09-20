@@ -59,6 +59,15 @@ public sealed class FlexSettings : Entity
     public int GradeOtherWeight { get; set; } = 1;
     public int IsHeavyThreshold { get; set; } = 7;
     public TeacherAssignMode AssignMode { get; set; } = TeacherAssignMode.HardClass;
+    /// <summary>
+    /// «Разрешить перегрузку» (D-39): если true, билдер поднимает дневной лимит
+    /// ТОЛЬКО тем учителям, чья недельная нагрузка не влезает в 5 × MaxLessonsPerDay,
+    /// до TeacherOverloadCap. Остальных не трогает. Видно в расписании (кто и сколько),
+    /// честно, не молча. UI-тумблер — backlog (идти через ConfirmDangerous).
+    /// </summary>
+    public bool AllowTeacherOverload { get; set; } = false;
+    /// <summary>Потолок перегрузки, уроков/день (дефолт 9: 1-я + 2-я смены; выше сетки не поднять).</summary>
+    public int TeacherOverloadCap { get; set; } = 9;
 
     public static FlexSettings Default => new();
 
@@ -137,7 +146,9 @@ public sealed record FlexSettingsRow(
     int W9,
     int WOther,
     int IsHeavyThreshold,
-    TeacherAssignMode AssignMode)
+    TeacherAssignMode AssignMode,
+    bool AllowTeacherOverload = false,
+    int TeacherOverloadCap = 9)
 {
     public static FlexSettingsRow Default => new(true, 3, 2, 1, 7, TeacherAssignMode.HardClass);
 
@@ -149,6 +160,8 @@ public sealed record FlexSettingsRow(
         GradeOtherWeight = WOther,
         IsHeavyThreshold = IsHeavyThreshold,
         AssignMode = AssignMode,
+        AllowTeacherOverload = AllowTeacherOverload,
+        TeacherOverloadCap = TeacherOverloadCap,
     };
 }
 

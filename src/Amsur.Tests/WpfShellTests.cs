@@ -145,8 +145,54 @@ public sealed class WpfShellTests : IAsyncDisposable
         });
     }
 
-    // --- 4. LoadRowWindow: диалог ручного ввода собирается и без ресурсов App ---
+    // --- 2b. SettingsWindow: карточка перегрузки строится (выкл. и вкл.) ---    [Fact]
+    public void SettingsWindow_OverloadCard_Constructs()
+    {
+        RunSta(async _ =>
+        {
+            Directory.CreateDirectory(_dir);
+            EnsureApp();
+            var session = new AppSession(_dir);
+            await session.InitAsync();
+            await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
+            var winOff = new SettingsWindow(session);
+            winOff.Close();
+            var flex = session.Flex with
+            {
+                Settings = session.Flex.Settings with
+                {
+                    AllowTeacherOverload = true, TeacherOverloadCap = 10,
+                },
+            };
+            await session.ApplyFlexAsync(flex);
+            var winOn = new SettingsWindow(session);
+            winOn.Close();
+        });
+    }
+
+    // --- 2c. ExportWindow: без активного — честное пустое состояние, черновик доступен ---
     [Fact]
+    public void ExportWindow_EmptyStateDraftAvailable()
+    {
+        RunSta(async _ =>
+        {
+            Directory.CreateDirectory(_dir);
+            EnsureApp();
+            var session = new AppSession(_dir);
+            await session.InitAsync();
+            await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
+            var win = new ExportWindow(session);
+            for (int i = 0; i < 100 && win.GateText.Text == "проверка…"; i++)
+                await Task.Delay(50);
+            Assert.Contains("нет активного", win.GateText.Text);
+            Assert.False(win.ExportBtn.IsEnabled);
+            Assert.True(win.DraftBtn.IsEnabled);
+            Assert.True(win.TeacherBox.Items.Count > 0);
+            win.Close();
+        });
+    }
+
+    // --- 4. LoadRowWindow: диалог ручного ввода собирается и без ресурсов App ---    [Fact]
     public void LoadRowWindow_Constructs()
     {
         RunSta(_ =>

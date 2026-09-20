@@ -14,12 +14,17 @@ public sealed record LoadRow(
     string TeacherName,
     bool SplitSubgroups,
     string? SplitTeacherBName,
-    string? RoomName);
+    string? RoomName,
+    // P-DAYOFF: дни (1-based номера через запятую) и слоты, когда учителя нет.
+    // Опциональны: старые файлы из 7 колонок импортируются как раньше.
+    string? UnavailDays = null,
+    string? UnavailSlots = null);
 
 public static class ExcelLoadExchange
 {
     private static readonly string[] Header =
-        ["Class", "Subject", "HoursPerWeek", "Teacher", "Split", "TeacherB", "Room"];
+        ["Class", "Subject", "HoursPerWeek", "Teacher", "Split", "TeacherB", "Room",
+         "UnavailDays", "UnavailSlots"];
 
     public static void ExportLoad(Stream destination, IReadOnlyList<LoadRow> rows)
     {
@@ -37,6 +42,8 @@ public static class ExcelLoadExchange
             ws.Cell(r + 2, 5).Value = row.SplitSubgroups ? "A/B" : "";
             ws.Cell(r + 2, 6).Value = row.SplitTeacherBName ?? "";
             ws.Cell(r + 2, 7).Value = row.RoomName ?? "";
+            ws.Cell(r + 2, 8).Value = row.UnavailDays ?? "";
+            ws.Cell(r + 2, 9).Value = row.UnavailSlots ?? "";
         }
         wb.SaveAs(destination);
     }
@@ -63,6 +70,8 @@ public static class ExcelLoadExchange
             string split = ws.Cell(r, 5).GetString().Trim();
             string teacherB = ws.Cell(r, 6).GetString().Trim();
             string room = ws.Cell(r, 7).GetString().Trim();
+            string unavailDays = ws.Cell(r, 8).GetString().Trim();
+            string unavailSlots = ws.Cell(r, 9).GetString().Trim();
             bool isSplit = split.Equals("A/B", StringComparison.OrdinalIgnoreCase);
             if (isSplit && string.IsNullOrEmpty(teacherB))
                 throw new InvalidOperationException($"Row {r}: split requires TeacherB.");
@@ -70,7 +79,9 @@ public static class ExcelLoadExchange
                 throw new InvalidOperationException($"Row {r}: TeacherB without split flag.");
             rows.Add(new LoadRow(cls, subj, hours, teacher, isSplit,
                 string.IsNullOrEmpty(teacherB) ? null : teacherB,
-                string.IsNullOrEmpty(room) ? null : room));
+                string.IsNullOrEmpty(room) ? null : room,
+                string.IsNullOrEmpty(unavailDays) ? null : unavailDays,
+                string.IsNullOrEmpty(unavailSlots) ? null : unavailSlots));
             r++;
         }
         return rows;

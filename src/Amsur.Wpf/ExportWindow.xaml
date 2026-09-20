@@ -9,7 +9,7 @@
   <StackPanel Margin="20">
     <TextBlock Style="{StaticResource TH1}" FontSize="20" Text="Экспорт и печать"/>
     <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
-               Text="Один лист «Расписание» по классам. Выгрузка блокируется, если есть жёсткие нарушения."/>
+               Text="Три вида: классы, учителя, кабинеты. Выгрузка блокируется, если есть жёсткие нарушения."/>
 
     <Grid Margin="0,12,0,0">
       <Grid.ColumnDefinitions>
@@ -33,6 +33,8 @@
           </Border>
           <CheckBox x:Name="TeacherSheetBox" Content="Лист «Учителя» (кому когда какой класс)" FontSize="13"
                     Margin="0,10,0,0" IsChecked="True" VerticalAlignment="Center"/>
+          <CheckBox x:Name="RoomSheetBox" Content="Лист «Кабинеты» (какой класс каким уроком занят)" FontSize="13"
+                    Margin="0,6,0,0" IsChecked="True" VerticalAlignment="Center"/>
 
           <TextBlock Text="Формат:" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
           <Border Background="{StaticResource BAccentSoft}" BorderBrush="{StaticResource BAccent}"
@@ -48,8 +50,8 @@
             </StackPanel>
           </Border>
           <Border Background="{StaticResource BSubtle}" BorderBrush="{StaticResource BBorder}"
-                  BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,8,0,0" Opacity="0.7"
-                  ToolTip="Печатная форма PDF появится в следующей версии">
+                   BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,8,0,0"
+                   ToolTip="Отдельной кнопки PDF нет: выгрузите HTML ниже и напечатайте в PDF из браузера (Ctrl+P)">
             <StackPanel Orientation="Horizontal">
               <Border Background="{StaticResource BTextMuted}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
                 <TextBlock Text="PDF" FontSize="11" FontWeight="Bold" Foreground="White"/>
@@ -58,10 +60,10 @@
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="Печатная форма PDF" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
                   <Border Style="{StaticResource Badge}" Background="{StaticResource BSubtle}" Margin="6,0,0,0">
-                    <TextBlock Text="Скоро" FontSize="10" Foreground="{StaticResource BTextSoft}"/>
+                    <TextBlock Text="через HTML" FontSize="10" Foreground="{StaticResource BTextSoft}"/>
                   </Border>
                 </StackPanel>
-                <TextBlock Style="{StaticResource THint}" FontSize="11" Text="Скоро, пока Excel — выгрузите таблицу выше."/>
+                <TextBlock Style="{StaticResource THint}" FontSize="11" Text="Выберите HTML ниже → откройте в браузере → печать в PDF (Ctrl+P)."/>
               </StackPanel>
             </StackPanel>
           </Border>
@@ -72,8 +74,17 @@
                     Margin="8,0,0,0" Click="OnBrowseClick"/>
             <TextBox x:Name="PathBox" VerticalAlignment="Center"/>
           </DockPanel>
-          <Button x:Name="ExportBtn" Content="⬇  Выгрузить в Excel" Style="{StaticResource BtnPrimary}"
+          <Button x:Name="ExportBtn" x:FieldModifier="public" Content="⬇  Выгрузить (Excel / HTML)" Style="{StaticResource BtnPrimary}"
                   Margin="0,12,0,0" Padding="16,10" Click="OnExportClick"/>
+          <Button x:Name="DraftBtn" x:FieldModifier="public" Content="⚡ Собрать черновик (быстро, без генерации)" Style="{StaticResource BtnSecondary}"
+                  Margin="0,8,0,0" Padding="16,8" Click="OnDraftClick"
+                  ToolTip="Жадный старт за секунды: размещённое — в сетку, неназначенное — листом «Неназначенные». Для прикидки, не для печати."/>
+          <TextBlock Text="Персональное расписание:" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
+          <DockPanel>
+            <Button Content="Выгрузить" Style="{StaticResource BtnSecondary}" DockPanel.Dock="Right"
+                    Margin="8,0,0,0" Click="OnTeacherClick"/>
+            <ComboBox x:Name="TeacherBox" x:FieldModifier="public" VerticalAlignment="Center"/>
+          </DockPanel>
           <TextBlock x:Name="ResultText" FontSize="13" Margin="0,8,0,0" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
@@ -85,7 +96,7 @@
             <TextBlock Text="Предпросмотр" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
             <Border x:Name="GateBadge" Style="{StaticResource Badge}" Background="{StaticResource BGoodBg}"
                     DockPanel.Dock="Right" VerticalAlignment="Center">
-              <TextBlock x:Name="GateText" Text="проверка…" FontSize="11" Foreground="{StaticResource BGood}"/>
+              <TextBlock x:Name="GateText" x:FieldModifier="public" Text="проверка…" FontSize="11" Foreground="{StaticResource BGood}"/>
             </Border>
           </DockPanel>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0"

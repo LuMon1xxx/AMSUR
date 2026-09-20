@@ -17,6 +17,9 @@ public sealed class CurriculumItem : Entity
     public Guid? RoomId { get; set; }     // предпочтительный кабинет (опционально)
     public int HoursPerWeek { get; set; }
     public bool SplitSubgroups { get; set; }  // A/B сплит (P0); N-сплиты — P1 Splits v2
+    public Guid? GroupId { get; set; }    // null = весь класс; профильная пара — подгруппа A/B
+    public Guid? SyncGroupId { get; set; } // общий Guid пары (A→химия + B→английский);
+                                           // билдер выводит per-hour sync (D-38)
 }
 
 // Единица размещения — конкретный час (из 5 ч → 5 occurrence).

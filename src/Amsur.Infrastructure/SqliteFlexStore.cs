@@ -60,7 +60,9 @@ public sealed class SqliteFlexStore(string connectionString)
               W9 INTEGER NOT NULL,
               WOther INTEGER NOT NULL,
               IsHeavyThreshold INTEGER NOT NULL,
-              AssignMode INTEGER NOT NULL);
+              AssignMode INTEGER NOT NULL,
+              AllowTeacherOverload INTEGER NOT NULL DEFAULT 0,
+              TeacherOverloadCap INTEGER NOT NULL DEFAULT 9);
             """;
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = ddl;
@@ -86,6 +88,22 @@ public sealed class SqliteFlexStore(string connectionString)
         catch (SqliteException ex) when (ex.Message.Contains("duplicate", StringComparison.OrdinalIgnoreCase))
         {
             // Колонка уже есть (свежая БД) — нечего делать.
+        }
+        // Миграция (D-39, перегрузка): AllowTeacherOverload + TeacherOverloadCap.
+        foreach (var col in new[] {
+            "ALTER TABLE FlexSettings ADD COLUMN AllowTeacherOverload INTEGER NOT NULL DEFAULT 0;",
+            "ALTER TABLE FlexSettings ADD COLUMN TeacherOverloadCap INTEGER NOT NULL DEFAULT 9;" })
+        {
+            try
+            {
+                await using var mig = conn.CreateCommand();
+                mig.CommandText = col;
+                await mig.ExecuteNonQueryAsync(ct);
+            }
+            catch (SqliteException ex) when (ex.Message.Contains("duplicate", StringComparison.OrdinalIgnoreCase))
+            {
+                // Колонка уже есть (свежая БД) — нечего делать.
+            }
         }
     }
 
@@ -151,10 +169,11 @@ public sealed class SqliteFlexStore(string connectionString)
         await ExecAsync(conn, tx, "DELETE FROM FlexSettings;", ct);
         var st = data.Settings;
         await ExecAsync(conn, tx,
-            "INSERT INTO FlexSettings(Id, GradePriorityEnabled, W11, W9, WOther, IsHeavyThreshold, AssignMode) VALUES(1, $e, $w11, $w9, $wo, $th, $am);",
+            "INSERT INTO FlexSettings(Id, GradePriorityEnabled, W11, W9, WOther, IsHeavyThreshold, AssignMode, AllowTeacherOverload, TeacherOverloadCap) VALUES(1, $e, $w11, $w9, $wo, $th, $am, $ov, $cap);",
             ct, ("$e", st.GradePriorityEnabled ? 1 : 0), ("$w11", st.W11),
             ("$w9", st.W9), ("$wo", st.WOther), ("$th", st.IsHeavyThreshold),
-            ("$am", (int)st.AssignMode));
+            ("$am", (int)st.AssignMode),
+            ("$ov", st.AllowTeacherOverload ? 1 : 0), ("$cap", st.TeacherOverloadCap));
 
         await tx.CommitAsync(ct);
     }
@@ -228,12 +247,13 @@ public sealed class SqliteFlexStore(string connectionString)
         var settings = FlexSettingsRow.Default;
         await using (var q = conn.CreateCommand())
         {
-            q.CommandText = "SELECT GradePriorityEnabled, W11, W9, WOther, IsHeavyThreshold, AssignMode FROM FlexSettings WHERE Id=1;";
+            q.CommandText = "SELECT GradePriorityEnabled, W11, W9, WOther, IsHeavyThreshold, AssignMode, AllowTeacherOverload, TeacherOverloadCap FROM FlexSettings WHERE Id=1;";
             await using var r = await q.ExecuteReaderAsync(ct);
             if (await r.ReadAsync(ct))
                 settings = new FlexSettingsRow(r.GetInt32(0) != 0, r.GetInt32(1),
                     r.GetInt32(2), r.GetInt32(3), r.GetInt32(4),
-                    (TeacherAssignMode)r.GetInt32(5));
+                    (TeacherAssignMode)r.GetInt32(5),
+                    r.GetInt32(6) != 0, r.GetInt32(7));
         }
         return new FlexDataset(rooms, classes, norms, overrides, difficulty, common, assigns, settings);
     }

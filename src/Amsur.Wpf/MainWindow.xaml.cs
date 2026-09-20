@@ -199,9 +199,62 @@ public partial class MainWindow : Window
             : Session.QualityRules.ProfileName == "STANDARD" ? "Рекомендуемый" : "Пресет";
         MiniProfileText.Text = ProfileShort();
         HeroGenerateBtn.IsEnabled = hasData;
+        RefreshStepsStage1(hasData);
+        _ = RefreshStepsStage2Async(hasData);
         RefreshQuality();
         RefreshFooter(s);
         _ = RefreshActiveAsync(hasData);
+    }
+
+    // P-GUIDE: живой «Быстрый старт» — кружки по факту, а не статично.
+    // S1/S2 — синхронно (данные есть/нет); S3–S5 — после чтения активного.
+    // ✓ = артефакт реально существует; иначе текущий шаг подсвечен, остальные серые.
+    private void RefreshStepsStage1(bool hasData)
+    {
+        PaintStep(Step1Circle, Step1Num, hasData ? StepState.Done : StepState.Current);
+        PaintStep(Step2Circle, Step2Num, hasData ? StepState.Done : StepState.Todo);
+    }
+
+    private async Task RefreshStepsStage2Async(bool hasData)
+    {
+        bool hasActive = false, hasQuality = false;
+        try
+        {
+            var active = hasData ? await Session.GetActiveAsync() : null;
+            hasActive = active is not null;
+            hasQuality = hasActive && Session.LastQuality is not null;
+        }
+        catch { /* шаги просто останутся серыми — честно, без падения дашборда */ }
+        PaintStep(Step3Circle, Step3Num,
+            hasActive ? StepState.Done : hasData ? StepState.Current : StepState.Todo);
+        PaintStep(Step4Circle, Step4Num,
+            hasQuality ? StepState.Done : hasActive ? StepState.Current : StepState.Todo);
+        PaintStep(Step5Circle, Step5Num, hasActive ? StepState.Current : StepState.Todo);
+    }
+
+    private enum StepState { Todo, Current, Done }
+
+    private void PaintStep(System.Windows.Controls.Border circle,
+        System.Windows.Controls.TextBlock num, StepState state)
+    {
+        switch (state)
+        {
+            case StepState.Done:
+                circle.Background = (Brush)FindResource("BAccent");
+                num.Foreground = System.Windows.Media.Brushes.White;
+                num.Text = "✓";
+                break;
+            case StepState.Current:
+                circle.Background = (Brush)FindResource("BAccent");
+                num.Foreground = System.Windows.Media.Brushes.White;
+                if (num.Text == "✓") num.Text = (string)num.Tag;
+                break;
+            default:
+                circle.Background = (Brush)FindResource("BSubtle");
+                num.Foreground = (Brush)FindResource("BTextSoft");
+                if (num.Text == "✓") num.Text = (string)num.Tag;
+                break;
+        }
     }
 
     private string ProfileShort() =>
@@ -428,7 +481,7 @@ public partial class MainWindow : Window
     private void OnScheduleClick(object sender, RoutedEventArgs e) =>
         new ScheduleWindow(Session).Show();
 
-    // P0-6: экспорт — через отдельное окно (Excel only, PDF «Скоро»).
+    // P0-6: экспорт — через отдельное окно (Excel 3 вида + HTML→PDF из браузера).
     private void OnExportClick(object sender, RoutedEventArgs e) =>
         new ExportWindow(Session) { Owner = this }.ShowDialog();
 

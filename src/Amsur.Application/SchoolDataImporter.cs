@@ -26,6 +26,12 @@ public sealed record SchoolData(
     /// <summary>P1: гибкие настройки R1–R9, применённые при импорте (дефолт — Empty).</summary>
     public FlexDataset Flex { get; init; } = FlexDataset.Empty;
 
+    /// <summary>P-DAYOFF: недоступность учителей (из колонок UnavailDays/UnavailSlots).</summary>
+    public IReadOnlyList<TeacherDayOff> DaysOff { get; init; } = [];
+
+    /// <inheritdoc cref="DaysOff"/>
+    public IReadOnlyList<TeacherUnavailability> Unavailability { get; init; } = [];
+
     public ProblemInput ToProblemInput()
     {
         // P2: flex → problem (имена → Id; неизвестные имена назначений пропускаем:
@@ -56,7 +62,7 @@ public sealed record SchoolData(
         }
         var common = Flex.CommonLesson;
         return new ProblemInput(
-            Classes, Teachers, Subjects, Curriculum, Groups, [], [],
+            Classes, Teachers, Subjects, Curriculum, Groups, DaysOff, Unavailability,
             DaysCount: DaysCount, SlotsPerDay: SlotsPerDay,
             SplitTeachers: new Dictionary<Guid, (Guid, Guid)>(SplitTeachers),
             rooms: Rooms, // P0-8: кабинеты из импорта обязаны доходить до solver (было: дроп в []).
@@ -75,6 +81,23 @@ public sealed record SchoolData(
 
 public static class SchoolDataImporter
 {
+    /// <summary>B5: человеческие сокращения → официальные РБ-названия (SUBJECTS_RB.md §1).
+    /// Неизвестное НЕ трогаем (создаётся как есть); каждое применение пишется в Notes,
+    /// чтобы завуч видел «что исправить» в Excel. Fail-loud пути не меняются.</summary>
+    public static readonly IReadOnlyDictionary<string, string> SubjectAliases =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Матем"] = "Математика",
+            ["ИЗО"] = "Изобразительное искусство",
+            ["Физра"] = "Физическая культура и здоровье",
+            ["Физкультура"] = "Физическая культура и здоровье",
+            ["Труд"] = "Трудовое обучение",
+            ["Технология"] = "Трудовое обучение",
+            ["ОБЖ"] = "Основы безопасности жизнедеятельности",
+            ["Окружающий мир"] = "Человек и мир",
+            ["Обществознание"] = "Обществоведение",
+        };
+
     public static void ExportTemplate(Stream destination) =>
         ExcelLoadExchange.ExportLoad(destination, []);
 
@@ -142,9 +165,21 @@ public static class SchoolDataImporter
         Subject Subj(string name)
         {
             var key = name.Trim();
+            if (SubjectAliases.TryGetValue(key, out var official))
+            {
+                notes.Add($"«{key}» распознано как «{official}» — " +
+                    "в Excel лучше писать официальное название.");
+                key = official;
+            }
             if (!subjects.TryGetValue(key, out var s))
             {
                 s = new Subject { Name = key, MaxPerDay = 2 };
+                // P-PE-FLAG: явный флаг из официального названия (после алиасов —
+                // «Физра» уже стала официальным именем выше). Name-matching
+                // запрещён только для произвольных строк; официальное имя — факт.
+                if (string.Equals(key, "Физическая культура и здоровье",
+                        StringComparison.OrdinalIgnoreCase))
+                    s.IsPhysicalEducation = true;
                 // R6: явная сложность предмета (1..10) бьёт дефолт 5.
                 var diff = flex.SubjectDifficulty.FirstOrDefault(x =>
                     string.Equals(x.SubjectName, key, StringComparison.OrdinalIgnoreCase));
@@ -216,6 +251,50 @@ public static class SchoolDataImporter
             curriculum.Add(item);
         }
 
+        // P-DAYOFF: недоступность учителей (UnavailDays/UnavailSlots строк).
+        // Дни — 1-based номера через запятую → DayIndex; слоты — как есть.
+        // Объединение по учителю со всех его строк; мусор — громкая ошибка.
+        var offDays = new Dictionary<string, SortedSet<int>>(StringComparer.OrdinalIgnoreCase);
+        var offSlots = new Dictionary<string, SortedSet<int>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in rows)
+        {
+            var tname = r.TeacherName.Trim();
+            if (!string.IsNullOrWhiteSpace(r.UnavailDays))
+                foreach (int d in ParseDays(r.UnavailDays!, tname, daysCount))
+                {
+                    if (!offDays.TryGetValue(tname, out var set))
+                        offDays[tname] = set = [];
+                    set.Add(d);
+                }
+            if (!string.IsNullOrWhiteSpace(r.UnavailSlots))
+                foreach (int s in ParseSlots(r.UnavailSlots!, tname, slotsPerDay))
+                {
+                    if (!offSlots.TryGetValue(tname, out var set))
+                        offSlots[tname] = set = [];
+                    set.Add(s);
+                }
+        }
+        var daysOff = new List<TeacherDayOff>();
+        var unavailability = new List<TeacherUnavailability>();
+        foreach (var (tname, set) in offDays)
+        {
+            var t = Teach(tname);
+            daysOff.AddRange(set.Select(d => new TeacherDayOff { TeacherId = t.Id, DayIndex = d }));
+        }
+        foreach (var (tname, set) in offSlots)
+        {
+            // Слот без дня = «этот урок ежедневно»: раскрываем на все дни
+            // (движок матчит точное (DayIndex, SlotIndex), см. ProblemBuilder).
+            var t = Teach(tname);
+            foreach (int d in Enumerable.Range(0, daysCount))
+                unavailability.AddRange(set.Select(s => new TeacherUnavailability
+                {
+                    TeacherId = t.Id, DayIndex = d, SlotIndex = s, Kind = AvailabilityKind.Forbidden
+                }));
+        }
+        if (daysOff.Count > 0 || unavailability.Count > 0)
+            notes.Add($"Недоступность учителей: дней — {daysOff.Count}, слотов — {unavailability.Count}.");
+
         // R7: один учитель на (класс,предмет). Сплиты освобождены (A/B — штатно два учителя).
         // Режим из FlexSettings (дефолт HardClass, D-34); Soft/Off — только заметка.
         var mode = flex.Settings.AssignMode;
@@ -256,6 +335,36 @@ public static class SchoolDataImporter
             classes.Values.ToList(), teachers.Values.ToList(), subjects.Values.ToList(),
             curriculum, groups.Values.SelectMany(g => new[] { g.A, g.B }).ToList(),
             rooms.Values.ToList(), splitTeachers, daysCount, slotsPerDay, notes)
-        { Flex = flex };
+        { Flex = flex, DaysOff = daysOff, Unavailability = unavailability };
+    }
+
+    private static IReadOnlyList<int> ParseDays(string raw, string teacher, int daysCount)
+    {
+        var out_ = new SortedSet<int>();
+        foreach (var part in raw.Split(',',
+                     StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!int.TryParse(part, out int v) || v < 1 || v > daysCount)
+                throw new InvalidOperationException(
+                    $"Учитель '{teacher}': НеДоступенДни — номера дней 1..{daysCount} " +
+                    $"через запятую (задано '{part}').");
+            out_.Add(v - 1);
+        }
+        return out_.ToList();
+    }
+
+    private static IReadOnlyList<int> ParseSlots(string raw, string teacher, int slotsPerDay)
+    {
+        var out_ = new SortedSet<int>();
+        foreach (var part in raw.Split(',',
+                     StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!int.TryParse(part, out int v) || v < 1 || v > slotsPerDay)
+                throw new InvalidOperationException(
+                    $"Учитель '{teacher}': НеДоступенСлоты — номера уроков 1..{slotsPerDay} " +
+                    $"через запятую (задано '{part}').");
+            out_.Add(v);
+        }
+        return out_.ToList();
     }
 }
