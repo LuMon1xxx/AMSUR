@@ -1,0 +1,124 @@
+<UserControl x:Class="Amsur.Wpf.Views.ExportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- P-D3: экспорт как view (контент из ExportWindow 1-в-1, кнопка «Закрыть» убрана).
+       Эмодзи ⬇/⚡ в кнопках заменены MDL2-глифами (правило «без эмодзи в UI»). -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Margin="24" MaxWidth="1100">
+    <TextBlock Style="{StaticResource TH1}" FontSize="20" Text="Экспорт и печать"/>
+    <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
+               Text="Три вида: классы, учителя, кабинеты. Выгрузка блокируется, если есть жёсткие нарушения."/>
+
+    <Grid Margin="0,12,0,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,6,0">
+        <StackPanel>
+          <TextBlock Text="Параметры выгрузки" FontSize="16" FontWeight="SemiBold"/>
+          <TextBlock Style="{StaticResource THCaption}" Margin="0,2,0,0" Text="что войдёт в документ"/>
+          <Border Background="{StaticResource BSubtle}" CornerRadius="8" Padding="10" Margin="0,10,0,0">
+            <StackPanel Orientation="Horizontal">
+              <CheckBox IsChecked="True" IsEnabled="False" VerticalAlignment="Center"/>
+              <StackPanel Margin="8,0,0,0">
+                <TextBlock Text="Расписание по классам (основной свод)" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                <TextBlock x:Name="ScopeText" Style="{StaticResource THint}" FontSize="12" Text="—"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+          <CheckBox x:Name="TeacherSheetBox" Content="Лист «Учителя» (кому когда какой класс)" FontSize="13"
+                    Margin="0,10,0,0" IsChecked="True" VerticalAlignment="Center"/>
+          <CheckBox x:Name="RoomSheetBox" Content="Лист «Кабинеты» (какой класс каким уроком занят)" FontSize="13"
+                    Margin="0,6,0,0" IsChecked="True" VerticalAlignment="Center"/>
+
+          <TextBlock Text="Формат:" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
+          <Border Background="{StaticResource BAccentSoft}" BorderBrush="{StaticResource BAccent}"
+                  BorderThickness="2" CornerRadius="10" Padding="10">
+            <StackPanel Orientation="Horizontal">
+              <Border Background="#107C41" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                <TextBlock Text="XLS" FontSize="11" FontWeight="Bold" Foreground="White"/>
+              </Border>
+              <StackPanel Margin="8,0,0,0">
+                <TextBlock Text="Microsoft Excel (.xlsx)" FontSize="13" FontWeight="SemiBold"/>
+                <TextBlock Style="{StaticResource THint}" FontSize="11" Text="Редактируемая таблица, готова к печати."/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+          <Border Background="{StaticResource BSubtle}" BorderBrush="{StaticResource BBorder}"
+                   BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,8,0,0"
+                   ToolTip="Отдельной кнопки PDF нет: выгрузите HTML ниже и напечатайте в PDF из браузера (Ctrl+P)">
+            <StackPanel Orientation="Horizontal">
+              <Border Background="{StaticResource BTextMuted}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                <TextBlock Text="PDF" FontSize="11" FontWeight="Bold" Foreground="White"/>
+              </Border>
+              <StackPanel Margin="8,0,0,0">
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="Печатная форма PDF" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                  <Border Style="{StaticResource Badge}" Background="{StaticResource BSubtle}" Margin="6,0,0,0">
+                    <TextBlock Text="через HTML" FontSize="10" Foreground="{StaticResource BTextSoft}"/>
+                  </Border>
+                </StackPanel>
+                <TextBlock Style="{StaticResource THint}" FontSize="11" Text="Выберите HTML ниже → откройте в браузере → печать в PDF (Ctrl+P)."/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <TextBlock Text="Куда сохранить:" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
+          <DockPanel>
+            <Button Content="Обзор…" Style="{StaticResource BtnSecondary}" DockPanel.Dock="Right"
+                    Margin="8,0,0,0" Click="OnBrowseClick"/>
+            <TextBox x:Name="PathBox" VerticalAlignment="Center"/>
+          </DockPanel>
+          <Button x:Name="ExportBtn" x:FieldModifier="public" Style="{StaticResource BtnPrimary}"
+                  Margin="0,12,0,0" Padding="16,10" Click="OnExportClick">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+              <TextBlock Text="Выгрузить (Excel / HTML)" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+          <Button x:Name="DraftBtn" x:FieldModifier="public" Style="{StaticResource BtnSecondary}"
+                  Margin="0,8,0,0" Padding="16,8" Click="OnDraftClick"
+                  ToolTip="Жадный старт за секунды: размещённое — в сетку, неназначенное — листом «Неназначенные». Для прикидки, не для печати.">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center"/>
+              <TextBlock Text="Собрать черновик (быстро, без генерации)" Margin="8,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+          </Button>
+          <TextBlock Text="Персональное расписание:" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
+          <DockPanel>
+            <Button Content="Выгрузить" Style="{StaticResource BtnSecondary}" DockPanel.Dock="Right"
+                    Margin="8,0,0,0" Click="OnTeacherClick"/>
+            <ComboBox x:Name="TeacherBox" x:FieldModifier="public" VerticalAlignment="Center"/>
+          </DockPanel>
+          <TextBlock x:Name="ResultText" FontSize="13" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Column="1" Style="{StaticResource Card}" Margin="6,0,0,0">
+        <StackPanel>
+          <DockPanel>
+            <TextBlock Text="Предпросмотр" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <Border x:Name="GateBadge" Style="{StaticResource Badge}" Background="{StaticResource BGoodBg}"
+                    DockPanel.Dock="Right" VerticalAlignment="Center">
+              <TextBlock x:Name="GateText" x:FieldModifier="public" Text="проверка…" FontSize="11" Foreground="{StaticResource BGood}"/>
+            </Border>
+          </DockPanel>
+          <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0"
+                     Text="Первые 12 строк активного расписания. Полный файл — все уроки."/>
+          <ItemsControl x:Name="PreviewList" Margin="0,8,0,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="{StaticResource BSubtle}" CornerRadius="6" Padding="8,6" Margin="0,0,0,6">
+                  <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap"/>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </StackPanel>
+  </ScrollViewer>
+</UserControl>

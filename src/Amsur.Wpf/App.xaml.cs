@@ -30,9 +30,29 @@ public partial class App : System.Windows.Application
             (s, _) => ((Window)s).Close()));
     }
 
+    // D-48: детект тестраннера (vstest/testhost): прод-старт запрещён.
+    private static bool IsTestHost()
+    {
+        try
+        {
+            var entry = System.Reflection.Assembly.GetEntryAssembly()?.FullName ?? "";
+            if (entry.Contains("testhost", StringComparison.OrdinalIgnoreCase) ||
+                entry.Contains("vstest", StringComparison.OrdinalIgnoreCase))
+                return true;
+            return AppDomain.CurrentDomain.FriendlyName.Contains("testhost",
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
+    }
+
     protected override async void OnStartup(System.Windows.StartupEventArgs e)
     {
         base.OnStartup(e);
+        // D-48: STA-тесты создают App + крутят Dispatcher — конструктор
+        // Application постит отложенный OnStartup, и без этой стражи тесты
+        // поднимали бы НАСТОЯЩЕЕ окно с НАСТОЯЩИМИ данными юзера (ghost window,
+        // найдено 20.09.2026 на рендер-тестах). Под тестраннером — только ресурсы.
+        if (IsTestHost()) return;
         try
         {
             var dir = Path.Combine(

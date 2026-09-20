@@ -37,30 +37,18 @@ public partial class MainWindow : Window, IViewNavigator
     {
         UserControl next = view switch
         {
-            "Data" => new PlaceholderView("Школа и данные",
-                "Классы, нагрузка, учителя и кабинеты.",
-                "Открыть данные старым окном (временно)")
-            { LegacyOpen = () => new SchoolDataWindow(Session) { Owner = this }.ShowDialog() },
-            "Settings" => new PlaceholderView("Настройки качества",
-                "Профили и веса правил без кода.",
-                "Открыть настройки старым окном (временно)")
-            { LegacyOpen = () => { new SettingsWindow(Session) { Owner = this }.ShowDialog(); Dashboard.RefreshAll(); } },
+            "Data" => new DataView(Session) { Navigator = this },
+            "Settings" => new SettingsView(Session) { Navigator = this },
             "Generate" => new PlaceholderView("Генерация расписания",
-                "Стадии, Top-5 вариантов и объяснение оценки.",
+                "Запустите расчёт с главной (кнопка или F5).",
                 "Открыть генерацию старым окном (временно)")
             { LegacyOpen = () => Dashboard.OnGenerateClick(this, new RoutedEventArgs()) },
             "Schedule" => new PlaceholderView("Расписание",
                 "Сетка дни × уроки по классам и учителям.",
                 "Открыть расписание старым окном (временно)")
             { LegacyOpen = () => new ScheduleWindow(Session).Show() },
-            "Export" => new PlaceholderView("Экспорт и печать",
-                "Excel, HTML и CSV готового расписания.",
-                "Открыть экспорт старым окном (временно)")
-            { LegacyOpen = () => new ExportWindow(Session) { Owner = this }.ShowDialog() },
-            "Help" => new PlaceholderView("Справка",
-                "Быстрый старт и ответы на частые вопросы.",
-                "Открыть справку старым окном (временно)")
-            { LegacyOpen = () => new HelpWindow { Owner = this }.ShowDialog() },
+            "Export" => new ExportView(Session),
+            "Help" => new HelpView(),
             _ => Dashboard,
         };
         if (view == "Dashboard") Dashboard.RefreshAll();
@@ -100,12 +88,21 @@ public partial class MainWindow : Window, IViewNavigator
         NavProfiles.Style = idleStyle;
     }
 
+    // P-D3: запуск генерации внутри оболочки (view + оркестратор из GenerateHost).
+    public void OpenGenerate(Amsur.Scheduling.Core.ProblemInput input)
+    {
+        var (view, _) = GenerateHost.CreateView(input, Session, Session.GenerateMode.Name);
+        ViewHost.Content = view;
+        PlayEnter(view);
+        PaintNav("Generate");
+    }
+
     private void OnNavClick(object sender, RoutedEventArgs e)
     {
         if (sender == NavHome) NavigateTo("Dashboard");
         else if (sender == NavData) NavigateTo("Data");
         else if (sender == NavSettings || sender == NavProfiles) NavigateTo("Settings");
-        else if (sender == NavGenerate) NavigateTo("Generate");
+        else if (sender == NavGenerate) Dashboard.OnGenerateClick(sender, e);
         else if (sender == NavSchedule) NavigateTo("Schedule");
         else if (sender == NavExport) NavigateTo("Export");
         else if (sender == NavHelp) NavigateTo("Help");

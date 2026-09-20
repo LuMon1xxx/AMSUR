@@ -453,38 +453,10 @@ public partial class DashboardView : UserControl
                 ShowErrors(["Сначала загрузите данные школы — кнопка «Загрузить Excel» выше."]);
                 return;
             }
-            var mode = Session.GenerateMode;
-            var input = Session.Data!.ToProblemInput();
-            var (win, orch) = GenerateHost.Create(input,
-                perSeedBudgetSeconds: mode.BudgetSeconds, numWorkers: 1,
-                dbPath: Session.DbPath, rules: Session.QualityRules,
-                modeName: mode.Name);
-            win.Show();
-            win.Closed += (_, _) => orch.ViewModel.RequestStop();
-            _ = RunGuardedAsync(orch);
+            // P-D3: генерация — внутри оболочки (view + оркестратор), без popup.
+            Navigator?.OpenGenerate(Session.Data!.ToProblemInput());
         }
         catch (Exception ex) { ShowError(ex); }
-    }
-
-    private async Task RunGuardedAsync(GenerationOrchestrator orch)
-    {
-        try
-        {
-            var mode = Session.GenerateMode;
-            await Task.Run(() => orch.RunAsync(mode.Seeds));
-            var best = orch.ViewModel.Top5.Best;
-            if (best?.Candidate is not null)
-            {
-                Session.LastQuality = QualityRating.FromBreakdown(best.Candidate.Breakdown);
-                Session.LastQualityLines = best.QualityLines.ToList();
-            }
-            RefreshAll();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show("Генерация прервана ошибкой: " + ex.Message,
-                "АМСУР", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
     }
 
     private void OnAdviceClose(object sender, RoutedEventArgs e) =>
