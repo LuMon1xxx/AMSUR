@@ -12,11 +12,11 @@ namespace Amsur.Wpf.Views;
 public partial class GenerateView : UserControl
 {
     private readonly GenerateViewModel _vm;
-    private readonly GenerationOrchestrator _orch;
-    private readonly AppSession _session;
+    private readonly GenerationOrchestrator? _orch;
+    private readonly AppSession? _session;
     private bool _started;
 
-    public GenerateView(GenerateViewModel vm, GenerationOrchestrator orch, AppSession session)
+    public GenerateView(GenerateViewModel vm, GenerationOrchestrator? orch = null, AppSession? session = null)
     {
         _vm = vm;
         _orch = orch;
@@ -35,21 +35,26 @@ public partial class GenerateView : UserControl
     {
         if (_started) return;
         _started = true;
+        // XAML-тесты конструируют view без оркестратора — стартовать нечего.
+        if (_orch is null || _session is null) return;
         _ = RunGuardedAsync();
     }
 
     private async Task RunGuardedAsync()
     {
+        // Сюда доходим только из StartOnce при живых orch+session.
+        var orch = _orch!;
+        var session = _session!;
         try
         {
-            await Task.Run(() => _orch.RunAsync(_session.GenerateMode.Seeds));
+            await Task.Run(() => orch.RunAsync(session.GenerateMode.Seeds));
             await Dispatcher.InvokeAsync(() =>
             {
                 var best = _vm.Top5.Best;
                 if (best?.Candidate is not null)
                 {
-                    _session.LastQuality = QualityRating.FromBreakdown(best.Candidate.Breakdown);
-                    _session.LastQualityLines = best.QualityLines.ToList();
+                    session.LastQuality = QualityRating.FromBreakdown(best.Candidate.Breakdown);
+                    session.LastQualityLines = best.QualityLines.ToList();
                 }
             });
         }

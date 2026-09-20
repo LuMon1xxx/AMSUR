@@ -2,6 +2,7 @@ using Amsur.Application;
 using Amsur.Domain;
 using Amsur.Scheduling.Core;
 using Amsur.Wpf;
+using Amsur.Wpf.Views;
 using ClosedXML.Excel;
 using System.Windows.Controls.Primitives;
 
@@ -198,22 +199,24 @@ public sealed class FlexP34Tests : IAsyncDisposable
             await session.InitAsync();
             await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
 
-            var school = new SchoolDataWindow(session);
+            var school = new DataView(session);
             Assert.Equal(6, school.ClassesGrid.Items.Count);
             Assert.Equal(10, school.RoomsGrid.Items.Count);
             Assert.Equal(10, school.TeachersList.Items.Count);
-            // Рендер off-screen: шаблоны колонок материализуются только при layout.
-            school.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
-            school.Left = -10000; school.Top = -10000;
-            school.Width = 1100; school.Height = 700;
-            school.Show();
-            school.UpdateLayout();
+            // Рендер off-screen в окне-хосте: шаблоны колонок материализуются
+            // только при layout.
+            var host = new System.Windows.Window { Content = school };
+            host.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
+            host.Left = -10000; host.Top = -10000;
+            host.Width = 1100; host.Height = 700;
+            host.Show();
+            host.UpdateLayout();
             System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
                 () => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
-            school.Close();
+            host.Close();
 
-            new SettingsWindow(session).Close();
-            new ExportWindow(session).Close();
+            new SettingsView(session);
+            new ExportView(session);
             new ScheduleWindow(session).Close();
         });
     }
@@ -230,7 +233,7 @@ public sealed class FlexP34Tests : IAsyncDisposable
             await session.InitAsync();
             await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
 
-            var win = new SchoolDataWindow(session);
+            var win = new DataView(session);
             var btn = (System.Windows.Controls.Button)win.FindName("ApplyRoomsBtn");
             btn.RaiseEvent(new System.Windows.RoutedEventArgs(ButtonBase.ClickEvent));
             // async void-обработчик: даём диспетчеру отработать.
@@ -239,7 +242,6 @@ public sealed class FlexP34Tests : IAsyncDisposable
             Assert.Equal(10, session.Flex.Rooms.Count);
             var gym = session.Data!.Rooms.Single(r => r.Name == "Спортзал");
             Assert.Equal(1, gym.MaxSimultaneousGroups); // дефолты без изменений
-            win.Close();
 
             // Перезапуск видит сохранённое.
             var session2 = new AppSession(_dir);

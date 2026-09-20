@@ -1,5 +1,6 @@
 using Amsur.Application;
 using Amsur.Wpf;
+using Amsur.Wpf.Views;
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
@@ -45,15 +46,14 @@ public sealed class WpfShellTests : IAsyncDisposable
         if (error is not null) throw error;
     }
 
-    // --- 1. GenerateWindow собирается с VM (E4/E5/E6-разметка валидна) ---
+    // --- 1. GenerateView собирается с VM (E4/E5/E6-разметка валидна) ---
     [Fact]
     public void GenerateWindow_ConstructsWithVm()
     {
         RunSta(_ =>
         {
-            var win = new GenerateWindow(new GenerateViewModel());
-            Assert.Equal("Составление расписания", ((GenerateViewModel)win.DataContext).Title);
-            win.Close();
+            var view = new GenerateView(new GenerateViewModel());
+            Assert.Equal("Составление расписания", ((GenerateViewModel)view.DataContext).Title);
             return Task.CompletedTask;
         });
     }
@@ -77,19 +77,18 @@ public sealed class WpfShellTests : IAsyncDisposable
                 CanAccept = true, Candidate = null!,
             };
             vm.Top5 = new Top5PanelModel { Cards = [card], TotalFound = 1 };
-            var win = new GenerateWindow(vm);
-            // Show off-screen: шаблон карточки Top-5 материализуется только
-            // в loaded-дереве при layout (Measure/Arrange после Show) — именно
-            // там падал прод (Event Viewer .NET 1026, XamlParseException BasedOn).
-            // LoadContent без Show ошибку НЕ воспроизводит (проверено 14.09.2026).
-            win.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
-            win.Left = -10000; win.Top = -10000;
-            win.Width = 1100; win.Height = 780;
-            win.Show();
-            win.UpdateLayout();
+            var view = new GenerateView(vm);
+            // Show off-screen в окне-хосте: шаблон карточки Top-5 материализуется
+            // только в loaded-дереве при layout (Measure/Arrange после Show).
+            var host = new Window { Content = view };
+            host.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
+            host.Left = -10000; host.Top = -10000;
+            host.Width = 1100; host.Height = 780;
+            host.Show();
+            host.UpdateLayout();
             System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
                 () => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
-            win.Close();
+            host.Close();
             return Task.CompletedTask;
         });
     }
@@ -109,22 +108,23 @@ public sealed class WpfShellTests : IAsyncDisposable
             var session = new AppSession(_dir);
             await session.InitAsync();
             await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
-            var (win, orch) = GenerateHost.Create(session.Data!.ToProblemInput(),
-                perSeedBudgetSeconds: 4, numWorkers: 1,
-                dbPath: session.DbPath, rules: session.QualityRules, modeName: "Быстро");
-            win.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
-            win.Left = -10000; win.Top = -10000;
-            win.Width = 1100; win.Height = 780;
-            win.Show();
+            session.SetGenerateMode("QUICK"); // бюджет ~3с × 1 сид (было 4с в Create)
+            var (view, orch) = GenerateHost.CreateView(session.Data!.ToProblemInput(),
+                session, modeName: "Быстро");
+            var host = new Window { Content = view };
+            host.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
+            host.Left = -10000; host.Top = -10000;
+            host.Width = 1100; host.Height = 780;
+            host.Show();
             var outcome = await orch.RunAsync([11]);
-            win.UpdateLayout();
+            host.UpdateLayout();
             System.Windows.Threading.Dispatcher.CurrentDispatcher.Invoke(
                 () => { }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             Assert.True(outcome.HasFeasible);
             Assert.NotNull(orch.ViewModel.Top5.Best);
             var accepted = await orch.AcceptAsync(orch.ViewModel.Top5.Best);
             Assert.True(accepted.Succeeded);
-            win.Close();
+            host.Close();
         });
     }
 
@@ -155,8 +155,7 @@ public sealed class WpfShellTests : IAsyncDisposable
             var session = new AppSession(_dir);
             await session.InitAsync();
             await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
-            var winOff = new SettingsWindow(session);
-            winOff.Close();
+            new SettingsView(session);
             var flex = session.Flex with
             {
                 Settings = session.Flex.Settings with
@@ -165,8 +164,7 @@ public sealed class WpfShellTests : IAsyncDisposable
                 },
             };
             await session.ApplyFlexAsync(flex);
-            var winOn = new SettingsWindow(session);
-            winOn.Close();
+            new SettingsView(session);
         });
     }
 
@@ -181,14 +179,13 @@ public sealed class WpfShellTests : IAsyncDisposable
             var session = new AppSession(_dir);
             await session.InitAsync();
             await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
-            var win = new ExportWindow(session);
-            for (int i = 0; i < 100 && win.GateText.Text == "проверка…"; i++)
+            var view = new ExportView(session);
+            for (int i = 0; i < 100 && view.GateText.Text == "проверка…"; i++)
                 await Task.Delay(50);
-            Assert.Contains("нет активного", win.GateText.Text);
-            Assert.False(win.ExportBtn.IsEnabled);
-            Assert.True(win.DraftBtn.IsEnabled);
-            Assert.True(win.TeacherBox.Items.Count > 0);
-            win.Close();
+            Assert.Contains("нет активного", view.GateText.Text);
+            Assert.False(view.ExportBtn.IsEnabled);
+            Assert.True(view.DraftBtn.IsEnabled);
+            Assert.True(view.TeacherBox.Items.Count > 0);
         });
     }
 
@@ -294,11 +291,10 @@ public sealed class WpfShellTests : IAsyncDisposable
             Assert.Equal("Не загружены", main.Dashboard.MiniDataStatus.Text);
             Assert.Equal("Нет данных", main.FooterRightText.Text);
             main.Close();
-            var settings = new SettingsWindow(session);
-            settings.Close();
-            new HelpWindow().Close();
+            new SettingsView(session);
+            new HelpView();
             new QualityDetailsWindow("Хорошее", ["Окна учителей: 5"]).Close();
-            new SchoolDataWindow(session).Close();
+            new DataView(session);
         });
     }
 }

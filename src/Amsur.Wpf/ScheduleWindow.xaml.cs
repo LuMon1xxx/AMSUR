@@ -457,9 +457,19 @@ public partial class ScheduleWindow : Window
         }
     }
 
-    // P0-6: экспорт — через отдельное окно (Excel 3 вида + HTML→PDF из браузера).
+    // P-D4: старое окно экспорта удалено — временный хост ExportView
+    // (умрёт вместе с ScheduleWindow в P-D2, когда будет сетка).
     private void OnExportClick(object sender, RoutedEventArgs e) =>
-        new ExportWindow(_session) { Owner = this }.ShowDialog();
+        new System.Windows.Window
+        {
+            Title = "Экспорт и печать",
+            Content = new Views.ExportView(_session),
+            Owner = this,
+            Width = 1100,
+            Height = 780,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Style = (Style)FindResource("ChromeWindow"),
+        }.ShowDialog();
 
     // P-SANPIN-UI: проверка активного расписания по нормам СанПиН РБ.
     // Кнопка всегда жива: без активного — понятное сообщение, а не мёртвая кнопка.
