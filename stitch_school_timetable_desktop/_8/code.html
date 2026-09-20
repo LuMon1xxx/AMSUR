@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="ru"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Hanken+Grotesk:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;font-family:'Segoe UI',system-ui,sans-serif;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-surface-variant":"#c6c6cd","outline":"#909097","on-background":"#d3e4fe","tertiary-fixed":"#ffddb8","on-tertiary-fixed":"#2a1700","outline-variant":"#45464d","primary-fixed-dim":"#bec6e0","on-secondary":"#00354a","on-primary":"#283044","on-secondary-fixed":"#001e2c","surface-container-highest":"#26364a","on-primary-fixed-variant":"#3f465c","surface-container":"#102034","on-error-container":"#ffdad6","on-tertiary-container":"#b47300","secondary":"#7bd0ff","surface-tint":"#bec6e0","inverse-primary":"#565e74","inverse-on-surface":"#213145","surface-bright":"#2a3a4f","secondary-fixed":"#c4e7ff","error-container":"#93000a","primary-container":"#0f172a","tertiary-fixed-dim":"#ffb95f","error":"#ffb4ab","primary":"#bec6e0","background":"#031427","surface-variant":"#26364a","surface-container-low":"#0b1c30","on-primary-fixed":"#131b2e","tertiary":"#ffb95f","on-error":"#690005","surface":"#031427","surface-dim":"#031427","tertiary-container":"#251400","secondary-container":"#00a6e0","on-primary-container":"#798098","inverse-surface":"#d3e4fe","on-surface":"#d3e4fe","on-secondary-fixed-variant":"#004c69","primary-fixed":"#dae2fd","surface-container-lowest":"#000f21","surface-container-high":"#1b2b3f","on-tertiary-fixed-variant":"#653e00","on-secondary-container":"#00374d","on-tertiary":"#472a00","secondary-fixed-dim":"#7bd0ff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"margin":"1rem","gutter":"0.75rem","space-xs":"0.25rem","space-md":"0.75rem","space-xl":"1.5rem","space-sm":"0.375rem","space-lg":"1rem"},"fontFamily":{"headline-lg":["Hanken Grotesk"],"body-lg":["Geist"],"headline-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"],"label-md":["Geist"],"label-sm":["Geist"],"display-lg":["Hanken Grotesk"],"body-sm":["Geist"],"body-md":["Geist"],"data-mono":["Geist"]},"fontSize":{"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-lg":["14px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"headline-md":["18px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-sm":["15px",{"lineHeight":"20px","letterSpacing":"-0.005em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"600"}],"label-sm":["10px",{"lineHeight":"12px","letterSpacing":"0.06em","fontWeight":"700"}],"display-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"400"}],"body-md":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"data-mono":["12px",{"lineHeight":"16px","letterSpacing":"-0.01em","fontWeight":"500"}]}}}};</script></head><body class="bg-background text-on-surface select-none antialiased min-h-screen"><aside class="fixed left-0 top-0 h-full w-[240px] bg-surface-container-lowest z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.4)]"><div class="flex flex-col"><div class="h-11 px-4 flex items-center gap-space-sm bg-surface-container-low"><span class="material-symbols-outlined text-secondary text-[20px]">grid_view</span><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface font-bold leading-none tracking-tight">АМСУР</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Моделирование сетки</span></div></div><div class="px-3 pt-3 pb-1"><div class="px-2 py-1 rounded bg-surface-container flex items-center justify-between text-on-surface-variant"><span class="font-label-md text-label-md uppercase tracking-wider text-outline">Режим работы</span><span class="flex items-center gap-1 font-label-sm text-label-sm text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Активен</span></div></div><nav class="flex flex-col gap-0.5 px-2 py-2" data-active-classes="bg-surface-container-high text-secondary font-semibold"><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="главная" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="font-body-md text-body-md">Главная</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="школа-и-данные" href="#"><span class="material-symbols-outlined text-[18px]">database</span><span class="font-body-md text-body-md">Школа и данные</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="генерация" href="#"><span class="material-symbols-outlined text-[18px]">auto_awesome</span><span class="font-body-md text-body-md">Генерация</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="расписание" href="#"><span class="material-symbols-outlined text-[18px]">calendar_month</span><span class="font-body-md text-body-md">Расписание</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="настройки-качества" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span class="font-body-md text-body-md">Настройки качества</span></a><a aria-current="page" class="flex items-center gap-space-md px-3 py-2 rounded transition-colors bg-surface-container-high text-secondary font-semibold" data-path="экспорт" href="#"><span class="material-symbols-outlined text-[18px]">file_download</span><span class="font-body-md text-body-md">Экспорт</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="справка" href="#"><span class="material-symbols-outlined text-[18px]">help</span><span class="font-body-md text-body-md">Справка</span></a></nav></div><div class="p-3 bg-surface-container-low flex flex-col gap-2"><div class="flex items-center justify-between px-2 py-1.5 rounded bg-surface-container-lowest text-on-surface-variant"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-outline text-[16px]">date_range</span><span class="font-body-sm text-body-sm">2024–2025 уч. год</span></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-outline">I полуг.</span></div><div class="flex items-center justify-between px-2 pt-1"><div class="flex items-center gap-2"><button class="flex items-center justify-center w-7 h-7 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="Переключить тему" type="button"><span class="material-symbols-outlined text-[18px]">dark_mode</span></button><span class="font-label-md text-label-md text-outline">v1.2.4</span></div><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span><span class="font-label-sm text-label-sm text-outline font-data-mono">СИНХР</span></div></div></div></aside><div class="pl-[240px]"><header class="fixed top-0 left-[240px] right-0 h-11 bg-surface-container-low/95 backdrop-blur-md z-40 flex items-center justify-between px-4 shadow-[0_1px_8px_rgba(0,0,0,0.2)]"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-2 text-on-surface-variant"><span class="font-body-sm text-body-sm text-outline">АМСУР</span><span class="text-outline text-body-sm">/</span><span class="font-body-sm text-body-sm text-on-surface font-semibold">Сетка занятий</span></div><div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span><span class="font-label-sm text-label-sm">Данные готовы</span></div></div><div class="flex items-center gap-space-md"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-2 text-outline text-[16px]">search</span><input class="h-7 w-56 pl-7 pr-3 rounded bg-surface-container text-on-surface placeholder-outline font-body-sm text-body-sm outline-none focus:ring-1 focus:ring-secondary" placeholder="Быстрый поиск (Ctrl+K)..." type="text"/></div><button class="relative p-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-tertiary"></span></button><div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[16px]">person</span></div><div class="flex items-center ml-2 pl-2"><button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" title="Свернуть" type="button"><span class="material-symbols-outlined text-[16px]">minimize</span></button><button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" title="Развернуть" type="button"><span class="material-symbols-outlined text-[15px]">check_box_outline_blank</span></button><button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-error-container hover:text-on-error-container transition-colors" title="Закрыть" type="button"><span class="material-symbols-outlined text-[16px]">close</span></button></div></div></header><main class="relative pt-11 bg-background min-h-screen"><div class="flex flex-col w-full">
+<!-- Command Bar: Controls & Mode Toggles -->
+<div class="px-6 py-3 bg-surface-container-low flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">ios_share</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Модуль выгрузки и шлюзов</span>
+</div>
+<div class="h-4 w-px bg-outline-variant/40"></div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-outline">
+<span class="material-symbols-outlined text-[14px] text-secondary">verified</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Сетка валидирована СанПиН</span>
+</div>
+</div>
+<!-- State switchers requested -->
+<div class="flex items-center gap-3">
+<!-- State switcher: Ready vs Empty -->
+<div class="flex items-center p-0.5 rounded bg-surface-container-lowest">
+<button class="flex items-center gap-1.5 px-3 py-1 rounded bg-secondary text-on-secondary font-label-md text-label-md transition-colors" id="btn-state-ready" type="button">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+          Готово к экспорту
+        </button>
+<button class="flex items-center gap-1.5 px-3 py-1 rounded text-outline hover:text-on-surface font-label-md text-label-md transition-colors" id="btn-state-empty" type="button">
+<span class="material-symbols-outlined text-[14px]">inbox</span>
+          Нет данных (пустое)
+        </button>
+</div>
+<div class="h-4 w-px bg-outline-variant/40"></div>
+<!-- Theme indicator toggle -->
+<div class="flex items-center p-0.5 rounded bg-surface-container-lowest">
+<button class="flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container-high text-secondary font-label-sm text-label-sm transition-colors" id="btn-theme-dark" type="button">
+<span class="material-symbols-outlined text-[14px]">dark_mode</span>
+          Тёмная
+        </button>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded text-outline hover:text-on-surface font-label-sm text-label-sm transition-colors" id="btn-theme-light" type="button">
+<span class="material-symbols-outlined text-[14px]">light_mode</span>
+          Светлая
+        </button>
+</div>
+</div>
+</div>
+<!-- Main View Container -->
+<div class="px-6 py-6 flex flex-col gap-6">
+<!-- FILLED STATE -->
+<div class="flex flex-col gap-6" id="section-filled">
+<!-- Screen Header with Telemetry Strip -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 p-5 rounded-xl bg-surface-container shadow-md relative overflow-hidden">
+<div class="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-secondary/5 pointer-events-none blur-3xl"></div>
+<div class="flex flex-col gap-1.5 relative z-10 max-w-2xl">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-secondary font-bold">Федеральный шлюз АИС 2024/2025</span>
+<span class="text-outline text-label-sm">•</span>
+<span class="font-data-mono text-data-mono text-outline">Ревизия #v2.8-APPROVED</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Экспорт и печать расписания</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Выгрузка в государственные системы, электронные журналы и полиграфические форматы для размещения в корпусах.</p>
+</div>
+<div class="flex items-center gap-3 relative z-10">
+<div class="flex flex-col items-end px-3 py-2 rounded bg-surface-container-low">
+<span class="font-label-sm text-label-sm uppercase text-outline">Комплектов</span>
+<span class="font-headline-md text-headline-md text-secondary font-data-mono">28 классов</span>
+</div>
+<div class="flex flex-col items-end px-3 py-2 rounded bg-surface-container-low">
+<span class="font-label-sm text-label-sm uppercase text-outline">Педсостав</span>
+<span class="font-headline-md text-headline-md text-primary font-data-mono">46 педагогов</span>
+</div>
+<div class="flex flex-col items-end px-3 py-2 rounded bg-surface-container-low">
+<span class="font-label-sm text-label-sm uppercase text-outline">Сменность</span>
+<span class="font-headline-md text-headline-md text-tertiary font-data-mono">2 смены</span>
+</div>
+</div>
+</div>
+<!-- Main Dual Column Layout: 4 Export Blocks + Operational Assistant -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- Left: 4 Target Cards Grid -->
+<div class="lg:col-span-8 flex flex-col gap-5">
+<!-- Card 1: Электронный журнал -->
+<div class="p-5 rounded-xl bg-surface-container flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">hub</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface">Электронный журнал</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-secondary font-label-sm text-label-sm">API 2.4</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">ФГИС «Моя Школа», ЭлЖур, Дневник.ру</span>
+</div>
+</div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-lowest text-secondary self-start sm:self-center">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-sm text-label-sm font-semibold">Готово к синхронизации (28 классов, 46 педагогов)</span>
+</div>
+</div>
+<div class="p-3 rounded bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[16px]">data_object</span>
+<span>Формат: <span class="text-on-surface font-semibold">XML / API-выгрузка</span> по стандартам Минпросвещения РФ</span>
+</div>
+<div class="flex items-center gap-2 text-outline font-data-mono text-body-sm">
+<span>Хэш-сумма: SHA-256 #8F0A2</span>
+</div>
+</div>
+<!-- Mini Progress / Mapping Status Indicator -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between font-label-sm text-label-sm text-outline">
+<span>Мэппинг СНИЛС учителей и ID кабинетов</span>
+<span class="text-secondary font-data-mono">100% (74/74 объектов)</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-lowest overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<div class="flex flex-wrap items-center gap-3 pt-1">
+<button class="h-8 px-4 rounded bg-secondary text-on-secondary font-label-md text-label-md font-bold flex items-center gap-2 hover:bg-secondary-fixed transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+                Синхронизировать с ЭлЖур
+              </button>
+<button class="h-8 px-3.5 rounded bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container-highest transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">download</span>
+                Скачать файл обмена (.xml)
+              </button>
+<button class="h-8 px-3 rounded text-outline hover:text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors ml-auto" type="button">
+<span class="material-symbols-outlined text-[16px]">settings_ethernet</span>
+                Параметры шлюза
+              </button>
+</div>
+</div>
+<!-- Card 2: Настенные стенды и печать -->
+<div class="p-5 rounded-xl bg-surface-container flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[24px]">print</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface">Настенные стенды и печать</span>
+<span class="px-2 py-0.5 rounded bg-tertiary-container text-tertiary font-label-sm text-label-sm">PDF с грифом</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Векторные макеты для школы, информационных уголков и учительской</span>
+</div>
+</div>
+<span class="font-data-mono text-label-sm text-outline">300 DPI Вектор</span>
+</div>
+<!-- Print Preview Mockup & Variants in split presentation -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+<!-- Preset options -->
+<div class="md:col-span-7 flex flex-col gap-2">
+<label class="flex items-start gap-3 p-2.5 rounded bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-colors">
+<input checked="" class="mt-1 accent-secondary" name="print-type" type="radio"/>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Общая сетка школы (формат А1 / А2)</span>
+<span class="font-body-sm text-body-sm text-outline">Для центрального холла 1-го этажа. Матрица по дням, классам и кабинетам.</span>
+</div>
+</label>
+<label class="flex items-start gap-3 p-2.5 rounded bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-colors">
+<input class="mt-1 accent-secondary" name="print-type" type="radio"/>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Расписание по классам (формат А4)</span>
+<span class="font-body-sm text-body-sm text-outline">28 раздельных листов с классным уголком, звонками и дежурствами.</span>
+</div>
+</label>
+<label class="flex items-start gap-3 p-2.5 rounded bg-surface-container-low cursor-pointer hover:bg-surface-container-high transition-colors">
+<input class="mt-1 accent-secondary" name="print-type" type="radio"/>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Индивидуальные расписания учителей (в учительскую)</span>
+<span class="font-body-sm text-body-sm text-outline">Карманные и настольные карточки с указанием свободных окон и кабинетов.</span>
+</div>
+</label>
+</div>
+<!-- Document Stamp Preview Miniature -->
+<div class="md:col-span-5 p-3 rounded-lg bg-surface-container-lowest flex flex-col justify-between relative shadow-inner">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase text-outline">Предпросмотр шапки</span>
+<span class="material-symbols-outlined text-[14px] text-secondary">visibility</span>
+</div>
+<div class="my-2 p-2.5 rounded bg-surface-container flex flex-col gap-1 text-right">
+<span class="font-label-sm text-label-sm text-on-surface uppercase font-bold">«УТВЕРЖДАЮ»</span>
+<span class="font-body-sm text-body-sm text-outline">Директор МАОУ СОШ №48</span>
+<span class="font-body-sm text-body-sm text-primary font-semibold">В. А. Смирнов _________</span>
+<div class="flex items-center justify-end gap-1 text-outline font-data-mono text-label-sm pt-1">
+<span class="material-symbols-outlined text-tertiary text-[12px]">draw</span>
+<span>Приказ №218 от 28.08.2024</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-outline font-body-sm text-body-sm">
+<span>Шрифт: ГОСТ</span>
+<span>Копии: 3 экз.</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 pt-1">
+<button class="h-8 px-4 rounded bg-secondary text-on-secondary font-label-md text-label-md font-bold flex items-center gap-2 hover:bg-secondary-fixed transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+                Сформировать PDF для печати
+              </button>
+<button class="h-8 px-3 rounded bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1.5 hover:bg-surface-container-highest transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+                Параметры полей
+              </button>
+</div>
+</div>
+<!-- Card 3 & 4: Excel + Notifications Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<!-- Card 3: Таблицы Excel (.xlsx) -->
+<div class="p-5 rounded-xl bg-surface-container flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">table_view</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Таблицы Excel (.xlsx)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Сводная матрица и тарификация</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-outline">
+                  Сводная матрица школы, разбивка по учителям с подсчётом тарификационных часов, окон и недельной нагрузки по кафедрам.
+                </p>
+<div class="p-2.5 rounded bg-surface-container-low flex flex-col gap-1 text-on-surface-variant font-data-mono text-body-sm">
+<div class="flex items-center justify-between">
+<span>• Лист 1: Сводная_Сетка_2024</span>
+<span class="text-secondary">420 КБ</span>
+</div>
+<div class="flex items-center justify-between">
+<span>• Лист 2: Нагрузка_Кафедры</span>
+<span class="text-secondary">110 КБ</span>
+</div>
+</div>
+</div>
+<button class="h-8 px-3 rounded bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-surface-container-highest transition-colors w-full" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary">download</span>
+                Скачать Excel-книгу со всеми листами
+              </button>
+</div>
+<!-- Card 4: Уведомления для учителей и родителей -->
+<div class="p-5 rounded-xl bg-surface-container flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary-container"></div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">forum</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Уведомления учителям и родителям</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Сферум / VK Мессенджер</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-outline">
+                  Экспорт индивидуальных памяток в мессенджеры. Готовые графические карточки с расписанием звонков, классным руководителем и кабинетом.
+                </p>
+<div class="flex items-center gap-2">
+<span class="px-2 py-1 rounded bg-surface-container-lowest font-label-sm text-label-sm text-secondary font-semibold">Сферум бот</span>
+<span class="px-2 py-1 rounded bg-surface-container-lowest font-label-sm text-label-sm text-primary font-semibold">PNG карточки</span>
+<span class="px-2 py-1 rounded bg-surface-container-lowest font-label-sm text-label-sm text-outline font-semibold">iCal (.ics)</span>
+</div>
+</div>
+<button class="h-8 px-3 rounded bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-surface-container-highest transition-colors w-full" type="button">
+<span class="material-symbols-outlined text-[16px] text-secondary">send</span>
+                Экспорт карточек расписания
+              </button>
+</div>
+</div>
+</div>
+<!-- Right: Assistant Pane with Mascot Сова Архип & Pre-Flight Checks -->
+<div class="lg:col-span-4 flex flex-col gap-5">
+<!-- Mascot Owl Card -->
+<div class="p-5 rounded-xl bg-surface-container flex flex-col gap-4 shadow-md relative overflow-hidden">
+<div class="flex items-start gap-4">
+<div class="relative shrink-0">
+<img alt="Маскот Сова Архип" class="w-20 h-20 rounded-xl object-contain bg-surface-container-lowest shadow-sm" src="https://lh3.googleusercontent.com/aida/AEtjO1Xoy-wcyW4mCMvlqODIY-zrM22COsk8v3q-yJLRq66fqQAM0ypNzdCwBcXgruWYMrNO_q0Y4oDmrMu6ZkESZGNDHpmIEYt1340LcrhuPslRh4dJR27tSWBcRIAzbm0fr7qdeFP9G6GZRLf5DOce9cV5IUqxSasMddc-zdZLkWvzS2wzSTbho_KebI3dY4xq-INpEyvPe0p2FWe5Z-eBpQetW9VMzudm3-2tjRyeC-VJRGELVxS1Hpqnt7kj"/>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-secondary flex items-center justify-center text-on-secondary">
+<span class="material-symbols-outlined text-[10px]">school</span>
+</div>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-on-surface">Сова Архип</span>
+<span class="px-1.5 py-0.5 rounded bg-tertiary/20 text-tertiary font-label-sm text-label-sm font-semibold">Ассистент</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Эксперт по тарификации и печати</span>
+</div>
+</div>
+<!-- Speech bubble style callout -->
+<div class="p-3.5 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md relative">
+<div class="absolute -top-2 left-6 w-3 h-3 bg-surface-container-low rotate-45"></div>
+              «Перед печатью проверьте, утверждено ли расписание звонков на 1-ю и 2-ю смену. В PDF автоматически добавлена шапка с номером школы и датой утверждения.»
+            </div>
+<div class="flex flex-col gap-2 pt-1 font-body-sm text-body-sm">
+<div class="flex items-center justify-between text-outline">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[16px]">check</span>
+                  Смены согласованы
+                </span>
+<span class="text-on-surface font-semibold">Да</span>
+</div>
+<div class="flex items-center justify-between text-outline">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[16px]">check</span>
+                  Коллизии кабинетов
+                </span>
+<span class="text-secondary font-semibold font-data-mono">0 конфликтов</span>
+</div>
+<div class="flex items-center justify-between text-outline">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[16px]">check</span>
+                  Окна преподавателей
+                </span>
+<span class="text-on-surface font-semibold">В пределах нормы</span>
+</div>
+</div>
+</div>
+<!-- Fast Batch Checklist -->
+<div class="p-5 rounded-xl bg-surface-container flex flex-col gap-4 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface">Быстрый пакет для завуча</span>
+<span class="material-symbols-outlined text-outline text-[18px]">folder_zip</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Сформировать архив «Готовое 1-е полугодие 2024/2025», включающий все PDF, файлы выгрузки в ЭлЖур и тарификационную книгу.
+            </p>
+<div class="p-2.5 rounded bg-surface-container-lowest flex items-center justify-between font-data-mono text-body-sm text-outline">
+<span>amsur_export_all.zip</span>
+<span class="text-secondary">~ 8.4 МБ</span>
+</div>
+<button class="h-9 px-4 rounded bg-primary text-on-primary font-label-md text-label-md font-bold flex items-center justify-center gap-2 hover:bg-primary-fixed transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">archive</span>
+              Скачать весь комплект (ZIP)
+            </button>
+</div>
+<!-- State Metadata info tile -->
+<div class="p-4 rounded-xl bg-surface-container-low flex items-center gap-3 text-outline font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]">security</span>
+<span>Выгрузка соответствует приказу Рособрнадзора №785 и регламентам защиты ПДн.</span>
+</div>
+</div>
+</div>
+</div>
+<!-- EMPTY STATE (Hidden by default, toggled via state buttons) -->
+<div class="hidden flex-col items-center justify-center py-20 px-6 rounded-2xl bg-surface-container text-center shadow-lg relative overflow-hidden" id="section-empty">
+<div class="w-20 h-20 rounded-2xl bg-surface-container-high flex items-center justify-center text-outline mb-6 shadow-sm">
+<span class="material-symbols-outlined text-[42px] text-tertiary">warning_amber</span>
+</div>
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline mb-2">Статус: Нет данных для экспорта</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface max-w-lg mb-3">
+        Нет готового расписания для экспорта
+      </h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md mb-8">
+        Сначала сгенерируйте и утвердите вариант расписания в разделе «Генерация», чтобы открыть доступ к электронным журналам и печатным формам.
+      </p>
+<a class="h-10 px-6 rounded bg-secondary text-on-secondary font-label-md text-label-md font-bold flex items-center gap-2 hover:bg-secondary-fixed transition-all shadow-md" data-path="генерация" href="#">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+        Перейти к генерации
+      </a>
+<!-- Subtle background decoration -->
+<div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-secondary/5 blur-3xl pointer-events-none"></div>
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-tertiary/5 blur-3xl pointer-events-none"></div>
+</div>
+</div>
+</div>
+<script>
+  // Interactive State Toggle: Filled vs Empty
+  const btnReady = document.getElementById('btn-state-ready');
+  const btnEmpty = document.getElementById('btn-state-empty');
+  const secFilled = document.getElementById('section-filled');
+  const secEmpty = document.getElementById('section-empty');
+
+  btnReady.addEventListener('click', () => {
+    secFilled.classList.remove('hidden');
+    secEmpty.classList.add('hidden');
+    btnReady.className = 'flex items-center gap-1.5 px-3 py-1 rounded bg-secondary text-on-secondary font-label-md text-label-md transition-colors';
+    btnEmpty.className = 'flex items-center gap-1.5 px-3 py-1 rounded text-outline hover:text-on-surface font-label-md text-label-md transition-colors';
+  });
+
+  btnEmpty.addEventListener('click', () => {
+    secFilled.classList.add('hidden');
+    secEmpty.classList.remove('hidden');
+    btnEmpty.className = 'flex items-center gap-1.5 px-3 py-1 rounded bg-secondary text-on-secondary font-label-md text-label-md transition-colors';
+    btnReady.className = 'flex items-center gap-1.5 px-3 py-1 rounded text-outline hover:text-on-surface font-label-md text-label-md transition-colors';
+  });
+
+  // Interactive Theme Mode Switcher
+  const btnDark = document.getElementById('btn-theme-dark');
+  const btnLight = document.getElementById('btn-theme-light');
+  const htmlRoot = document.documentElement;
+
+  btnDark.addEventListener('click', () => {
+    htmlRoot.classList.add('dark');
+    btnDark.className = 'flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container-high text-secondary font-label-sm text-label-sm transition-colors';
+    btnLight.className = 'flex items-center gap-1 px-2.5 py-1 rounded text-outline hover:text-on-surface font-label-sm text-label-sm transition-colors';
+  });
+
+  btnLight.addEventListener('click', () => {
+    htmlRoot.classList.remove('dark');
+    btnLight.className = 'flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container-high text-secondary font-label-sm text-label-sm transition-colors';
+    btnDark.className = 'flex items-center gap-1 px-2.5 py-1 rounded text-outline hover:text-on-surface font-label-sm text-label-sm transition-colors';
+  });
+</script></main></div></body></html>

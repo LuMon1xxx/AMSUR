@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="ru"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Hanken+Grotesk:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;font-family:'Segoe UI',system-ui,sans-serif;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-surface-variant":"#c6c6cd","outline":"#909097","on-background":"#d3e4fe","tertiary-fixed":"#ffddb8","on-tertiary-fixed":"#2a1700","outline-variant":"#45464d","primary-fixed-dim":"#bec6e0","on-secondary":"#00354a","on-primary":"#283044","on-secondary-fixed":"#001e2c","surface-container-highest":"#26364a","on-primary-fixed-variant":"#3f465c","surface-container":"#102034","on-error-container":"#ffdad6","on-tertiary-container":"#b47300","secondary":"#7bd0ff","surface-tint":"#bec6e0","inverse-primary":"#565e74","inverse-on-surface":"#213145","surface-bright":"#2a3a4f","secondary-fixed":"#c4e7ff","error-container":"#93000a","primary-container":"#0f172a","tertiary-fixed-dim":"#ffb95f","error":"#ffb4ab","primary":"#bec6e0","background":"#031427","surface-variant":"#26364a","surface-container-low":"#0b1c30","on-primary-fixed":"#131b2e","tertiary":"#ffb95f","on-error":"#690005","surface":"#031427","surface-dim":"#031427","tertiary-container":"#251400","secondary-container":"#00a6e0","on-primary-container":"#798098","inverse-surface":"#d3e4fe","on-surface":"#d3e4fe","on-secondary-fixed-variant":"#004c69","primary-fixed":"#dae2fd","surface-container-lowest":"#000f21","surface-container-high":"#1b2b3f","on-tertiary-fixed-variant":"#653e00","on-secondary-container":"#00374d","on-tertiary":"#472a00","secondary-fixed-dim":"#7bd0ff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"margin":"1rem","gutter":"0.75rem","space-xs":"0.25rem","space-md":"0.75rem","space-xl":"1.5rem","space-sm":"0.375rem","space-lg":"1rem"},"fontFamily":{"headline-lg":["Hanken Grotesk"],"body-lg":["Geist"],"headline-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"],"label-md":["Geist"],"label-sm":["Geist"],"display-lg":["Hanken Grotesk"],"body-sm":["Geist"],"body-md":["Geist"],"data-mono":["Geist"]},"fontSize":{"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.015em","fontWeight":"600"}],"body-lg":["14px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"headline-md":["18px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-sm":["15px",{"lineHeight":"20px","letterSpacing":"-0.005em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"600"}],"label-sm":["10px",{"lineHeight":"12px","letterSpacing":"0.06em","fontWeight":"700"}],"display-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"400"}],"body-md":["13px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"data-mono":["12px",{"lineHeight":"16px","letterSpacing":"-0.01em","fontWeight":"500"}]}}}};</script></head><body class="bg-background text-on-surface select-none antialiased min-h-screen"><aside class="fixed left-0 top-0 h-full w-[240px] bg-surface-container-lowest z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.4)]"><div class="flex flex-col"><div class="h-11 px-4 flex items-center gap-space-sm bg-surface-container-low"><span class="material-symbols-outlined text-secondary text-[20px]">grid_view</span><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface font-bold leading-none tracking-tight">АМСУР</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Моделирование сетки</span></div></div><div class="px-3 pt-3 pb-1"><div class="px-2 py-1 rounded bg-surface-container flex items-center justify-between text-on-surface-variant"><span class="font-label-md text-label-md uppercase tracking-wider text-outline">Режим работы</span><span class="flex items-center gap-1 font-label-sm text-label-sm text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Активен</span></div></div><nav class="flex flex-col gap-0.5 px-2 py-2" data-active-classes="bg-surface-container-high text-secondary font-semibold"><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="главная" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span class="font-body-md text-body-md">Главная</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="школа-и-данные" href="#"><span class="material-symbols-outlined text-[18px]">database</span><span class="font-body-md text-body-md">Школа и данные</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="генерация" href="#"><span class="material-symbols-outlined text-[18px]">auto_awesome</span><span class="font-body-md text-body-md">Генерация</span></a><a aria-current="page" class="flex items-center gap-space-md px-3 py-2 rounded transition-colors bg-surface-container-high text-secondary font-semibold" data-path="расписание" href="#"><span class="material-symbols-outlined text-[18px]">calendar_month</span><span class="font-body-md text-body-md">Расписание</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="настройки-качества" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span class="font-body-md text-body-md">Настройки качества</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="экспорт" href="#"><span class="material-symbols-outlined text-[18px]">file_download</span><span class="font-body-md text-body-md">Экспорт</span></a><a class="flex items-center gap-space-md px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="справка" href="#"><span class="material-symbols-outlined text-[18px]">help</span><span class="font-body-md text-body-md">Справка</span></a></nav></div><div class="p-3 bg-surface-container-low flex flex-col gap-2"><div class="flex items-center justify-between px-2 py-1.5 rounded bg-surface-container-lowest text-on-surface-variant"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-outline text-[16px]">date_range</span><span class="font-body-sm text-body-sm">2024–2025 уч. год</span></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-outline">I полуг.</span></div><div class="flex items-center justify-between px-2 pt-1"><div class="flex items-center gap-2"><button class="flex items-center justify-center w-7 h-7 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="Переключить тему" type="button"><span class="material-symbols-outlined text-[18px]">dark_mode</span></button><span class="font-label-md text-label-md text-outline">v1.2.4</span></div><div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span><span class="font-label-sm text-label-sm text-outline font-data-mono">СИНХР</span></div></div></div></aside><div class="pl-[240px]"><header class="fixed top-0 left-[240px] right-0 h-11 bg-surface-container-low/95 backdrop-blur-md z-40 flex items-center justify-between px-4 shadow-[0_1px_8px_rgba(0,0,0,0.2)]"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-2 text-on-surface-variant"><span class="font-body-sm text-body-sm text-outline">АМСУР</span><span class="text-outline text-body-sm">/</span><span class="font-body-sm text-body-sm text-on-surface font-semibold">Сетка занятий</span></div><div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span><span class="font-label-sm text-label-sm">Данные готовы</span></div></div><div class="flex items-center gap-space-md"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-2 text-outline text-[16px]">search</span><input class="h-7 w-56 pl-7 pr-3 rounded bg-surface-container text-on-surface placeholder-outline font-body-sm text-body-sm outline-none focus:ring-1 focus:ring-secondary" placeholder="Быстрый поиск (Ctrl+K)..." type="text"/></div><button class="relative p-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-tertiary"></span></button><div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[16px]">person</span></div><div class="flex items-center ml-2 pl-2"><button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" title="Свернуть" type="button"><span class="material-symbols-outlined text-[16px]">minimize</span></button><button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" title="Развернуть" type="button"><span class="material-symbols-outlined text-[15px]">check_box_outline_blank</span></button><button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-error-container hover:text-on-error-container transition-colors" title="Закрыть" type="button"><span class="material-symbols-outlined text-[16px]">close</span></button></div></div></header><main class="relative pt-11 bg-background min-h-screen"><div class="flex flex-col w-full">
+<!-- Command Header Strip & Switchers -->
+<section class="flex flex-col gap-3 px-6 py-4 bg-surface-container-lowest">
+<div class="flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<div class="flex items-center p-1 bg-surface-container rounded-lg shadow-sm">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded text-on-primary bg-secondary shadow font-label-md text-label-md transition-all" id="view-mode-classes" type="button">
+<span class="material-symbols-outlined text-[16px]">groups</span>
+<span>По классам</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all font-label-md text-label-md" id="view-mode-teachers" type="button">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span>По учителям</span>
+</button>
+</div>
+<div class="h-4 w-px bg-surface-container-highest"></div>
+<div class="flex items-center p-1 bg-surface-container rounded-lg shadow-sm">
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded text-secondary bg-surface-container-high font-label-md text-label-md" id="state-toggle-filled" type="button">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Заполненное</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high font-label-md text-label-md" id="state-toggle-empty" type="button">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span>Пустое состояние</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-all font-label-md text-label-md shadow-sm" id="theme-toggle-btn" type="button">
+<span class="material-symbols-outlined text-[16px] text-tertiary">palette</span>
+<span id="theme-status-text">Тема: Тёмная (Dark)</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-all font-label-md text-label-md shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">edit_calendar</span>
+<span>Правка вручную</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-all font-label-md text-label-md shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">print</span>
+<span>Печать</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-on-secondary hover:bg-secondary-fixed transition-all font-label-md text-label-md shadow-md" type="button">
+<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+<span class="font-bold">Экспорт PDF</span>
+</button>
+</div>
+</div>
+<!-- Filter & Context Selector Bar -->
+<div class="flex flex-wrap items-center justify-between gap-4 pt-2" id="filter-matrix-bar">
+<div class="flex flex-wrap items-center gap-3">
+<!-- Main Scope Selector -->
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[18px]">school</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline leading-tight uppercase">Текущий выбор</span>
+<span class="font-headline-sm text-headline-sm leading-tight text-on-surface font-semibold" id="active-target-title">Класс: 7А (28 учеников · Кабинет 305)</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px] ml-2 cursor-pointer">arrow_drop_down</span>
+</div>
+<!-- Class Quick Chips -->
+<div class="flex items-center gap-1.5 bg-surface-container-low p-1 rounded-lg" id="class-chips-group">
+<button class="class-chip px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" data-class="5А" type="button">5А</button>
+<button class="class-chip px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" data-class="6Б" type="button">6Б</button>
+<button class="class-chip px-2.5 py-1 rounded bg-secondary text-on-secondary font-label-md text-label-md font-bold shadow-sm" data-class="7А" type="button">7А ✓</button>
+<button class="class-chip px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" data-class="8А" type="button">8А</button>
+<button class="class-chip px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" data-class="9Б" type="button">9Б</button>
+<button class="class-chip px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" data-class="10А" type="button">10А</button>
+<button class="class-chip px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" data-class="11А" type="button">11А</button>
+</div>
+</div>
+<!-- Tactical Filters & Highlights -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm bg-surface-container px-2.5 py-1.5 rounded-lg">
+<span class="text-outline">Период:</span>
+<span class="text-on-surface font-medium">1 полугодие 2024</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-body-sm text-body-sm bg-surface-container px-2.5 py-1.5 rounded-lg">
+<span class="text-outline">Смена:</span>
+<span class="text-on-surface font-medium">1 смена (08:30-14:45)</span>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container-low p-1 rounded-lg">
+<span class="font-label-sm text-label-sm text-outline px-1.5 uppercase">Подсветка:</span>
+<button class="px-2 py-0.5 rounded bg-surface-container text-tertiary font-label-sm text-label-sm hover:bg-surface-container-high transition-colors" type="button">Окна (2)</button>
+<button class="px-2 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm hover:bg-surface-container-high transition-colors" type="button">СанПиН ✓</button>
+<button class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high transition-colors" type="button">Замены (0)</button>
+</div>
+</div>
+</div>
+</section>
+<!-- CONTENT VIEW 1: FILLED TIMETABLE STATE -->
+<div class="flex flex-col flex-1 px-6 py-4 gap-4" id="view-filled-container">
+<!-- Drag-and-drop affordance pill -->
+<div class="flex items-center justify-between px-4 py-2 bg-surface-container-low rounded-lg shadow-sm">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-secondary">drag_indicator</span>
+<span class="font-body-sm text-body-sm">Перетащите урок для быстрой перестановки или нажмите для открытия инспектора связей.</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-sm bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-outline">Точные науки</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-sm bg-tertiary"></span>
+<span class="font-label-sm text-label-sm text-outline">Гуманитарные</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-sm bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-outline">Естественные / Спорт</span>
+</div>
+</div>
+</div>
+<!-- The 6-Day Grid Matrix -->
+<div class="overflow-x-auto rounded-xl bg-surface-container-lowest shadow-xl">
+<div class="min-w-[1240px] flex flex-col">
+<!-- Matrix Days Header -->
+<div class="grid grid-cols-[100px_repeat(6,1fr)] bg-surface-container-high text-on-surface">
+<div class="p-3 flex items-center justify-center font-label-md text-label-md text-outline tracking-wider uppercase bg-surface-container-highest">
+            Урок / Время
+          </div>
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-high">
+<span class="font-headline-sm text-headline-sm font-semibold">Понедельник</span>
+<span class="font-label-sm text-label-sm text-outline">6 уроков · 28 ч/нед</span>
+</div>
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-high">
+<span class="font-headline-sm text-headline-sm font-semibold">Вторник</span>
+<span class="font-label-sm text-label-sm text-outline">6 уроков · Баланс норм</span>
+</div>
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-high">
+<span class="font-headline-sm text-headline-sm font-semibold text-secondary">Среда (актив)</span>
+<span class="font-label-sm text-label-sm text-secondary">7 уроков · Пик нагрузки</span>
+</div>
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-high">
+<span class="font-headline-sm text-headline-sm font-semibold">Четверг</span>
+<span class="font-label-sm text-label-sm text-outline">6 уроков · Баланс норм</span>
+</div>
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-high">
+<span class="font-headline-sm text-headline-sm font-semibold">Пятница</span>
+<span class="font-label-sm text-label-sm text-outline">6 уроков · Облегчённый день</span>
+</div>
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-high">
+<span class="font-headline-sm text-headline-sm font-semibold text-outline">Суббота</span>
+<span class="font-label-sm text-label-sm text-outline">2 занятия · Внеурочная</span>
+</div>
+</div>
+<!-- ROW 1 (08:30 - 09:15) -->
+<div class="grid grid-cols-[100px_repeat(6,1fr)] bg-surface-container-low/40">
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-low text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">1</span>
+<span class="font-label-sm text-label-sm text-outline font-data-mono">08:30</span>
+<span class="font-label-sm text-label-sm text-outline-variant font-data-mono">09:15</span>
+</div>
+<!-- Mon #1 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Русский язык</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 108</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Кузнецова Е.И.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Tue #1 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-secondary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Алгебра</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 204</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Иванова М.А.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Wed #1 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Английский язык</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 215/216</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Морозова / Соколова</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Thu #1 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">История</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 302</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Лебедев В.К.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Fri #1 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-secondary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Геометрия</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 204</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Иванова М.А.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Sat #1 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container-low hover:bg-surface-container shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-outline-variant">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface-variant line-clamp-1">Внеурочная деят.</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-outline font-data-mono text-label-sm">Каб. 305</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Кружок робототехники</span>
+<span class="material-symbols-outlined text-[14px] opacity-40">drag_handle</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ROW 2 (09:25 - 10:10) -->
+<div class="grid grid-cols-[100px_repeat(6,1fr)] bg-surface-container-lowest">
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-low text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">2</span>
+<span class="font-label-sm text-label-sm text-outline font-data-mono">09:25</span>
+<span class="font-label-sm text-label-sm text-outline-variant font-data-mono">10:10</span>
+</div>
+<!-- Mon #2 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Литература</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 108</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Кузнецова Е.И.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Tue #2 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-secondary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Геометрия</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 204</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Иванова М.А.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Wed #2 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-secondary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Физика</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 312</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Смирнов Д.В.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Thu #2 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Обществознание</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 302</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Лебедев В.К.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Fri #2 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-outline-variant">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Биология</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 220</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Григорьева О.Н.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Sat #2 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container-low hover:bg-surface-container shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-secondary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface-variant line-clamp-1">Классный час</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-outline font-data-mono text-label-sm">Каб. 305</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Кузнецова Е.И.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40">drag_handle</span>
+</div>
+</div>
+</div>
+</div>
+<!-- ROW 3 (10:30 - 11:15) -->
+<div class="grid grid-cols-[100px_repeat(6,1fr)] bg-surface-container-low/40">
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-low text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">3</span>
+<span class="font-label-sm text-label-sm text-outline font-data-mono">10:30</span>
+<span class="font-label-sm text-label-sm text-outline-variant font-data-mono">11:15</span>
+</div>
+<!-- Mon #3 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-outline-variant">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Физкультура</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Спортзал 1</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Петров А.С.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Tue #3 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-outline-variant">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Биология</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 220</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Григорьева О.Н.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Wed #3 - ACTIVE TOKEN FOCUS -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container-highest shadow-lg transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-secondary">
+<div class="flex items-start justify-between gap-1">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary line-clamp-1">Алгебра</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-secondary text-on-secondary font-data-mono text-label-sm font-bold">Каб. 204</span>
+</div>
+<div class="flex items-center justify-between text-on-surface text-body-sm font-medium">
+<span class="truncate">Иванова М.А.</span>
+<span class="material-symbols-outlined text-[14px] text-secondary">center_focus_strong</span>
+</div>
+</div>
+</div>
+<!-- Thu #3 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Английский язык</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 215</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Морозова Т.Н.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Fri #3 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-outline-variant">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Химия</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 314</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Воронова Л.К.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Sat #3: Free slot -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+<span class="font-label-sm text-label-sm mt-1">Окно</span>
+</div>
+</div>
+</div>
+<!-- ROW 4 (11:35 - 12:20) -->
+<div class="grid grid-cols-[100px_repeat(6,1fr)] bg-surface-container-lowest">
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-low text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">4</span>
+<span class="font-label-sm text-label-sm text-outline font-data-mono">11:35</span>
+<span class="font-label-sm text-label-sm text-outline-variant font-data-mono">12:20</span>
+</div>
+<!-- Mon #4 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-secondary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Информатика</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 211</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Васильев К.А.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Tue #4 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Русский язык</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 108</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Кузнецова Е.И.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Wed #4 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-outline-variant">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">География</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 308</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Попова С.В.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Thu #4 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-secondary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Физика</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 312</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Смирнов Д.В.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Fri #4 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Литература</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 108</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Кузнецова Е.И.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Sat #4 -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+<span class="font-label-sm text-label-sm mt-1">Свободно</span>
+</div>
+</div>
+</div>
+<!-- ROW 5 (12:35 - 13:20) -->
+<div class="grid grid-cols-[100px_repeat(6,1fr)] bg-surface-container-low/40">
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-low text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">5</span>
+<span class="font-label-sm text-label-sm text-outline font-data-mono">12:35</span>
+<span class="font-label-sm text-label-sm text-outline-variant font-data-mono">13:20</span>
+</div>
+<!-- Mon #5 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-outline-variant">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">География</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 308</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Попова С.В.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Tue #5 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-outline-variant">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Химия</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 314</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Воронова Л.К.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Wed #5: Target destination preview slot -->
+<div class="p-1.5">
+<div class="relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-error-container/20 text-on-surface shadow transition-all">
+<div class="flex items-start justify-between gap-1">
+<span class="font-label-md text-label-md font-bold text-error">Потенциальное окно</span>
+<span class="material-symbols-outlined text-error text-[16px]">warning</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Перемещение сюда вызовет накладку кабинета</p>
+<span class="font-label-sm text-label-sm text-outline font-data-mono">Слот доступен</span>
+</div>
+</div>
+<!-- Thu #5 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-outline-variant">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Физкультура</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Спортзал 1</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Петров А.С.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Fri #5 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Музыка / МХК</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 102</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Николаева В.С.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Sat #5 -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+</div>
+</div>
+</div>
+<!-- ROW 6 (13:30 - 14:15) -->
+<div class="grid grid-cols-[100px_repeat(6,1fr)] bg-surface-container-lowest">
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-low text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">6</span>
+<span class="font-label-sm text-label-sm text-outline font-data-mono">13:30</span>
+<span class="font-label-sm text-label-sm text-outline-variant font-data-mono">14:15</span>
+</div>
+<!-- Mon #6 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">ИЗО</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 110</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Сергеев Д.М.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Tue #6 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-secondary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Информатика</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 211</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Васильев К.А.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Wed #6 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Технология</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Мастерские</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Федоров В.П.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Thu #6 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">История</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Каб. 302</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Лебедев В.К.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Fri #6 -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+<span class="font-label-sm text-label-sm mt-1">Окончание смены</span>
+</div>
+</div>
+<!-- Sat #6 -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+</div>
+</div>
+</div>
+<!-- ROW 7 (14:25 - 15:10) -->
+<div class="grid grid-cols-[100px_repeat(6,1fr)] bg-surface-container-low/40">
+<div class="p-3 flex flex-col items-center justify-center bg-surface-container-low text-center">
+<span class="font-headline-sm text-headline-sm font-bold text-secondary">7</span>
+<span class="font-label-sm text-label-sm text-outline font-data-mono">14:25</span>
+<span class="font-label-sm text-label-sm text-outline-variant font-data-mono">15:10</span>
+</div>
+<!-- Mon #7 -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+</div>
+</div>
+<!-- Tue #7 -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+</div>
+</div>
+<!-- Wed #7 -->
+<div class="p-1.5">
+<div class="timetable-token group relative flex flex-col justify-between p-2.5 h-24 rounded-lg bg-surface-container hover:bg-surface-container-high shadow transition-all cursor-grab active:cursor-grabbing border-l-4 border-l-tertiary">
+<div class="flex items-start justify-between gap-1">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface line-clamp-1">Технология (практика)</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-secondary font-data-mono text-label-sm font-semibold">Мастерские</span>
+</div>
+<div class="flex items-center justify-between text-outline text-body-sm">
+<span class="truncate">Федоров В.П.</span>
+<span class="material-symbols-outlined text-[14px] opacity-40 group-hover:opacity-100">drag_handle</span>
+</div>
+</div>
+</div>
+<!-- Thu #7 -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+</div>
+</div>
+<!-- Fri #7 -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+</div>
+</div>
+<!-- Sat #7 -->
+<div class="p-1.5">
+<div class="flex flex-col items-center justify-center h-24 rounded-lg bg-surface-container-lowest/50 text-outline-variant">
+<span class="material-symbols-outlined text-[20px]">horizontal_rule</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Inspector Drawer / Smart Bottom Bar with Mascot "Архип" -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-2">
+<!-- Lesson Context Card -->
+<div class="lg:col-span-4 p-4 rounded-xl bg-surface-container shadow-md flex flex-col justify-between">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Выделенный урок</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-secondary font-data-mono text-label-sm font-bold">Среда · 3 урок</span>
+</div>
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">functions</span>
+</div>
+<div class="flex flex-col">
+<h4 class="font-headline-md text-headline-md font-bold text-on-surface leading-tight">Алгебра (7А)</h4>
+<span class="font-body-md text-body-md text-on-surface-variant">Иванова Марина Алексеевна</span>
+<span class="font-label-md text-label-md text-outline mt-0.5">Кабинет 204 · Профиль: Математический</span>
+</div>
+</div>
+<div class="flex items-center gap-2 mt-4 pt-3 bg-surface-container-low p-2 rounded-lg">
+<span class="material-symbols-outlined text-secondary text-[16px]">verified</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">СанПиН норма соблюдена (2-3 уроки середины недели)</span>
+</div>
+</div>
+<!-- Mascot Assistant "Архип" Advice Panel -->
+<div class="lg:col-span-8 p-4 rounded-xl bg-surface-container-high shadow-lg flex items-center justify-between gap-4">
+<div class="flex items-start gap-4">
+<!-- Mascot Avatar with Pulse Status -->
+<div class="relative shrink-0">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-secondary text-[32px]">smart_toy</span>
+</div>
+<span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-secondary flex items-center justify-center">
+<span class="w-2 h-2 rounded-full bg-surface"></span>
+</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Архип</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-tertiary font-bold tracking-wider uppercase">ИИ-ассистент сетки</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 max-w-2xl leading-relaxed">
+              «Внимание: перемещение этого урока на <strong class="text-on-surface font-semibold">5-й час среды</strong> создаст 
+              <span class="text-tertiary font-semibold">«окно» в 1 час</span> у преподавателя Ивановой М.А. и сместит пиковую когнитивную кривую учеников на неблагоприятное время. 
+              <span class="text-secondary font-semibold">Рекомендуем оставить алгебру на 3-м уроке</span>.»
+            </p>
+</div>
+</div>
+<div class="flex flex-col gap-2 shrink-0">
+<button class="px-3 py-1.5 rounded-lg bg-secondary text-on-secondary hover:bg-secondary-fixed font-label-md text-label-md font-bold transition-all shadow-sm" type="button">
+            Применить совет
+          </button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" type="button">
+            Игнорировать
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- CONTENT VIEW 2: EMPTY TIMETABLE STATE (Hidden by default, switched via button) -->
+<div class="hidden flex-col items-center justify-center flex-1 px-6 py-16 gap-6" id="view-empty-container">
+<div class="relative w-72 h-72 rounded-2xl bg-surface-container-low shadow-xl flex flex-col items-center justify-center p-6 text-center">
+<!-- Architectural blueprint empty grid illustration -->
+<svg class="w-36 h-36 text-outline opacity-40 mb-4" fill="none" stroke="currentColor" viewbox="0 0 100 100">
+<rect height="90" rx="6" stroke-dasharray="4 4" stroke-width="2" width="90" x="5" y="5"></rect>
+<line stroke-dasharray="2 2" stroke-width="1.5" x1="5" x2="95" y1="35" y2="35"></line>
+<line stroke-dasharray="2 2" stroke-width="1.5" x1="5" x2="95" y1="65" y2="65"></line>
+<line stroke-dasharray="2 2" stroke-width="1.5" x1="35" x2="35" y1="5" y2="95"></line>
+<line stroke-dasharray="2 2" stroke-width="1.5" x1="65" x2="65" y1="5" y2="95"></line>
+<circle class="text-secondary" cx="50" cy="50" fill="currentColor" fill-opacity="0.1" r="12" stroke-width="2"></circle>
+<path d="M46 50L54 50M50 46L50 54" stroke="currentColor" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+<!-- Floating Mascot Badge -->
+<div class="absolute -top-4 -right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-highest text-secondary shadow-lg">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+<span class="font-label-sm text-label-sm font-bold">Архип готов к расчёту</span>
+</div>
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface">Сетка ещё не построена</span>
+<span class="font-body-sm text-body-sm text-outline mt-1">Для класса 7А нет утверждённых назначений</span>
+</div>
+<div class="flex flex-col items-center text-center max-w-lg">
+<h3 class="font-headline-lg text-headline-lg font-bold text-on-surface">Сетка расписания ещё не сформирована</h3>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-2">
+        Перейдите в раздел автоматической генерации расписания по алгоритмам СанПиН или загрузите готовый учебный план в формате CSV / Excel.
+      </p>
+<div class="flex items-center gap-3 mt-6">
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-secondary text-on-secondary font-headline-sm text-headline-sm font-bold hover:bg-secondary-fixed transition-all shadow-lg" type="button">
+<span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+<span>Перейти в раздел «Генерация»</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-surface-container-high text-on-surface font-headline-sm text-headline-sm hover:bg-surface-container-highest transition-all shadow" type="button">
+<span class="material-symbols-outlined text-[20px]">upload_file</span>
+<span>Загрузить готовый файл</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    // Mode Switcher (Classes vs Teachers)
+    const btnClasses = document.getElementById('view-mode-classes');
+    const btnTeachers = document.getElementById('view-mode-teachers');
+    const targetTitle = document.getElementById('active-target-title');
+    const chipsGroup = document.getElementById('class-chips-group');
+
+    btnClasses.addEventListener('click', () => {
+      btnClasses.className = "flex items-center gap-2 px-3 py-1.5 rounded text-on-primary bg-secondary shadow font-label-md text-label-md transition-all";
+      btnTeachers.className = "flex items-center gap-2 px-3 py-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all font-label-md text-label-md";
+      targetTitle.textContent = "Класс: 7А (28 учеников · Кабинет 305)";
+      chipsGroup.classList.remove('hidden');
+    });
+
+    btnTeachers.addEventListener('click', () => {
+      btnTeachers.className = "flex items-center gap-2 px-3 py-1.5 rounded text-on-primary bg-secondary shadow font-label-md text-label-md transition-all";
+      btnClasses.className = "flex items-center gap-2 px-3 py-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-all font-label-md text-label-md";
+      targetTitle.textContent = "Учитель: Иванова М.А. (Математика · 24 ч/нед)";
+      chipsGroup.classList.add('hidden');
+    });
+
+    // State Switcher (Filled Timetable vs Empty Placeholder)
+    const btnFilled = document.getElementById('state-toggle-filled');
+    const btnEmpty = document.getElementById('state-toggle-empty');
+    const filledContainer = document.getElementById('view-filled-container');
+    const emptyContainer = document.getElementById('view-empty-container');
+    const filterBar = document.getElementById('filter-matrix-bar');
+
+    btnFilled.addEventListener('click', () => {
+      btnFilled.className = "flex items-center gap-1.5 px-3 py-1.5 rounded text-secondary bg-surface-container-high font-label-md text-label-md";
+      btnEmpty.className = "flex items-center gap-1.5 px-3 py-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high font-label-md text-label-md";
+      filledContainer.classList.remove('hidden');
+      emptyContainer.classList.add('hidden');
+      filterBar.classList.remove('opacity-40', 'pointer-events-none');
+    });
+
+    btnEmpty.addEventListener('click', () => {
+      btnEmpty.className = "flex items-center gap-1.5 px-3 py-1.5 rounded text-secondary bg-surface-container-high font-label-md text-label-md";
+      btnFilled.className = "flex items-center gap-1.5 px-3 py-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high font-label-md text-label-md";
+      filledContainer.classList.add('hidden');
+      emptyContainer.classList.remove('hidden');
+      filterBar.classList.add('opacity-40', 'pointer-events-none');
+    });
+
+    // Theme Switcher (Dark / Light)
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    const themeText = document.getElementById('theme-status-text');
+    let isDark = true;
+
+    themeBtn.addEventListener('click', () => {
+      isDark = !isDark;
+      const htmlEl = document.documentElement;
+      if (isDark) {
+        htmlEl.classList.add('dark');
+        themeText.textContent = "Тема: Тёмная (Dark)";
+      } else {
+        htmlEl.classList.remove('dark');
+        themeText.textContent = "Тема: Светлая (Light)";
+      }
+    });
+
+    // Class Chip Switching
+    const chips = document.querySelectorAll('.class-chip');
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => {
+          c.className = "class-chip px-2.5 py-1 rounded text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors";
+          c.textContent = c.getAttribute('data-class');
+        });
+        chip.className = "class-chip px-2.5 py-1 rounded bg-secondary text-on-secondary font-label-md text-label-md font-bold shadow-sm";
+        chip.textContent = chip.getAttribute('data-class') + ' ✓';
+        targetTitle.textContent = `Класс: ${chip.getAttribute('data-class')} (28 учеников · Кабинет 305)`;
+      });
+    });
+
+    // Micro Drag Token Visual Feedback
+    const tokens = document.querySelectorAll('.timetable-token');
+    tokens.forEach(tok => {
+      tok.addEventListener('mouseenter', () => {
+        tok.classList.add('shadow-md');
+      });
+      tok.addEventListener('mouseleave', () => {
+        tok.classList.remove('shadow-md');
+      });
+    });
+  })();
+</script></main></div></body></html>
