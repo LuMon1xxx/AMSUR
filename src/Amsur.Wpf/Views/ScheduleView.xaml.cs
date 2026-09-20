@@ -8,14 +8,16 @@ using Amsur.Application;
 using Amsur.Scheduling.Core;
 using Microsoft.Win32;
 
-namespace Amsur.Wpf;
+namespace Amsur.Wpf.Views;
 
 public sealed record ScheduleRowVm(
     Guid OccurrenceId, string ClassName, string SubjectName, string TeacherName,
     int Day, int Slot, string RoomName, int DayIndex, Guid? RoomId, string Badge = "");
 
-public partial class ScheduleWindow : Window
+// P-D2: сетка как view (логика из ScheduleWindow 1-в-1 + акценты областей).
+public partial class ScheduleView : UserControl
 {
+    public IViewNavigator? Navigator { get; set; }
     private static readonly string[] DayNames =
         ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 
@@ -26,7 +28,7 @@ public partial class ScheduleWindow : Window
     private ObservableCollection<ScheduleRowVm> _allRows = [];
     private ScheduleRowVm? _selectedRow;
 
-    public ScheduleWindow(AppSession session)
+    public ScheduleView(AppSession session)
     {
         _session = session;
         InitializeComponent();
@@ -297,24 +299,35 @@ public partial class ScheduleWindow : Window
                         },
                     };
                     if (TryFindResource("Badge") is Style badgeStyle) chip.Style = badgeStyle;
+                    var area = AreaBrush(AreaOf(row.SubjectName));
                     var inner = new StackPanel
                     {
+                        Margin = new Thickness(8, 0, 0, 0),
                         Children =
                         {
-                            new TextBlock { Text = row.SubjectName, FontSize = 12, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap },
-                            new TextBlock { Text = row.TeacherName, FontSize = 11, Foreground = textSoft, Margin = new Thickness(0, 2, 0, 0) },
+                            new TextBlock { Text = row.SubjectName, FontSize = 13, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap },
+                            new TextBlock { Text = row.TeacherName, FontSize = 12, Foreground = textSoft, Margin = new Thickness(0, 2, 0, 0) },
                             chip,
                         },
                     };
+                    var stripe = new Border
+                    {
+                        Background = area, Width = 3, CornerRadius = new CornerRadius(2),
+                        Margin = new Thickness(0, 2, 0, 2), VerticalAlignment = VerticalAlignment.Stretch,
+                    };
+                    var dock = new DockPanel { LastChildFill = true };
+                    DockPanel.SetDock(stripe, Dock.Left);
+                    dock.Children.Add(stripe);
+                    dock.Children.Add(inner);
                     cell = new Border
                     {
                         Background = isSelected ? accentSoft : card,
                         BorderBrush = isSelected ? accent : border,
                         BorderThickness = isSelected ? new Thickness(2) : new Thickness(0, 0, 1, 1),
-                        CornerRadius = isSelected ? new CornerRadius(8) : new CornerRadius(0),
-                        Padding = new Thickness(8), Cursor = Cursors.Hand, Tag = row,
+                        CornerRadius = new CornerRadius(8),
+                        Padding = new Thickness(6), Cursor = Cursors.Hand, Tag = row,
                     };
-                    cell.Child = inner;
+                    cell.Child = dock;
                     cell.MouseLeftButtonUp += OnMatrixCellClick;
                     cell.ToolTip = $"{row.ClassName} · {row.SubjectName} · {row.TeacherName} · каб. {row.RoomName}";
                 }
@@ -336,6 +349,30 @@ public partial class ScheduleWindow : Window
             BuildMatrixSelection();
         }
     }
+
+    // P-D2: акцент карточки по области предмета (Stitch §3.4).
+    // UI-only эвристика по имени: точные — индиго, гуманитарные — янтарь,
+    // спорт/труд/искусства — зелёный. Порядок важен: «физическая культура»
+    // содержит «физик», поэтому спорт проверяется первым.
+    private static string AreaOf(string subject)
+    {
+        string s = subject.ToLowerInvariant();
+        if (s.Contains("культур") || s.Contains("труд") || s.Contains("искусств") ||
+            s.Contains("музык") || s.Contains("дмп") || s.Contains("физ-ра"))
+            return "sport";
+        if (s.Contains("матем") || s.Contains("алгебр") || s.Contains("геометр") ||
+            s.Contains("физик") || s.Contains("хими") || s.Contains("биолог") ||
+            s.Contains("информат") || s.Contains("астрон") || s.Contains("черчен"))
+            return "stem";
+        return "hum";
+    }
+
+    private Brush AreaBrush(string area) => area switch
+    {
+        "stem" => Br("BAccent", Brushes.Indigo),
+        "sport" => Br("BGood", Brushes.Green),
+        _ => Br("BWarn", Brushes.DarkGoldenrod),
+    };
 
     private void BuildMatrixSelection()
     {
@@ -464,7 +501,7 @@ public partial class ScheduleWindow : Window
         {
             Title = "Экспорт и печать",
             Content = new Views.ExportView(_session),
-            Owner = this,
+            Owner = System.Windows.Window.GetWindow(this),
             Width = 1100,
             Height = 780,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
@@ -485,7 +522,7 @@ public partial class ScheduleWindow : Window
         IReadOnlyList<string> lines = findings.Count == 0
             ? ["Нарушений СанПиН не найдено. Проверены: нагрузка в день, 1-е классы, физкультура первым уроком. Цифры норм требуют сверки с НПА."]
             : findings.Select(f => (f.IsError ? "Нарушение: " : "Пожелание: ") + f.Text).ToList();
-        new QualityDetailsWindow("СанПиН — проверка расписания", lines) { Owner = this }.ShowDialog();
+        new QualityDetailsWindow("СанПиН — проверка расписания", lines) { Owner = System.Windows.Window.GetWindow(this) }.ShowDialog();
     }
 
     private async void OnRefreshClick(object sender, RoutedEventArgs e) => await ReloadAsync();

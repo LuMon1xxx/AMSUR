@@ -217,7 +217,7 @@ public sealed class FlexP34Tests : IAsyncDisposable
 
             new SettingsView(session);
             new ExportView(session);
-            new ScheduleWindow(session).Close();
+            new ScheduleView(session);
         });
     }
 

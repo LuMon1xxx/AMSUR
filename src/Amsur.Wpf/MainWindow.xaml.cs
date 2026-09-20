@@ -43,10 +43,7 @@ public partial class MainWindow : Window, IViewNavigator
                 "Запустите расчёт с главной (кнопка или F5).",
                 "Открыть генерацию старым окном (временно)")
             { LegacyOpen = () => Dashboard.OnGenerateClick(this, new RoutedEventArgs()) },
-            "Schedule" => new PlaceholderView("Расписание",
-                "Сетка дни × уроки по классам и учителям.",
-                "Открыть расписание старым окном (временно)")
-            { LegacyOpen = () => new ScheduleWindow(Session).Show() },
+            "Schedule" => new ScheduleView(Session) { Navigator = this },
             "Export" => new ExportView(Session),
             "Help" => new HelpView(),
             _ => Dashboard,

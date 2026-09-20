@@ -128,7 +128,7 @@ public sealed class WpfShellTests : IAsyncDisposable
         });
     }
 
-    // --- 2. ScheduleWindow: нет активного — честное пустое состояние ---
+    // --- 2. ScheduleView: нет активного — честное пустое состояние ---
     [Fact]
     public void ScheduleWindow_EmptyStateWhenNoActive()
     {
@@ -137,11 +137,10 @@ public sealed class WpfShellTests : IAsyncDisposable
             Directory.CreateDirectory(_dir);
             var session = new AppSession(_dir);
             await session.InitAsync();
-            var win = new ScheduleWindow(session);
-            for (int i = 0; i < 100 && win.StatusText.Text == "Загрузка…"; i++)
+            var view = new ScheduleView(session);
+            for (int i = 0; i < 100 && view.StatusText.Text == "Загрузка…"; i++)
                 await Task.Delay(50);
-            Assert.Contains("Нет активного расписания", win.StatusText.Text);
-            win.Close();
+            Assert.Contains("Нет активного расписания", view.StatusText.Text);
         });
     }
 

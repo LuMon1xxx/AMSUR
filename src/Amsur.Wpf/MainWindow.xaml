@@ -81,7 +81,7 @@
       </Border>
 
       <!-- Хостер разделов -->
-      <ContentControl x:Name="ViewHost" Grid.Column="1"/>
+      <ContentControl x:Name="ViewHost" x:FieldModifier="public" Grid.Column="1"/>
     </Grid>
   </DockPanel>
 </Window>
