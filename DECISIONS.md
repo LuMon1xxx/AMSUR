@@ -439,3 +439,9 @@
 ## D-46 Vorota tolko na determinirovannykh stadiyakh (20.09.2026)
 - Context: PhotoSchool_Greedy_Coverage flakal v polnom syute: time-boxed LS (10s/20s) pod nagruzkoy CPU dayot khuzhe (5->7 okon) - vorota na time-boxed poiske nagruzko-zavisimy.
 - Chosen: assert-gates tolko greedy (pokrytie >=870) + repair (uluchshenie + <=12); LS multi-seed - logged evidence bez gate. Margin +1-2 ot zamerov (signal zhiv: syroy greedy - 21 okno). Stabilizatsiya LS (determinirovannyi poryadok obsledovaniya) - backlog, ne blokiruet pilot.
+
+## D-47 P-D0 strangler: odno okno bez lomaniya testov (20.09.2026)
+- Context: 7 otdelnykh Window nuzhno svesti v odno (reshenie polzovatelya), ne slomav WpfShell-testy i povedenie.
+- Chosen: MainWindow=shell (nav+ViewHost+footer), kontent dashborda PEREVEZYON v DashboardView (ne skopirovan - compiler proveryaet), ostalnye - PlaceholderView s knopkoy "staroe okno (vremenno)". Testy obnovleny minimalno (3 polya cherez main.Dashboard). Starye okna udalyayutsya paketami P-D1..P-D3, a ne srazu.
+- Evidence: build 0 errors; WpfShell 7/7; suit 301+1/0; skrin v3-shell-d0.png.
+- Poputno: tofu-bag ikonok rezhimov (C# vs XML-suschnosti) + obrezka hero-podpisi - pochineny, zafiksirovano kommentarom v kode.

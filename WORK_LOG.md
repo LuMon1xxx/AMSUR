@@ -290,3 +290,11 @@ handoff `amsur_design.md_wpf.net_10_handoff.md` (база 1600×900, rail 240px,
 - Smoke exe: headless 15s zhiv, RAM ~126MB (kak v baseline), ubit shtatno, .NET Runtime oshibok v Event Viewer — 0. UI-fayly NE trogany → novykh skrinov ne delal (v2-* aktualny); mimo ne gonyal (pokazyvat nechego novogo).
 - Naydeno: G1 (smena v Load), G2 (pin klassnogo chasa), G3 (Splits v2) — pakety na oktyabr. Fiktura OurSchoolTests NE troguta (foto-korrektirovki v mappinge).
 - S succession: obnovleny PROJECT_STATUS (301+1, pilot), BENCHMARKS (PhotoSchool), DECISIONS (D-45, D-46), NDTP-skeleton (§4/§5 real-cifry). Kommit/push — finalnym paketom.
+
+## 20.09.2026 - P-D0 karkas: odno okno + navigaciya + animacii + Gufo (D-47)
+- Reshenie: odno okno (MainWindow=shell: nav-rail + ViewHost + footer), DashboardView (kontent pereekhal 1-v-1), ostalnye razdely - PlaceholderView s vremennym otkrytiem starykh okon (pakety P-D1..P-D3). Starye okna zhivy - testy zelyonye.
+- Animacii (bez bibliotek): press-scale 0.96 knopok (BtnPrimary/Secondary/NavBtn, shared PressDown/PressUp), fade+slide 220ms smeny view (kod, ViewEnter), Gufo-sova v hero (vektor) + "Gufo sovetuet" + beydzh "Gufo na svyazi".
+- Naydennyy bag (do D0 ne viden): ikonki rezhimov - tofu-kvadraty (C# ne parsit &#xE768;, nuzhen (char)0xE768 - Glyph()). Pochineno, skrin podtverdil. Hero-podpis obrezalas (gorizontalny StackPanel) - pochineno Gridom.
+- Voprosy: Stitch MCP - chtenie rabotaet, generate/edit taymauty (2 popytki, stop). Svetluyu adaptaciyu delayu sam po planu.
+- Evidence: build 0 errors; WpfShell 7/7; polny suit 301+1/0 (2m40s); v3-shell-d0.png - shell+Gufo+ikonki OK.
+- Resheniya: D-47 (strangler-migraciya, vorota D0), imya maskota - Gufo (utverzhdeno), setka posledney.

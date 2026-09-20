@@ -46,6 +46,32 @@
     <SolidColorBrush x:Key="BGoodBg" Color="{StaticResource CGoodBg}"/>
     <SolidColorBrush x:Key="BWarnBg" Color="{StaticResource CWarnBg}"/>
     <SolidColorBrush x:Key="BBadBg" Color="{StaticResource CBadBg}"/>
+    <!-- P-D0: тёплый сабтл для дружелюбных панелей + Гуфо -->
+    <SolidColorBrush x:Key="BWarm" Color="#FFF7ED"/>
+    <SolidColorBrush x:Key="BWarmBorder" Color="#FED7AA"/>
+
+    <!-- P-D0: базовые анимации (только accelerate-free, без сторонних библиотек).
+         PressDown/PressUp: лёгкое сжатие при нажатии (90/120мс).
+         Применение: в шаблоне кнопки именованный ScaleTransform x:Name="PressScale"
+         (каждый шаблон — свой инстанс, сториборды общие резолвят имя в неймскопе).
+         ViewEnter: появление view (fade + подъём 12px, 220мс) — запуск из кода,
+         цель сториборда задаёт вызыватель (Storyboard.SetTarget). -->
+    <Storyboard x:Key="PressDown">
+      <DoubleAnimation Storyboard.TargetName="PressScale"
+                       Storyboard.TargetProperty="ScaleX"
+                       To="0.96" Duration="0:0:0.09"/>
+      <DoubleAnimation Storyboard.TargetName="PressScale"
+                       Storyboard.TargetProperty="ScaleY"
+                       To="0.96" Duration="0:0:0.09"/>
+    </Storyboard>
+    <Storyboard x:Key="PressUp">
+      <DoubleAnimation Storyboard.TargetName="PressScale"
+                       Storyboard.TargetProperty="ScaleX"
+                       To="1" Duration="0:0:0.12"/>
+      <DoubleAnimation Storyboard.TargetName="PressScale"
+                       Storyboard.TargetProperty="ScaleY"
+                       To="1" Duration="0:0:0.12"/>
+    </Storyboard>
 
     <CornerRadius x:Key="RCard">12</CornerRadius>
     <CornerRadius x:Key="RControl">8</CornerRadius>
@@ -111,7 +137,11 @@
         <Setter.Value>
           <ControlTemplate TargetType="Button">
             <Border x:Name="Frame" Background="{TemplateBinding Background}"
-                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+                    CornerRadius="8" Padding="{TemplateBinding Padding}"
+                    RenderTransformOrigin="0.5,0.5">
+              <Border.RenderTransform>
+                <ScaleTransform x:Name="PressScale" ScaleX="1" ScaleY="1"/>
+              </Border.RenderTransform>
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -121,6 +151,15 @@
               <Trigger Property="IsPressed" Value="True">
                 <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentPressed}"/>
               </Trigger>
+              <EventTrigger RoutedEvent="PreviewMouseDown">
+                <BeginStoryboard Storyboard="{StaticResource PressDown}"/>
+              </EventTrigger>
+              <EventTrigger RoutedEvent="PreviewMouseUp">
+                <BeginStoryboard Storyboard="{StaticResource PressUp}"/>
+              </EventTrigger>
+              <EventTrigger RoutedEvent="MouseLeave">
+                <BeginStoryboard Storyboard="{StaticResource PressUp}"/>
+              </EventTrigger>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter TargetName="Frame" Property="Opacity" Value="0.5"/>
               </Trigger>
@@ -149,7 +188,11 @@
             <Border x:Name="Frame" Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}"
-                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+                    CornerRadius="8" Padding="{TemplateBinding Padding}"
+                    RenderTransformOrigin="0.5,0.5">
+              <Border.RenderTransform>
+                <ScaleTransform x:Name="PressScale" ScaleX="1" ScaleY="1"/>
+              </Border.RenderTransform>
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
             <ControlTemplate.Triggers>
@@ -159,6 +202,15 @@
               <Trigger Property="IsPressed" Value="True">
                 <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentBorder}"/>
               </Trigger>
+              <EventTrigger RoutedEvent="PreviewMouseDown">
+                <BeginStoryboard Storyboard="{StaticResource PressDown}"/>
+              </EventTrigger>
+              <EventTrigger RoutedEvent="PreviewMouseUp">
+                <BeginStoryboard Storyboard="{StaticResource PressUp}"/>
+              </EventTrigger>
+              <EventTrigger RoutedEvent="MouseLeave">
+                <BeginStoryboard Storyboard="{StaticResource PressUp}"/>
+              </EventTrigger>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter TargetName="Frame" Property="Opacity" Value="0.5"/>
               </Trigger>
@@ -642,7 +694,11 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+            <Border x:Name="NavFrame" Background="{TemplateBinding Background}" CornerRadius="8"
+                    Padding="{TemplateBinding Padding}" RenderTransformOrigin="0.5,0.5">
+              <Border.RenderTransform>
+                <ScaleTransform x:Name="PressScale" ScaleX="1" ScaleY="1"/>
+              </Border.RenderTransform>
               <StackPanel Orientation="Horizontal">
                 <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="15" Width="22"
                            TextAlignment="Center" VerticalAlignment="Center"
@@ -655,6 +711,15 @@
                 <Setter Property="Background" Value="{StaticResource BSubtle}"/>
                 <Setter Property="Foreground" Value="{StaticResource BText}"/>
               </Trigger>
+              <EventTrigger RoutedEvent="PreviewMouseDown">
+                <BeginStoryboard Storyboard="{StaticResource PressDown}"/>
+              </EventTrigger>
+              <EventTrigger RoutedEvent="PreviewMouseUp">
+                <BeginStoryboard Storyboard="{StaticResource PressUp}"/>
+              </EventTrigger>
+              <EventTrigger RoutedEvent="MouseLeave">
+                <BeginStoryboard Storyboard="{StaticResource PressUp}"/>
+              </EventTrigger>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Opacity" Value="0.5"/>
               </Trigger>
