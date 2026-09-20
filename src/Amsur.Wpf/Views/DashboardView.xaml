@@ -16,6 +16,39 @@
         <TextBlock x:Name="SubText" Style="{StaticResource THint}" Margin="0,4,0,0"
                    Text="Загрузите данные школы, чтобы начать."/>
 
+        <!-- P-D1: умный следующий шаг Гуфо (одно действие, не пять) -->
+        <Border x:Name="NextStepCard" Style="{StaticResource Card}" Margin="0,14,0,0"
+                Background="{StaticResource BWarm}" BorderBrush="{StaticResource BWarmBorder}">
+          <StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" Background="{StaticResource BAccent}"
+                      VerticalAlignment="Center" ToolTip="Гуфо — помощник АМСУР">
+                <TextBlock Text="Г" FontSize="18" FontWeight="Bold" Foreground="White"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              </Border>
+              <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
+                <TextBlock x:Name="NextStepTitle" FontSize="14" FontWeight="SemiBold" Text="Загрузите данные школы"/>
+                <TextBlock x:Name="NextStepText" Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0"
+                           Text="Шаблон Excel → заполнить → загрузить. Это займёт несколько минут."/>
+              </StackPanel>
+              <Button x:Name="NextStepBtn" x:FieldModifier="public" Grid.Column="2" Content="Загрузить Excel" Style="{StaticResource BtnPrimary}"
+                      Padding="16,8" VerticalAlignment="Center" Click="OnNextStepClick"/>
+            </Grid>
+            <!-- Настройки сетки — только на шаге загрузки (иначе дублируют карточку ниже) -->
+            <StackPanel x:Name="NextStepInputs" Orientation="Horizontal" Margin="52,10,0,0">
+              <TextBlock Text="Дней:" VerticalAlignment="Center"/>
+              <TextBox x:Name="DaysBox" Text="5" Width="40" Margin="6,0,16,0"/>
+              <TextBlock Text="Уроков в день:" VerticalAlignment="Center"/>
+              <TextBox x:Name="SlotsBox" Text="7" Width="40" Margin="6,0,0,0"/>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
         <!-- Hero-баннер + Гуфо -->
         <Border Margin="0,14,0,0" CornerRadius="12" Background="{StaticResource HeroBrush}" Padding="20">
           <Grid>
@@ -126,26 +159,7 @@
           </Border>
         </UniformGrid>
 
-        <!-- A: данных нет -->
-        <Border x:Name="StateNoData" x:FieldModifier="public" Style="{StaticResource Card}" Margin="0,14,0,0">
-          <StackPanel>
-            <TextBlock Text="Сначала загрузите данные школы" FontSize="17" FontWeight="SemiBold"/>
-            <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
-                       Text="Скачайте шаблон Excel, заполните нагрузку и загрузите файл. Это займёт несколько минут."/>
-            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-              <Button Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Click="OnTemplateClick"/>
-              <Button Content="Загрузить Excel" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0" Click="OnImportClick"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-              <TextBlock Text="Дней:" VerticalAlignment="Center"/>
-              <TextBox x:Name="DaysBox" Text="5" Width="40" Margin="6,0,16,0"/>
-              <TextBlock Text="Уроков в день:" VerticalAlignment="Center"/>
-              <TextBox x:Name="SlotsBox" Text="7" Width="40" Margin="6,0,0,0"/>
-            </StackPanel>
-          </StackPanel>
-        </Border>
-
-        <!-- D: ошибка импорта -->
+        <!-- D: ошибка импорта (баннер Гуфо выше заменяет старое «сначала загрузите») -->
         <Border x:Name="ErrorCard" Style="{StaticResource Card}" Margin="0,14,0,0"
                 Background="{StaticResource BBadBg}" Visibility="Collapsed">
           <StackPanel>

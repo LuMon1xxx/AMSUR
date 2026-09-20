@@ -157,13 +157,10 @@ public partial class DashboardView : UserControl
         SyncModeCards();
         var s = Session.Summary;
         bool hasData = Session.HasData;
-        bool noData = !hasData;
 
-        StateNoData.Visibility = noData ? Visibility.Visible : Visibility.Collapsed;
-
-        SubText.Text = noData
-            ? "Загрузите данные школы, чтобы начать."
-            : "Данные готовы. Проверьте режим и создавайте расписание.";
+        SubText.Text = hasData
+            ? "Данные готовы. Проверьте режим и создавайте расписание."
+            : "Загрузите данные школы, чтобы начать.";
 
         if (s is null)
         {
@@ -221,6 +218,56 @@ public partial class DashboardView : UserControl
         PaintStep(Step4Circle, Step4Num,
             hasQuality ? StepState.Done : hasActive ? StepState.Current : StepState.Todo);
         PaintStep(Step5Circle, Step5Num, hasActive ? StepState.Current : StepState.Todo);
+        PaintNextStep(hasData, hasActive, hasQuality);
+    }
+
+    // P-D1: умный следующий шаг — одно действие вместо пяти.
+    private enum NextAction { Import, Generate, Schedule, Export }
+    private NextAction _next = NextAction.Import;
+
+    private void PaintNextStep(bool hasData, bool hasActive, bool hasQuality)
+    {
+        // Ввод сетки (дни/уроки) нужен только на шаге загрузки.
+        NextStepInputs.Visibility = !hasData ? Visibility.Visible : Visibility.Collapsed;
+        if (!hasData)
+        {
+            _next = NextAction.Import;
+            NextStepTitle.Text = "Загрузите данные школы";
+            NextStepText.Text = "Шаблон Excel → заполнить → загрузить. Это займёт несколько минут.";
+            NextStepBtn.Content = "Загрузить Excel";
+        }
+        else if (!hasActive)
+        {
+            _next = NextAction.Generate;
+            NextStepTitle.Text = "Всё готово — создавайте расписание";
+            NextStepText.Text = "Проверьте режим справа и нажмите кнопку. Гуфо всё посчитает сам.";
+            NextStepBtn.Content = "Сгенерировать";
+        }
+        else if (!hasQuality)
+        {
+            _next = NextAction.Schedule;
+            NextStepTitle.Text = "Проверьте результат";
+            NextStepText.Text = "Откройте сетку: дни, уроки, учителя и кабинеты.";
+            NextStepBtn.Content = "Перейти к сетке";
+        }
+        else
+        {
+            _next = NextAction.Export;
+            NextStepTitle.Text = "Расписание готово — можно выгружать";
+            NextStepText.Text = "Заберите Excel для школы или посмотрите сетку ещё раз.";
+            NextStepBtn.Content = "Выгрузить";
+        }
+    }
+
+    private void OnNextStepClick(object sender, RoutedEventArgs e)
+    {
+        switch (_next)
+        {
+            case NextAction.Import: OnImportClick(sender, e); break;
+            case NextAction.Generate: OnGenerateClick(sender, e); break;
+            case NextAction.Schedule: OnScheduleClick(sender, e); break;
+            case NextAction.Export: OnExportClick(sender, e); break;
+        }
     }
 
     private enum StepState { Todo, Current, Done }

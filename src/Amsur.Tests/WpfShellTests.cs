@@ -290,7 +290,7 @@ public sealed class WpfShellTests : IAsyncDisposable
             await session.InitAsync();
             typeof(App).GetProperty("Session")!.SetValue(app, session);
             var main = new MainWindow();
-            Assert.Equal(System.Windows.Visibility.Visible, main.Dashboard.StateNoData.Visibility);
+            Assert.Equal("Загрузить Excel", main.Dashboard.NextStepBtn.Content);
             Assert.Equal("Не загружены", main.Dashboard.MiniDataStatus.Text);
             Assert.Equal("Нет данных", main.FooterRightText.Text);
             main.Close();
