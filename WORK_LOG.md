@@ -168,3 +168,125 @@ handoff `amsur_design.md_wpf.net_10_handoff.md` (база 1600×900, rail 240px,
 - Проверено: build 0 errors (только предсущ. warnings NU1903/CS8601/CS8602/xUnit2012);
   полный сьют 253/253 PASS за 2м41с. Коммит/пуш НЕ делались (ждут команды).
 
+## 15.09.2026 — Wave-2: коммит базы + чистка + аудит (Compose+, без nemotron)
+- Требование пользователя: задачи субагентам на nemotron 3/3.5 не поручать (D-36).
+  S3/S4 классические пропущены; синтез — OWN SYNTHESIS: decision-wave2.md +
+  plan-wave2.md + risks-wave2.md (чеклист внутри decision).
+- Git-база: пользователь выбрал «закоммитить текущее» → b3ae5fd (64 файла:
+  исходники+доки+DemoSchool.xlsx+Docs_Contest+WORK_LOG; bin/obj, Combat,
+  publish-single сознательно НЕ staged). Коммит через `-c user.*` (та же ident,
+  что история: compose-plus), конфиг не менялся. Push не делался.
+- Проверено (свежее, эта машина): `dotnet build src/Amsur.slnx` — 0 errors,
+  15 предсущ. warnings, ~22с. `dotnet test src/Amsur.Tests` — **258/259 за 2м53с**.
+- KNOWN-FAIL (D-35, карантин, не чинилось): MidSchoolTight_StandardRun_Feasible,
+  2/2 repro одиночным прогоном. Факты: tight-фикстура 994 occ, greedy 986/994
+  (79мс), solver Unknown/place=0, выход ~4с/seed при бюджете 12с (дело не в бюджете).
+  Тест новый, в 253/253 автора не входил. Чинить вслепую запрещено.
+- P-CLEAN (D-37): Combat45×3 → _archive/samples-20260915; publish-single/ →
+  _archive/builds-20260915; RealSchool_Schedule.xlsx + ~$… → туда же (git mv,
+  история сохранена). Удалений нет. grep: Combat/RealSchool в src не используются
+  (только коммент DemoSchoolTests). Эталоны EPICJ + DemoSchool на месте.
+  bin/obj (2190 tracked) не тронуты — `git rm --cached` ждёт подтверждения.
+- P-AUDIT: PROJECT_STATUS (259 + KNOWN-FAIL, RuleCatalog v3→v5, персист ГОТОВ),
+  BENCHMARKS (секция Wave-2), DECISIONS D-35..D-37. Остальное из S1-расхождений
+  (MASTER weight-freeze, SANPIN MaxPerDay в прод-импорте, детерминизм-оговорка) —
+  backlog, не переписывалось.
+- B1/B2/B3/B6 — verify-only по коду: A1 Task.Run (MainWindow.xaml.cs:402),
+  StaticResource (GenerateWindow.xaml:182, grep BasedOn+Dynamic = 0),
+  SQLite-персист + restore (AppSession), DemoRows 56 + seeds (DemoSchoolTests).
+  B4 (HTML) → P-B4, B5 (fuzzy) → P-B5, B7 (LICENSE/README/.gitignore) → P-B47.
+- P-B47 ГОТОВ: .gitignore (bin/obj, publish, _archive, ~$*, *.user, .vs, TestResults,
+  *.db), LICENSE MIT (2026 AMSUR contributors), README.md (что/запуск/primer.png/
+  ссылки/честные ограничения). _archive теперь ignored — случайных коммитов не будет.
+- P-B4 ГОТОВ (тест+замер+это): ScheduleHtmlExporter (gate INV-01, сетка как в Excel,
+  print-CSS, минимальное экранирование — WebUtility кириллицу в &#NNN;, не подошёл:
+  1 красный цикл → починено) + AppSession.ExportActiveHtmlAsync + ветка .html в
+  ExportWindow (фильтр диалога тоже). Тесты HtmlExportTests 4 шт; проверка:
+  Html+Excel+WpfShell 14/14.
+- P-B5 ГОТОВ: SubjectAliases (9 шт: Матем/ИЗО/Физра/Физкультура/Труд/Технология/ОБЖ/
+  Окружающий мир/Обществознание → официальные) + заметка «распознано — исправьте
+  в Excel» в Notes (поверхность «что исправить» — NotesList в SchoolDataWindow,
+  код уже показывал). Неизвестное («Мат», «Рус») — как есть. Fail-loud цел.
+  Тесты SubjectAliasTests 5 шт; проверка: alias+import+flex+manual+room+heavy 55/55.
+- Финал волны (свежий полный прогон): **267/268 за 2м27с**, единственное красное —
+  карантин D-35. Новых падений нет. P-F2 и остаток Этапа 4 — backlog (план-wave2):
+  LoadRow позиционный в десятках мест + цепочка Teacher→ProblemInput→Builder —
+  это отдельный пакет, не «маленький проброс.
+- НЕ коммитилось (ждут команды): P-CLEAN-перемещения (staged R×2), правки 4 md,
+  новые .gitignore/LICENSE/README/wave2-доки/экспортёры/тесты.
+
+## 15.09.2026 — Wave-3: недостатки аналогов → в AMSUR (автономно, без nemotron)
+Исследование: 2 researcher-трека (7 аналогов + конкурсы/школы РБ/нормативка).
+Решение: decision-wave3.md. Гибко-просто по D-34 (дефолты из коробки, опасное —
+через ConfirmDangerous, запреты с объяснением).
+- P-SANPIN-DOC: SANPIN_RB §7 исправлен — чередование трудных/лёгких ОТМЕНЕНО
+  реформой-2019 (№525); «чередование» теперь только пожелание школы, не норма.
+- P-PE-FLAG: Subject.IsPhysicalEducation выставляется в импорте из официального
+  названия (после алиасов); тест в SubjectAliasTests.
+- P-SANPIN-CHECK: новый SanPinChecker (отчёт, не gate): нагрузка/день по caps
+  (1→5/2–4→5/5–6→6/7–11→7, NEEDS-CHECK), 1-е классы (дней с 5 уроками ≤1),
+  физра первым уроком (warning). Лимиты — данные SanPinLimits (школа меняет
+  без кода). 5 тестов.
+- P-SANPIN-UI: кнопка «Проверить СанПиН» в ScheduleWindow → QualityDetailsWindow
+  (строки со «СанПиН» сами ложатся в группу «Нормы СанПиН»); без активного —
+  понятное сообщение, не мёртвая кнопка.
+- P-CSV: ScheduleCsvExporter (Class;Day;Slot;Subject;Teacher;Room, UTF-8 BOM,
+  gate INV-01) — мост к «Электронной школе»/РИОС. 3 теста.
+- P-DAYOFF: колонки UnavailDays/UnavailSlots в шаблоне (9 вместо 7; старые файлы
+  читаются) → TeacherDayOff/Unavailability → AllowedDays/AllowedSlots (движок уже
+  умел, ToProblemInput передавал [],[] — теперь проброшено). Персист: +2 колонки
+  в LoadRows с ALTER-миграцией старых БД. 11 тестов (парсинг/union/границы/
+  roundtrip Excel/старый формат/стор).
+- P-GUIDE: «Быстрый старт» стал живым: кружки ✓/текущий/серый по факту
+  (данные/активное/оценка), дашборд не падает при ошибке чтения.
+- Проверено: затронутые пакеты 34/34 и 71/71 по ходу; финал полный **287/288
+  за 2м41с** (+20 тестов волны), красное — только карантин D-35.
+- Backlog (отдельные EPIC): Splits v2, DnD+Undo, 6-й день/WeekType, справочник
+  предметов как данные, замены, ручной ввод DayOff в окнах (пока только Excel),
+  точная сверка caps с текстом №206 (NEEDS-CHECK в силе).
+
+
+## 15.09.2026 - Kontest-paket: tri vida eksporta + chestny PDF + karantin D-35 kodom + dokumenty NDTP
+- Excel: list KABINETY (Klass|Den|Urok|Predmet|Uchitel), checkbox v ExportWindow, AppSession peregruzka; test ExportThreeViews_RoomsSheet. Export 9/9.
+- PDF: mertvy beidzh SKORO ubran; kartochka >>cherez HTML<< + Ctrl+P; knopka VYGRUZIT (Excel/HTML); kommistarii P0-6 obnovleny. QuestPDF ne vvodilsya (D5).
+- D-35: [Fact(Skip)] s prichinoi + diag 15.09 v DECISIONS (greedy 986/994, unplaced 5 uchitelei - gipoteza peregruz pulov). Polny suit 288 passed + 1 skipped, 0 failed (2m34s).
+- Docs_Contest: NDTP_proekt_skeleton.md (struktura PDF 10 str + chernoviki + tsifry) + pismo_zavuchu.md. Kommit/push NE delalis.
+
+## 15.09.2026 - Fiktura nashei shkoly (OurSchoolTests, D-38)
+- 6 raundov voprosov: 27 klassov, smeny 6-7/ostalnye, profili 10A/11A (khim/angl pary), fizmat 10B/11B, shtat 40, kabinety 20. ASSUME: 5-e bez deleniya in.yaz, 6-e fizra 2, profil URA fobshch po 1, 11B fizra 1.
+- Dvigatel: CurriculumItem.GroupId/SyncGroupId + per-hour sync v bildere + 2 fail-loud garda. Least-loaded balansirovka pulov.
+- NAKHODKA: russkii blok 122ch na 3 uchitelei (90 slotov) - nekhvatka 32ch = tselaya stavka. Greedy 935/988, solver chestno Unknown/place=0. Eto material dlya zavucha i zayavki.
+- Zhdu ot uchenika: tochnye chasy 10-11. Kommit/push NE delalis.
+
+## 15.09.2026 - Peregruzka (D-39) + okhota za 5-11 xlsx
+- Nastroyka zhivyot: FlexSettings + store + builder, testy 3 sht. UI-tumbler - backlog.
+- VAZHNOE: starshaya matematika tozhe peregruzhena (98/90, algebra s 7-go) - nashyol dvigatel, ne uchenik.
+- 5-11 xlsx POKA NET chestno: cap9/11 + MAXIMUM + 120s = NO FEASIBLE. Reshenie sushchestvuet (bisect 988/988 bez capov i s kabinetami), no solver ne upakovyvaet v budget. Podozrenie: kabinetov 20 na 27 klassov - zhdu perescheta komnat ot uchenika.
+
+## 15.09.2026 - Kabinety 30, gym ONLY-PE, stop solver-popytok
+- Fiktura: 30 komnat, gym cap 3 ONLY + 29 forbidden-PE. Suit 296+1/0.
+- 5-11 xlsx POKA NET: 977/988 vnutri solvera, 11 urokov ne zakryvayutsya (cap9/11, budget do 120s). Reshenie: realnye dannye + chernovik-rezhim kak backup.
+
+## 15.09.2026 - Smeny 8G/9G, 980/988, stop
+- Greedy-overload 975 (rus vsego 2 vne setki). Solver vnutri 980/988, Phase A 0. Gipoteza: model Phase A strozhe greedy - backlog.
+
+## 15.09.2026 - Cap8 + CHERNOVIK, pervy file 5-11
+- Cap8 dal 975->978 greedy. STANDARD cap8 vsyo ravno NO FEASIBLE.
+- ExportDraftGrid + 2 testa. Samples_Export/OurSchool_raspisanie_CHERNOVIK.xlsx (978/988, 4 lista). Polny suit nije.
+
+## 15.09.2026 - P-A gotov: A1 + A2 v UI
+- Peregruzka: kartochka + confirm + cap-raise dlya strok. Chernovik: knopka + greedy. Personalnye: combo + export. Plan: .opencode/compose-plus/plan-ux-flex.md. Dalee: P-C dizayn, P-D tur, P-B gibkost.
+
+## 15.09.2026 - P-C gotov: checkbox/progress/pressed/header + Help + vision QA
+- Render STA PNG + mimo + lichnaya proverka. 3 mikrofiksa. Dalee: P-D tur, P-B gibkost.
+
+## 20.09.2026 - Avtonomka: chistka + foto 5-11 + syut 301 + smoke (D-45, D-46)
+- Brif uchenika: vsyo srazu (NDTP 21.09-05.10, 100 idey do 20.11, pilot SSh8, app usable k oktyabryu). Git/push razresheny; po faktu remote net + gh сломан (ne tot paket) — push zhdyot sozdaniya repo (komanda v finalnom otchyote).
+- Chistka: `git rm --cached` bin/obj (2190 files, .gitignore derzhit), kommit 00876ac (untrack bin/obj + .gitignore/MIT/README + arkhiv samples + performery/testy + foto pilota). Po puti: oshibochno snyal ves src s indeksa (`git rm -r src`) — vosstanovil `git add .gitignore + git add src`, proveril (bin/obj 0, diff tolko realnye izmeneniya). Urok: pathspecy po odnomu, bez `src` v spiske.
+- Foto 5-11: 6 foto → Excel 24 klassa/396 strok/769 ch (generator + mapping, sm. dannye/). Ruchnoy podschyot soshyolsya s generatorom (769). Uchitelya-pleyskholdery, pary 10A/11A bez sync, [?] 11B Sr — vsyo v mappinge.
+- Dvigatel na foto: import shape OK; greedy 878/884 (6 ne vlezli — vse 10A, strukturno: 47 occ na 40 slotov); repair 21->10; LS 10s ×3 seed: gaps 5/7/5, soft 2945/2740/2950. Do 0 ne dokhodit — chestno (G2/G3).
+- Flake-borba: PhotoSchool_Greedy_Coverage padal v polnom syute (time-boxed LS pod nagruzkoy dayot khuzhe) — D-46: vorota tolko greedy+repair (determinirovannye), LS — logged evidence. Fiks srabotal s pervogo raza.
+- Syut: **301 passed + 1 skipped (D-35), 0 failed, 2m29s**. Build 0 errors (24 predsysch. warnings).
+- Smoke exe: headless 15s zhiv, RAM ~126MB (kak v baseline), ubit shtatno, .NET Runtime oshibok v Event Viewer — 0. UI-fayly NE trogany → novykh skrinov ne delal (v2-* aktualny); mimo ne gonyal (pokazyvat nechego novogo).
+- Naydeno: G1 (smena v Load), G2 (pin klassnogo chasa), G3 (Splits v2) — pakety na oktyabr. Fiktura OurSchoolTests NE troguta (foto-korrektirovki v mappinge).
+- S succession: obnovleny PROJECT_STATUS (301+1, pilot), BENCHMARKS (PhotoSchool), DECISIONS (D-45, D-46), NDTP-skeleton (§4/§5 real-cifry). Kommit/push — finalnym paketom.

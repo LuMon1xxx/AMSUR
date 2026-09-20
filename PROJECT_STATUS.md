@@ -1,7 +1,8 @@
 # АМСУР — статус проекта, тесты и настройка (единый файл, 13.09.2026)
 
 > Статус: **EPIC-K готов** (FULL UI — продукт: dashboard, режимы, настройки, рейтинг).
-> Полный сьют: **188/188 за ~2.5 мин**. V1 (`D:\LuMon1x\Pr_Auto`) не тронут.
+> Полный сьют (20.09.2026, день): **301 пройдено + 1 skipped, 0 failed за 2м29с**
+> (карантин D-35; +2 PhotoSchool: реальные фото 5–11; было 299+1). V1 (`D:\LuMon1x\Pr_Auto`) не тронут.
 > Технические детали — `MASTER_PLAN.md`, `DECISIONS.md`, `BENCHMARKS.md`.
 
 ---
@@ -66,6 +67,14 @@
 - Планы по нормам 5-дневки 21/23/29/30/32/33/34; пример: `RealSchool_Schedule_EPICJ.xlsx`
   (40 классов, 0 окон, 0 поздних стартов — проверено независимым аудитом).
 
+### Пилот СШ №8: реальные фото 5–11 (20.09.2026, `данные/`)
+- 6 фото висящего расписания → `НашаШкола_5-11_нагрузка.xlsx` (24 класса,
+  396 строк, 769 ч/нед; генератор `build_load_5-11.py`; маппинг `МАППИНГ_5-11.md`).
+- Факты по фото: 2-я смена только 6–7-е; сплит ин.яза есть и в 5-х; ОБЖ в 5-х есть;
+  музыки в 5–11 нет; учителя на фото отсутствуют (плейсхолдеры, сверить с завучем).
+- Движок на фото-данных: greedy 878/884, repair 21→10 окон, pipeline ×3 seed 5/7/5.
+  Зазоры под октябрь: смена в Load (G1), пин классного часа (G2), Splits v2 (G3).
+
 ---
 
 ## 3. Последние тесты и замеры
@@ -79,6 +88,15 @@
 - +1 модель началки (`PrimaryClasses_SingleClassTeacher`).
 - +3 UX-логики (`QualityUxTests`: режимы, рейтинг, редактор) +1 STA всех окон.
 - STA-smoke: 6 окон конструируются; exe запускается (12с headless без краша).
+
+### Сьют wave-2/3 (15.09.2026, ночь): **287/288 за ~2м41с**
+- +Flex P1–P5 (SchoolFlex, RoomPolicy, lanes, ONLY, R7 fail-loud, DangerStrict),
+  HeavyFlex, MidSchoolTight, DemoSchool, WpfShell-регрессия BasedOn.
+- 1 KNOWN-FAIL: `MidSchoolTight_StandardRun_Feasible` (новый тест, 2/2 repro:
+  tight-фикстура 994 occ, greedy 986/994, solver выходит ~4с/seed без feasible;
+  чинить вслепую запрещено — карантин, D-35). Остальные 287 зелёные,
+  в т.ч. новые HtmlExportTests (4), SubjectAliasTests (6), SanPinCheckerTests (5),
+  CsvExportTests (3), DayOffTests (11).
 
 ### Ключевые замеры (RealSchool 1196, seed 11)
 - Аудит массы: было 1389 юнитов teacher-gap = 395 ordinary + **994 cross (72%)**.
@@ -135,7 +153,7 @@
 Сейчас: выбор профиля и режима на главном экране; полные настройки — кнопка
 «Настроить»/«Изменить» (пресеты, слайдеры, предметы/классы/учителя, эксперт, сохранение
 «Моя школа»). Следом не требуется — диалог уже полный; backlog: day-уровень доступности
-учителей, doubles/adjacency-предпочтения, персист школьных данных (сейчас session-only).
+учителей, doubles/adjacency-предпочтения (персист школьных данных ГОТОВ: SQLite + restore при старте, P3).
 
 ---
 
@@ -165,7 +183,7 @@
 - Слои: `Amsur.Domain` / `Scheduling.Core` / `Scheduling.OrTools` /
   `Application` / `Infrastructure` (raw SQLite) / `Wpf` / `Tests`.
 - Ключевые файлы: `GapUtils.cs`, `QualitySettings.cs` (веса+профили+шкала),
-  `RuleCatalog.cs` (v3), `SoftEvaluator.cs`, `SearchIndex.cs` (`LocalSearch.cs`
+  `RuleCatalog.cs` (v5), `SoftEvaluator.cs`, `SearchIndex.cs` (`LocalSearch.cs`
   targeted-старт), `QualityExplainer.cs` + `QualityHints.cs`, `QualityProfiles`
   (`SqliteQualityProfileStore.cs`), `RealSchoolStressTests.cs` (fixture, классные 1–4).
 - Команды: `dotnet build src/Amsur.slnx`, `dotnet test src/Amsur.Tests` (~2 мин).

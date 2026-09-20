@@ -192,3 +192,40 @@ P2 fixture → P4 профили → матрица весов + stability → r
 ## Стенд P1 (план, D-09)
 - Фикстуры tiny/small/medium/dense/subgroup-heavy/room-constrained/teacher-constrained × плотности 70/85/97%
 - `workers=1+seed`, метрики firstFeasibleMs / bestAt60s / gap + PhaseMs
+
+## V2 Wave-2 (15.09.2026) — MEASURED, коммит b3ae5fd
+- Build: 0 errors / 15 предсущ. warnings (NU1903 e_sqlite3, CS8601/8602, xUnit2012), ~22с.
+- Full suite: **258/259 за 2м53с** (было 253/253 у автора; +6: WpfShell-регрессия BasedOn, QualityUx, MidSchoolTight-набор).
+- KNOWN-FAIL (D-35): MidSchoolTight_StandardRun_Feasible — tight 994 occ, greedy 986/994 (79мс),
+  solver Unknown/place=0, выход ~4с/seed при бюджете 12с; candidates=0. Остальное зелёное.
+- Вечер 15.09 (P-B4+P-B5): **267/268 за 2м27с** (+4 HtmlExport, +5 SubjectAlias; Html+Excel+WpfShell 14/14,
+  alias+импорт-потребители 55/55). Красный — только карантин D-35.
+- Ночь 15.09 (Wave-3: SanPinChecker+UI, CSV, DayOff, живой Быстрый старт):
+  **287/288 за 2м41с** (+5 SanPin, +1 PE-флаг, +3 CSV, +11 DayOff; пакеты 34/34 и 71/71
+  по ходу, WpfShell с новыми кнопками зелёный). Красный — только карантин D-35.
+
+## V2 OurSchool (15.09.2026) - MEASURED, shkola 5-11/27 klassov (D-38)
+- Build 988 occ (27 klassov, 40 uchitelei, 20 kabinetov, prof-pary 10A/11A, DPM/med-pary, klassnyi chas 27).
+- Greedy seed 11: 935/988 za ~0.2s. Ne vlezli 53: russkie 38 (blok 122ch na 90 slotov - realnaya nekhvatka), in.yaz 12 (147/150), algebra 9, geometriya 5, geografiya 1.
+- Solver-zond 8s seed 11: Unknown/place=0, wall 4.3s (polnogo razmescheniya net - chestno). Vyalenost greedy po kabinetam (piki 21-22 > 20) - zona rosta LS, ne fiktura.
+
+## V2 OurSchool-overload (15.09.2026, D-39)
+- Greedy cap9: 970/988. Bisect: +10rooms 970 (kabinetY NE dushitel), nocap 985 (dnevnye limity dushiteli 15), +rooms+nocap 988/988 (polnoe razmeschenie SUSCHESTVUET).
+- Solver: cap9/11, STANDARD/MAXIMUM/120s - NO FEASIBLE (Phase A ne zakryvaet; ostatok ~3 uroka - piki kabinetov + upakovka dnya pri cap 9).
+
+## V2 OurSchool-rooms30 (15.09.2026, D-40)
+-Solver-greedy: 977/988 (bylo 970). Ne vlezli 11: khim/inf-para/rus/inyaz-para rasseyano. Komnaty 30 ne vinovaty (bisect). Ostatok - plotnost 98% + overloade + chetverg.
+
+## V2 OurSchool-cap8-draft (15.09.2026, D-42)
+- Greedy cap8+overload: 978/988. STANDARD cap8: NO FEASIBLE. Draft-file: 66KB, 4 lista, dyr 10 (in.yaz 8 + rus 2).
+
+## V2 PhotoSchool (20.09.2026) - MEASURED, realnye foto 5-11/24 klassa (D-45)
+- Import: 24 klassa, 396 strok, 769 ch/ned, 60+ splitov, klassnyi chas 24.
+  Occurrences: 884 (769 + split-dubli ~115). Build bez oshibok, slotov 8/den,
+  MaxLessonsPerDay=8 (shkola podtverzhdaet 8-urochnye piki; defolt importa 6
+  ne vmestil by 8B/9B — chestnaya nastroyka, ne podgonka).
+- Greedy seed 11: 878/884 za ~0.2s. Ne vlezli 6 — vse 10A (profilnye pary bez
+  sync: dvigatel vidit 47 nezavisimykh occ pri 40 slotakh klassa — strukturno).
+- Repair: 21 -> 10/11 student-gap. Pipeline LS 10s: seed 11/22/33 -> gaps 5/7/5,
+  soft 2945/2740/2950. Do 0 ne dokhodit (single-okrestnost + plavayuschiy
+  klassnyi chas bez CommonLesson-pina — sm. G2/G3 v mappinge).
