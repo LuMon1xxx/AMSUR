@@ -291,6 +291,12 @@ handoff `amsur_design.md_wpf.net_10_handoff.md` (база 1600×900, rail 240px,
 - Naydeno: G1 (smena v Load), G2 (pin klassnogo chasa), G3 (Splits v2) — pakety na oktyabr. Fiktura OurSchoolTests NE troguta (foto-korrektirovki v mappinge).
 - S succession: obnovleny PROJECT_STATUS (301+1, pilot), BENCHMARKS (PhotoSchool), DECISIONS (D-45, D-46), NDTP-skeleton (§4/§5 real-cifry). Kommit/push — finalnym paketom.
 
+## 20.09.2026 - P-D5 tyomnaya tema + UiTestHost + FINAL REDESIGN (D-49)
+- Dark.xaml (polny nabor tokenov) + pereklyuchatel v nav + persist ui.theme + perezapusk. Podmena slovarya na starte; Static->Dynamic v stilyakh App.xaml (inache smena ne beretsya - proof skrinami). TextElement.Foreground=BText na kornyakh vseh views (inache chyorny tekst na tyomnom).
+- Yad batcha: DynamicResource + neskolko STA-potokov = VerifyAccess. Reshenie: UiTestHost (odin STA na progon, odin App). Poputno vskrylos: zakrytie pervogo okna gasilo App (ShutdownMode iz XAML perezatiral kod) - fiks poryadkom. UI-testy 13/13 za 4s (bylo 6s+).
+- Ssyut FINAL: 301+1/0. Commit 37c3edb. Vse pakety V3 (D0/D1/D3/D4/D2/D5) gotovy; setka posledney kak prosili; Гуфо utverzhdyon.
+- D-49: tyomnaya cherez Dynamic + restart-flow (live-pereklyuchenie bez perezapuska ne delayem osoznanno - stabilnost).
+
 ## 20.09.2026 - P-D0 karkas: odno okno + navigaciya + animacii + Gufo (D-47)
 - Reshenie: odno okno (MainWindow=shell: nav-rail + ViewHost + footer), DashboardView (kontent pereekhal 1-v-1), ostalnye razdely - PlaceholderView s vremennym otkrytiem starykh okon (pakety P-D1..P-D3). Starye okna zhivy - testy zelyonye.
 - Animacii (bez bibliotek): press-scale 0.96 knopok (BtnPrimary/Secondary/NavBtn, shared PressDown/PressUp), fade+slide 220ms smeny view (kod, ViewEnter), Gufo-sova v hero (vektor) + "Gufo sovetuet" + beydzh "Gufo na svyazi".
