@@ -1,0 +1,49 @@
+Абрамова: n=28 RU=14 RUL=13 РусЛит[?]=1
+Сидорович: n=25 RU=13 RUL=9 PE=1 WH=1 LA=1
+Потапов: n=30 RU=16 RUL=8 MA=3 EN*=1 IN*=1 PE=1
+Берёзко: n=24 GE=24 CC=1
+Авдеёнок: n=24 BY=14 BYL=9 OBZ=1 CC=1
+Бурко: n=14 BYL=8 BY=6 | codes: цех
+Воронова: n=18 BY=11 BYL=7 CC=1 | codes: аст
+Жилко: n=27 BY=10 BYL=7 RU=6 RUL=4 CC=1 | codes: 9б-пл
+Толстик: n=20 BY=13 BYL=7 CC=1 | codes: 9б-пл 11а-ф
+Лащ: n=4 LA=4
+Лабикова: n=29 LA=25 AR2=2 RU=1 CC=1 MA=1
+Хинич: n=23 LA=17 MA=5 RU=1
+Гордионок: n=12 MA=8 LA=4
+Мисевич: n=22 MA=22
+Хильчук: n=32 MA=30 RUL=1 CC=1 RU=1 | codes: 11б-пл 9б-инд
+Ильюшина: n=5 MA=5
+Бадеева: n=25 IN*=15 MA=3 PH=2 IN=1 CC=1 RUL=1 BI=1 AR=1 PE=1
+Наконечная: n=36 PH=18 IN*=17 IN=1
+Бесфамильно: n=7 PH=5 LA=1 CH=1
+Денискин: n=5 PH=5
+Александрович: n=37 MA=22 PH=6 CH=3 RU=2 PE=2 BI=1 EN*=1
+Воробьёва: n=33 HIK=6 CHP=6 HIP=4 WH=4 HI=4 HIB=2 OBP=2 CHB=2 BIB=1 CC=1 OB=1 OBB=1
+Авхименко: n=22 AR=12 WH=8 OBZ=1 CC=1 MA=1 | codes: аст
+Крупович: n=21 WH=9 HI=9 OB=3 CC=1 | codes: 9а-ф 9б-ф 9в-ф
+Павлович: n=11 WH=3 OBP=2 BIP=2 OB=2 OBB=1 BIB=1
+Шаболтиев: n=8 DM=4 OB=1 LA=1 MA=1 RUL=1
+Коротченя: n=8 AR=6 MA=1 PE=1
+Гигель: n=24 PE=24 CC=1
+Свищёва: n=21 PE=19 RUL=1 BY=1
+Пекарский: n=33 PE=30 MA=1 EN*=1 BY=1
+Апанович: n=2 RUL=1 PE=1
+Разводовская: n=9 EN*=8 MA=1 CC=1
+Шустова: n=18 EN*=18 CC=1
+Плужнова: n=9 EN*=9 CC=1 | codes: 3кл-над над
+Касперович: n=29 EN*=14 MA=10 ENP=2 ENB=2 CC=1 HI=1
+Богданова: n=21 EN*=18 EN=2 MA=1 CC=1
+Новикова: n=19 EN*=13 EN=1 WH=1 MA=1 RUL=1 PE=1 AR=1 | codes: 3в-пл
+Хорошко: n=23 EN*=13 ENP=4 EN=2 ENB=2 BIP=2
+Островская: n=30 EN*=20 ENP=4 ENB=2 BIP=2 CC=1 MA=1 HI=1
+Мазынская: n=0 
+Маляревич: n=0 
+Демидчик: n=22 BI=12 BIP=4 CHP=2 BIB=2 ENP=2 CC=1
+Липницкая: n=37 CH=14 CHP=8 HIP=4 CHB=3 BIB=2 BIP=2 OBP=2 HIB=1 OBB=1
+Дамашевич: n=6 DM=4 CH=2
+Чепикова: n=19 BI=10 GE=4 CM=4 OBZ=1 CC=1 | codes: аст
+Шаройкина: n=24 CH=6 BIP=4 BI=3 BIB=2 OBP=2 BYL=2 HIB=1 OBB=1 CC=1 CHB=1 PH=1 BY=1 | codes: цех 10а-ф 10а-пл
+Королёнок: n=2 WH=1 RU=1 CC=1
+Асафова: n=0 CC=1
+Голубец: n=0 CC=1
