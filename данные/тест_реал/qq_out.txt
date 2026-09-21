@@ -1,0 +1,97 @@
+Гордионок Пн1 class=8б subj=Матем
+Гордионок Пн2 class=11а subj=Матем
+Гордионок Вт5 class=5в subj=Матем
+Гордионок Вт7 class=6г subj=ТрудS
+Гордионок Вт8 class=6г subj=ТрудS
+Гордионок Вт10 class=6а subj=ТрудS
+Гордионок Вт11 class=6а subj=ТрудS
+Гордионок Ср1 class=8б subj=Матем
+Гордионок Ср2 class=8б subj=Матем
+Гордионок Ср3 class=11а subj=Матем
+Гордионок Чт2 class=11а subj=Матем
+Гордионок Чт3 class=8б subj=Матем
+Бурко Вт1 class=8а subj=БелЯ
+Бурко Вт2 class=8а subj=БелЛит
+Бурко Вт3 class=8г subj=БелЯ
+Бурко Вт4 class=10б subj=БелЯ
+Бурко Вт7 class=10а subj=БелЛит
+Бурко Ср1 class=8г subj=БелЯ
+Бурко Ср2 class=10а subj=БелЯ
+Бурко Ср3 class=8г subj=БелЛит
+Бурко Ср4 class=10б subj=БелЛит
+Бурко Ср5 class=8а subj=БелЯ
+Бурко Чт2 class=10а subj=БелЛит
+Бурко Чт3 class=8а subj=БелЛит
+Бурко Чт5 class=10б subj=БелЛит
+Бурко Чт6 class=8г subj=БелЛит
+Воронова Пн6 class=6б subj=БелЯ
+Воронова Пн7 class=6а subj=БелЯ
+Воронова Пн9 class=6б subj=БелЛит
+Воронова Пн10 class=7г subj=БелЛит
+Воронова Пн11 class=7г subj=БелЯ
+Воронова Пн12 class=6в subj=БелЯ
+Воронова Вт7 class=6а subj=БелЯ
+Воронова Вт8 class=6а subj=БелЛит
+Воронова Вт9 class=6в subj=БелЯ
+Воронова Вт10 class=6б subj=БелЯ
+Воронова Вт11 class=6б subj=БелЛит
+Воронова Вт12 class=6в subj=БелЛит
+Воронова Ср7 class=6а subj=БелЯ
+Воронова Ср8 class=6б subj=БелЯ
+Воронова Ср9 class=6в subj=БелЛит
+Воронова Ср10 class=7г subj=БелЯ
+Воронова Ср11 class=6в subj=БелЯ
+Воронова Ср12 class=6а subj=БелЛит
+Александрович Пн4 class=8в subj=Матем
+Александрович Пн5 class=8г subj=Матем
+Александрович Пн6 class=8а subj=Матем
+Александрович Пн9 class=7а subj=РусЯ
+Александрович Пн10 class=7в subj=Био
+Александрович Пн11 class=6а subj=Физра
+Александрович Вт3 class=8а subj=Физика
+Александрович Вт4 class=8а subj=Матем
+Александрович Вт5 class=8в subj=Матем
+Александрович Вт6 class=8г subj=Матем
+Александрович Вт7 class=8г subj=Физика
+Александрович Вт8 class=7а subj=Физика
+Александрович Вт9 class=6а subj=Матем
+Александрович Вт10 class=7в subj=Матем
+Александрович Вт11 class=7а subj=Матем
+Александрович Ср3 class=8а subj=Матем
+Александрович Ср4 class=8г subj=Матем
+Александрович Ср5 class=8в subj=Матем
+Александрович Ср6 class=8г subj=Физика
+Александрович Ср7 class=8в subj=Физика
+Александрович Ср8 class=7в subj=Матем
+Александрович Ср9 class=7а subj=Матем
+Александрович Ср10 class=7а subj=Физика
+Александрович Ср11 class=6а subj=Матем
+Александрович Чт5 class=8в subj=Матем
+Александрович Чт6 class=8а subj=Матем
+Александрович Чт7 class=8г subj=Матем
+Александрович Чт8 class=6а subj=АнглS
+Александрович Чт11 class=7в subj=Матем
+Александрович Чт12 class=7а subj=Матем
+Александрович Пт2 class=8а subj=Матем
+Александрович Пт3 class=8г subj=РусЯ
+Александрович Пт4 class=8в subj=Матем
+Александрович Пт6 class=8а subj=Физра
+Александрович Пт7 class=7г subj=Химия
+Александрович Пт9 class=8в subj=?
+Александрович Пт10 class=7а subj=Химия
+Александрович Пт11 class=7в subj=Химия
+Александрович Пт12 class=6а subj=?
+CELL 10б Вт5 subj=Физика teachers=NONE
+CELL 10б Ср1 subj=Физика teachers=NONE
+CELL 10б Ср5 subj=Физика teachers=NONE
+CELL 10б Пт5 subj=Физика teachers=T20
+CELL 11б Ср8 subj=РусЛит[?] teachers=T1
+CELL 11а Вт4 subj=Астрон teachers=NONE
+CELL 5а Пт2 subj=БелЯ teachers=T5
+CELL 5а Чт4 subj=БелЯ teachers=T5
+CELL 5а Вт5 subj=БелЯ teachers=T5
+CELL 5в Пн2 subj=Матем teachers=T12
+CELL 5в Вт5 subj=Матем teachers=T13
+CELL 5в Ср5 subj=Матем teachers=T12
+CELL 5в Чт3 subj=Матем teachers=T12
+CELL 5в Пт2 subj=Матем teachers=T12

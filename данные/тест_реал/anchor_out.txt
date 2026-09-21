@@ -1,0 +1,8 @@
+6а Пн TEACH: T2@6[plain]; T2@9[plain]; T7@7[plain]; T21@11[plain]; T30@10[plain]; T45@8[plain]
+6а Пт TEACH: T17@7[plain]; T18@7[plain]; T21@11[plain]; T23@9[plain]; T30@11[plain]; T37@9[plain]; T39@9[plain]; T45@6[plain]
+6б Пн TEACH: T2@8[plain]; T7@6[plain]; T7@9[plain]; T17@10[plain]; T37@7[plain]; T39@7[plain]; T45@11[plain]
+6б Пт TEACH: T17@6[plain]; T17@9[plain]; T18@9[plain]; T23@10[plain]; T24@11[plain]; T30@8[plain]; T45@7[plain]
+6в Пн TEACH: T3@10[plain]; T7@12[plain]; T15@10[plain]; T30@8[plain]; T34@7[plain]; T38@7[plain]; T45@9[plain]
+6в Пт TEACH: T3@8[plain]; T3@10[plain]; T15@10[plain]; T17@8[plain]; T18@8[plain]; T23@7[plain]; T30@6[plain]
+6г Пн TEACH: T3@8[plain]; T9@9[plain]; T9@10[plain]; T15@11[plain]; T23@12[plain]; T45@7[plain]
+6г Пт TEACH: T3@7[plain]; T3@9[plain]; T9@6[plain]; T15@11[plain]; T30@9[plain]; T34@7[plain]; T38@8[plain]
