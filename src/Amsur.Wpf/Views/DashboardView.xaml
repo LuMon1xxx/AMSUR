@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- P-D0: контент дашборда, переехавший из MainWindow 1-в-1 (+ Гуфо в hero).
        Оболочка с навигацией — MainWindow. -->
-  <Grid>
+  <Grid TextElement.Foreground="{DynamicResource BText}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*" MinWidth="0"/>
       <ColumnDefinition Width="340"/>

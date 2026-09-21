@@ -19,37 +19,11 @@ public sealed class FlexP34Tests : IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
-    private static void RunSta(Func<Task> body)
-    {
-        Exception? error = null;
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                var dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
-                dispatcher.InvokeAsync(async () =>
-                {
-                    try { await body(); }
-                    catch (Exception ex) { error = ex; }
-                    finally { dispatcher.InvokeShutdown(); }
-                });
-                System.Windows.Threading.Dispatcher.Run();
-            }
-            catch (Exception ex) { error = ex; }
-        });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(60)), "STA thread hung");
-        if (error is not null) throw error;
-    }
+    // UI-тесты идут через общий хост (см. UiTestHost): один STA-поток,
+    // один App — иначе DynamicResource темы падает через потоки.
+    private static void RunSta(Func<Task> body) => UiTestHost.Run(body);
 
-    private static void EnsureApp()
-    {
-        // Как WpfShellTests.EnsureApp: App + InitializeComponent грузит тему (BBg и др.).
-        if (System.Windows.Application.Current is App) return;
-        var app = new App();
-        app.InitializeComponent();
-    }
+    private static void EnsureApp() => UiTestHost.EnsureApp();
 
     // Сессия: flex применяется, переживает перезапуск, флаги доходят до задачи.
     [Fact]

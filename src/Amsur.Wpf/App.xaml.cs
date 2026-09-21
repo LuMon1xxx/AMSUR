@@ -30,6 +30,23 @@ public partial class App : System.Windows.Application
             (s, _) => ((Window)s).Close()));
     }
 
+    // P-D5: тёмная тема копированием записей поверх Resources.
+    // StaticResource резолвится при загрузке окон — позже созданные окна
+    // увидят тёмные значения без переделки XAML.
+    private void ApplyDarkTheme()
+    {
+        try
+        {
+            var dict = new ResourceDictionary
+            {
+                Source = new Uri("Themes/Dark.xaml", UriKind.Relative),
+            };
+            foreach (var key in dict.Keys.Cast<object>().ToList())
+                Resources[key] = dict[key];
+        }
+        catch { /* тёмная не легла — остаёмся на светлой, честно без падения */ }
+    }
+
     // D-48: детект тестраннера (vstest/testhost): прод-старт запрещён.
     private static bool IsTestHost()
     {
@@ -61,6 +78,8 @@ public partial class App : System.Windows.Application
             Directory.CreateDirectory(dir);
             Session = new AppSession(dir);
             await Session.InitAsync();
+            // P-D5: тёмная тема — поверх ресурсов ДО создания окон.
+            if (Session.ThemeName == "dark") ApplyDarkTheme();
             // A3: окно создаём ЯВНО после InitAsync (без StartupUri) — конструктор
             // MainWindow больше не может отработать до готовых данных.
             MainWindow = new MainWindow();

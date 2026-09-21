@@ -4,7 +4,7 @@
   <!-- P-D0: временная заглушка переезжающего раздела. Удаляется пакетом,
        который привозит настоящий view (см. план §5). -->
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="24" MaxWidth="760">
+    <StackPanel Margin="24" MaxWidth="760" TextElement.Foreground="{DynamicResource BText}">
       <TextBlock x:Name="TitleText" Style="{StaticResource TH1}" Text="Раздел"/>
       <TextBlock x:Name="SubText" Style="{StaticResource THint}" Margin="0,4,0,0" Text=""/>
       <Border Style="{StaticResource Card}" Margin="0,14,0,0" Background="{StaticResource BWarm}"

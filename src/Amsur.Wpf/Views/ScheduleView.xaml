@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{StaticResource BBg}">
   <!-- P-D2: сетка как view (контент из ScheduleWindow 1-в-1 + акценты областей). -->
-  <DockPanel Margin="20">
+  <DockPanel Margin="20" TextElement.Foreground="{DynamicResource BText}">
     <!-- Верх: заголовок + честный статус (имена сохранены для STA) -->
     <StackPanel DockPanel.Dock="Top">
       <TextBlock Style="{DynamicResource TH1}" FontSize="20" Text="Активное расписание"/>
@@ -100,29 +100,21 @@
             </Style>
           </DataGrid.ColumnHeaderStyle>
           <DataGrid.RowStyle>
+            <!-- P-D5: полосы дней — через токены темы (были захардкоженные белые). -->
             <Style TargetType="DataGridRow">
               <Style.Triggers>
                 <DataTrigger Binding="{Binding Day}" Value="1">
-                  <Setter Property="Background" Value="#FFFFFF"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Day}" Value="2">
-                  <Setter Property="Background" Value="#FDFDFF"/>
+                  <Setter Property="Background" Value="{StaticResource BCard}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Day}" Value="3">
-                  <Setter Property="Background" Value="#F8FAFF"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Day}" Value="4">
-                  <Setter Property="Background" Value="#FDFBF7"/>
+                  <Setter Property="Background" Value="{StaticResource BSubtle}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Day}" Value="5">
-                  <Setter Property="Background" Value="#FAFDF9"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Day}" Value="6">
-                  <Setter Property="Background" Value="#FDF8FA"/>
+                  <Setter Property="Background" Value="{StaticResource BSubtle}"/>
                 </DataTrigger>
                 <Trigger Property="IsSelected" Value="True">
-                  <Setter Property="Background" Value="{DynamicResource BAccentSoft}"/>
-                  <Setter Property="Foreground" Value="{DynamicResource BText}"/>
+                  <Setter Property="Background" Value="{StaticResource BAccentSoft}"/>
+                  <Setter Property="Foreground" Value="{StaticResource BText}"/>
                   <Setter Property="BorderThickness" Value="0"/>
                 </Trigger>
               </Style.Triggers>

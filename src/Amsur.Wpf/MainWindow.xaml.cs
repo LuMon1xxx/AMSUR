@@ -29,8 +29,31 @@ public partial class MainWindow : Window, IViewNavigator
         _navButtons["Export"] = NavExport;
         _navButtons["Help"] = NavHelp;
         Dashboard = new DashboardView { Navigator = this, ChromeRefresh = RefreshChrome };
+        ThemeBox.IsChecked = Session.ThemeName == "dark";
         NavigateTo("Dashboard");
         RefreshChrome();
+    }
+
+    // P-D5: смена темы — сохранение + перезапуск (StaticResource применяется при загрузке).
+    private async void OnThemeChanged(object sender, RoutedEventArgs e)
+    {
+        if (sender is not CheckBox box || !IsLoaded) return;
+        string want = box.IsChecked == true ? "dark" : "light";
+        if (want == Session.ThemeName) return;
+        try { await Session.SetThemeAsync(want); }
+        catch { return; }
+        var res = MessageBox.Show(
+            "Тема применится после перезапуска. Перезапустить АМСУР сейчас?",
+            "АМСУР", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (res != MessageBoxResult.Yes) return;
+        try
+        {
+            var exe = Process.GetCurrentProcess().MainModule?.FileName;
+            if (exe is not null)
+                Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
+        }
+        catch { return; }
+        Close();
     }
 
     public void NavigateTo(string view)

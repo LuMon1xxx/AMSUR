@@ -6,7 +6,7 @@
         Style="{DynamicResource ChromeWindow}"
         Background="{DynamicResource BBg}">
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-  <StackPanel Margin="20">
+  <StackPanel Margin="20" TextElement.Foreground="{DynamicResource BText}">
     <TextBlock Style="{DynamicResource TH1}" FontSize="18" Text="Строка нагрузки"/>
     <TextBlock x:Name="HintText" Style="{DynamicResource THint}" FontSize="12" Margin="0,4,0,0"
                Text="Одна строка = один предмет у класса. Новое имя создаст класс, предмет, учителя или кабинет." TextWrapping="Wrap"/>

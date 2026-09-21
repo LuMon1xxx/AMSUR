@@ -4,7 +4,7 @@
   <!-- P-D3: справка как view (контент из HelpWindow 1-в-1, кнопка «Закрыть» убрана —
        в однооконной навигации она не нужна; назад — через rail). -->
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="24" MaxWidth="860">
+    <StackPanel Margin="24" MaxWidth="860" TextElement.Foreground="{DynamicResource BText}">
       <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
         <Border Width="40" Height="40" CornerRadius="20" Background="{StaticResource BAccent}"
                 VerticalAlignment="Center" ToolTip="Гуфо — помощник АМСУР">

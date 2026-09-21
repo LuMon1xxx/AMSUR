@@ -50,6 +50,15 @@ public sealed class AppSession
     /// <summary>Строки «почему так» последнего лучшего варианта (для подробного анализа).</summary>
     public IReadOnlyList<string>? LastQualityLines { get; set; }
 
+    /// <summary>P-D5: тема оформления (light/dark, персист ui.theme).</summary>
+    public string ThemeName { get; private set; } = "light";
+
+    public async Task SetThemeAsync(string theme, CancellationToken ct = default)
+    {
+        ThemeName = theme == "dark" ? "dark" : "light";
+        await _appSettings.SetAsync("ui.theme", ThemeName, ct);
+    }
+
     public void SetQualityProfile(string profileName) =>
         QualityRules = RuleResolver.Resolve(profileName);
 
@@ -110,6 +119,13 @@ public sealed class AppSession
         // B1: глобальный тумблер предупреждений (дефолт true).
         try { ConfirmDangerous = await _appSettings.GetBoolAsync("ui.confirmDangerous", true); }
         catch { ConfirmDangerous = true; }
+        // P-D5: тема (дефолт light; мусор — тоже light).
+        try
+        {
+            var t = await _appSettings.GetAsync("ui.theme");
+            ThemeName = t == "dark" ? "dark" : "light";
+        }
+        catch { ThemeName = "light"; }
         // P3: гибкие настройки переживают перезапуск (старые БД — дефолты).
         try { Flex = await _flexStore.LoadAsync(); }
         catch { Flex = FlexDataset.Empty; }

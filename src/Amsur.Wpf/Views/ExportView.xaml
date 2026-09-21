@@ -4,7 +4,7 @@
   <!-- P-D3: экспорт как view (контент из ExportWindow 1-в-1, кнопка «Закрыть» убрана).
        Эмодзи ⬇/⚡ в кнопках заменены MDL2-глифами (правило «без эмодзи в UI»). -->
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-  <StackPanel Margin="24" MaxWidth="1100">
+  <StackPanel Margin="24" MaxWidth="1100" TextElement.Foreground="{DynamicResource BText}">
     <TextBlock Style="{StaticResource TH1}" FontSize="20" Text="Экспорт и печать"/>
     <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
                Text="Три вида: классы, учителя, кабинеты. Выгрузка блокируется, если есть жёсткие нарушения."/>

@@ -4,7 +4,7 @@
              Background="{StaticResource BBg}">
   <!-- P-D3: настройки как view (контент из SettingsWindow 1-в-1).
        «Отмена» = выйти без применения (view пересоздаётся при каждом входе). -->
-  <DockPanel Margin="20">
+  <DockPanel Margin="20" TextElement.Foreground="{DynamicResource BText}">
     <StackPanel DockPanel.Dock="Top">
       <DockPanel>
         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">

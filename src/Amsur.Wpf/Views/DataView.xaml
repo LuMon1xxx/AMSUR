@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="{StaticResource BBg}">
   <!-- P-D3: данные как view (контент из SchoolDataWindow 1-в-1, кнопка «Закрыть» убрана). -->
-  <DockPanel Margin="20">
+  <DockPanel Margin="20" TextElement.Foreground="{DynamicResource BText}">
     <StackPanel DockPanel.Dock="Top">
       <DockPanel>
         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">

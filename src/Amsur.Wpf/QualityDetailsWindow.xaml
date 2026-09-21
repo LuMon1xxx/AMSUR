@@ -5,7 +5,7 @@
         MinWidth="560" MinHeight="440" WindowStartupLocation="CenterOwner"
         Style="{DynamicResource ChromeWindow}"
         Background="{StaticResource BBg}">
-  <DockPanel Margin="20">
+  <DockPanel Margin="20" TextElement.Foreground="{DynamicResource BText}">
     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
       <Button Content="Понятно" Style="{StaticResource BtnPrimary}" Click="OnCloseClick"/>
     </StackPanel>

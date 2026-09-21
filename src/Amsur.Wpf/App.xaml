@@ -26,26 +26,26 @@
     <Color x:Key="CWarnBg">#FFFBEB</Color>
     <Color x:Key="CBadBg">#FEF2F2</Color>
 
-    <SolidColorBrush x:Key="BAccent" Color="{StaticResource CAccent}"/>
-    <SolidColorBrush x:Key="BAccentDark" Color="{StaticResource CAccentDark}"/>
-    <SolidColorBrush x:Key="BAccentPressed" Color="{StaticResource CAccentPressed}"/>
-    <SolidColorBrush x:Key="BAccentSoft" Color="{StaticResource CAccentSoft}"/>
-    <SolidColorBrush x:Key="BAccentBorder" Color="{StaticResource CAccentBorder}"/>
-    <SolidColorBrush x:Key="BBg" Color="{StaticResource CBg}"/>
-    <SolidColorBrush x:Key="BCard" Color="{StaticResource CCard}"/>
-    <SolidColorBrush x:Key="BSubtle" Color="{StaticResource CSubtle}"/>
-    <SolidColorBrush x:Key="BBorder" Color="{StaticResource CBorder}"/>
-    <SolidColorBrush x:Key="BBorderStrong" Color="{StaticResource CBorderStrong}"/>
-    <SolidColorBrush x:Key="BText" Color="{StaticResource CText}"/>
-    <SolidColorBrush x:Key="BTextSoft" Color="{StaticResource CTextSoft}"/>
-    <SolidColorBrush x:Key="BTextSecondary" Color="{StaticResource CTextSecondary}"/>
-    <SolidColorBrush x:Key="BTextMuted" Color="{StaticResource CTextMuted}"/>
-    <SolidColorBrush x:Key="BGood" Color="{StaticResource CGood}"/>
-    <SolidColorBrush x:Key="BWarn" Color="{StaticResource CWarn}"/>
-    <SolidColorBrush x:Key="BBad" Color="{StaticResource CBad}"/>
-    <SolidColorBrush x:Key="BGoodBg" Color="{StaticResource CGoodBg}"/>
-    <SolidColorBrush x:Key="BWarnBg" Color="{StaticResource CWarnBg}"/>
-    <SolidColorBrush x:Key="BBadBg" Color="{StaticResource CBadBg}"/>
+    <SolidColorBrush x:Key="BAccent" Color="{DynamicResource CAccent}"/>
+    <SolidColorBrush x:Key="BAccentDark" Color="{DynamicResource CAccentDark}"/>
+    <SolidColorBrush x:Key="BAccentPressed" Color="{DynamicResource CAccentPressed}"/>
+    <SolidColorBrush x:Key="BAccentSoft" Color="{DynamicResource CAccentSoft}"/>
+    <SolidColorBrush x:Key="BAccentBorder" Color="{DynamicResource CAccentBorder}"/>
+    <SolidColorBrush x:Key="BBg" Color="{DynamicResource CBg}"/>
+    <SolidColorBrush x:Key="BCard" Color="{DynamicResource CCard}"/>
+    <SolidColorBrush x:Key="BSubtle" Color="{DynamicResource CSubtle}"/>
+    <SolidColorBrush x:Key="BBorder" Color="{DynamicResource CBorder}"/>
+    <SolidColorBrush x:Key="BBorderStrong" Color="{DynamicResource CBorderStrong}"/>
+    <SolidColorBrush x:Key="BText" Color="{DynamicResource CText}"/>
+    <SolidColorBrush x:Key="BTextSoft" Color="{DynamicResource CTextSoft}"/>
+    <SolidColorBrush x:Key="BTextSecondary" Color="{DynamicResource CTextSecondary}"/>
+    <SolidColorBrush x:Key="BTextMuted" Color="{DynamicResource CTextMuted}"/>
+    <SolidColorBrush x:Key="BGood" Color="{DynamicResource CGood}"/>
+    <SolidColorBrush x:Key="BWarn" Color="{DynamicResource CWarn}"/>
+    <SolidColorBrush x:Key="BBad" Color="{DynamicResource CBad}"/>
+    <SolidColorBrush x:Key="BGoodBg" Color="{DynamicResource CGoodBg}"/>
+    <SolidColorBrush x:Key="BWarnBg" Color="{DynamicResource CWarnBg}"/>
+    <SolidColorBrush x:Key="BBadBg" Color="{DynamicResource CBadBg}"/>
     <!-- P-D0: тёплый сабтл для дружелюбных панелей + Гуфо -->
     <SolidColorBrush x:Key="BWarm" Color="#FFF7ED"/>
     <SolidColorBrush x:Key="BWarmBorder" Color="#FED7AA"/>
@@ -87,46 +87,46 @@
     <Style x:Key="TH1" TargetType="TextBlock">
       <Setter Property="FontSize" Value="22"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
     </Style>
     <Style x:Key="TH2" TargetType="TextBlock">
       <Setter Property="FontSize" Value="16"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
-      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
     </Style>
     <Style x:Key="THint" TargetType="TextBlock">
       <Setter Property="FontSize" Value="13"/>
-      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BTextSoft}"/>
       <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
 
     <!-- P0-0: дополнительные текстовые стили handoff -->
     <Style x:Key="THBody" TargetType="TextBlock">
       <Setter Property="FontSize" Value="13"/>
-      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
       <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
     <Style x:Key="THCaption" TargetType="TextBlock">
       <Setter Property="FontSize" Value="11"/>
-      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BTextSoft}"/>
       <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
     <Style x:Key="TBMono" TargetType="TextBlock">
       <Setter Property="FontFamily" Value="Consolas"/>
       <Setter Property="FontSize" Value="12"/>
-      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
     </Style>
 
     <Style x:Key="Card" TargetType="Border">
-      <Setter Property="Background" Value="{StaticResource BCard}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="Background" Value="{DynamicResource BCard}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="CornerRadius" Value="{StaticResource RCard}"/>
       <Setter Property="Padding" Value="{StaticResource TCardPadding}"/>
     </Style>
 
     <Style x:Key="BtnPrimary" TargetType="Button">
-      <Setter Property="Background" Value="{StaticResource BAccent}"/>
+      <Setter Property="Background" Value="{DynamicResource BAccent}"/>
       <Setter Property="Foreground" Value="White"/>
       <Setter Property="FontSize" Value="15"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
@@ -146,10 +146,10 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentDark}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BAccentDark}"/>
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentPressed}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BAccentPressed}"/>
               </Trigger>
               <EventTrigger RoutedEvent="PreviewMouseDown">
                 <BeginStoryboard Storyboard="{StaticResource PressDown}"/>
@@ -175,11 +175,11 @@
     </Style>
 
     <Style x:Key="BtnSecondary" TargetType="Button">
-      <Setter Property="Background" Value="{StaticResource BCard}"/>
-      <Setter Property="Foreground" Value="{StaticResource BAccent}"/>
+      <Setter Property="Background" Value="{DynamicResource BCard}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BAccent}"/>
       <Setter Property="FontSize" Value="13"/>
       <Setter Property="Padding" Value="12,7"/>
-      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Template">
@@ -197,10 +197,10 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentSoft}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BAccentSoft}"/>
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentBorder}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BAccentBorder}"/>
               </Trigger>
               <EventTrigger RoutedEvent="PreviewMouseDown">
                 <BeginStoryboard Storyboard="{StaticResource PressDown}"/>
@@ -220,7 +220,7 @@
       </Setter>
       <Style.Triggers>
         <Trigger Property="IsMouseOver" Value="True">
-          <Setter Property="Background" Value="{StaticResource BAccentSoft}"/>
+          <Setter Property="Background" Value="{DynamicResource BAccentSoft}"/>
         </Trigger>
         <Trigger Property="IsEnabled" Value="False">
           <Setter Property="Opacity" Value="0.5"/>
@@ -235,8 +235,8 @@
 
     <!-- Карточка-режим: RadioButton как выбираемая панель -->
     <Style x:Key="RadioCard" TargetType="RadioButton">
-      <Setter Property="Background" Value="{StaticResource BCard}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="Background" Value="{DynamicResource BCard}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Padding" Value="12,10"/>
       <Setter Property="Cursor" Value="Hand"/>
@@ -251,12 +251,12 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource BAccent}"/>
                 <Setter TargetName="Frame" Property="BorderThickness" Value="2"/>
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentSoft}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BAccentSoft}"/>
               </Trigger>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource BAccent}"/>
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter TargetName="Frame" Property="Opacity" Value="0.5"/>
@@ -282,7 +282,7 @@
     </Style>
 
     <Style x:Key="ScrollBarThumb" TargetType="Thumb">
-      <Setter Property="Background" Value="{StaticResource BBorderStrong}"/>
+      <Setter Property="Background" Value="{DynamicResource BBorderStrong}"/>
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Template">
         <Setter.Value>
@@ -293,10 +293,10 @@
       </Setter>
       <Style.Triggers>
         <Trigger Property="IsMouseOver" Value="True">
-          <Setter Property="Background" Value="{StaticResource BTextMuted}"/>
+          <Setter Property="Background" Value="{DynamicResource BTextMuted}"/>
         </Trigger>
         <Trigger Property="IsDragging" Value="True">
-          <Setter Property="Background" Value="{StaticResource BAccent}"/>
+          <Setter Property="Background" Value="{DynamicResource BAccent}"/>
         </Trigger>
       </Style.Triggers>
     </Style>
@@ -355,12 +355,12 @@
 
     <!-- P1-shell: современные поля ввода (implicit — все TextBox приложения) -->
     <Style TargetType="TextBox">
-      <Setter Property="Background" Value="{StaticResource BCard}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="Background" Value="{DynamicResource BCard}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Padding" Value="8,5"/>
       <Setter Property="FontSize" Value="13"/>
-      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
       <Setter Property="Cursor" Value="IBeam"/>
       <Setter Property="Template">
@@ -376,14 +376,14 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BBorderStrong}"/>
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource BBorderStrong}"/>
               </Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True">
-                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource BAccent}"/>
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BSubtle}"/>
-                <Setter Property="Foreground" Value="{StaticResource BTextMuted}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BSubtle}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BTextMuted}"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -400,12 +400,12 @@
         <Setter.Value>
           <ControlTemplate TargetType="ToggleButton">
             <Border Background="Transparent" Padding="0,0,8,0">
-              <Path x:Name="Arrow" Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource BTextMuted}"
+              <Path x:Name="Arrow" Data="M 0 0 L 4 4 L 8 0" Stroke="{DynamicResource BTextMuted}"
                     StrokeThickness="1.6" VerticalAlignment="Center" HorizontalAlignment="Right"/>
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Arrow" Property="Stroke" Value="{StaticResource BAccent}"/>
+                <Setter TargetName="Arrow" Property="Stroke" Value="{DynamicResource BAccent}"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -417,7 +417,7 @@
       <Setter Property="Background" Value="Transparent"/>
       <Setter Property="Padding" Value="8,6"/>
       <Setter Property="FontSize" Value="13"/>
-      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ComboBoxItem">
@@ -427,10 +427,10 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsHighlighted" Value="True">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentSoft}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BAccentSoft}"/>
               </Trigger>
               <Trigger Property="IsSelected" Value="True">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentSoft}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BAccentSoft}"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -439,12 +439,12 @@
     </Style>
 
     <Style TargetType="ComboBox">
-      <Setter Property="Background" Value="{StaticResource BCard}"/>
-      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="Background" Value="{DynamicResource BCard}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Padding" Value="8,5"/>
       <Setter Property="FontSize" Value="13"/>
-      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
       <Setter Property="MinHeight" Value="30"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
       <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
@@ -465,12 +465,12 @@
                                   Content="{TemplateBinding SelectionBoxItem}"
                                   ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                <ToggleButton Grid.Column="1" Style="{StaticResource ComboBoxToggle}" Width="20"
+                <ToggleButton Grid.Column="1" Style="{DynamicResource ComboBoxToggle}" Width="20"
                               IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
               </Grid>
               <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
                      Placement="Bottom" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
-                <Border Background="{StaticResource BCard}" BorderBrush="{StaticResource BBorder}"
+                <Border Background="{DynamicResource BCard}" BorderBrush="{DynamicResource BBorder}"
                         BorderThickness="1" CornerRadius="8" Padding="2"
                         MinWidth="{TemplateBinding ActualWidth}" MaxHeight="240">
                   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -481,14 +481,14 @@
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BBorderStrong}"/>
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource BBorderStrong}"/>
               </Trigger>
               <Trigger Property="IsDropDownOpen" Value="True">
-                <Setter TargetName="Frame" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+                <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource BAccent}"/>
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BSubtle}"/>
-                <Setter Property="Foreground" Value="{StaticResource BTextMuted}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BSubtle}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BTextMuted}"/>
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -498,7 +498,7 @@
 
     <!-- P-C: современный чекбокс (implicit — тумблер перегрузки и все остальные) -->
     <Style TargetType="CheckBox">
-      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
       <Setter Property="FontSize" Value="13"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
       <Setter Property="Cursor" Value="Hand"/>
@@ -507,7 +507,7 @@
           <ControlTemplate TargetType="CheckBox">
             <StackPanel Orientation="Horizontal">
               <Border x:Name="Box" Width="17" Height="17" CornerRadius="4"
-                      Background="{StaticResource BCard}" BorderBrush="{StaticResource BBorderStrong}"
+                      Background="{DynamicResource BCard}" BorderBrush="{DynamicResource BBorderStrong}"
                       BorderThickness="1.5" VerticalAlignment="Center">
                 <Path x:Name="Glyph" Data="M 4 8.5 L 7.5 12 L 13 4.5" Stroke="White"
                       StrokeThickness="2" StrokeLineJoin="Round" Visibility="Collapsed"
@@ -517,12 +517,12 @@
             </StackPanel>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="Box" Property="Background" Value="{StaticResource BAccent}"/>
-                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+                <Setter TargetName="Box" Property="Background" Value="{DynamicResource BAccent}"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BAccent}"/>
                 <Setter TargetName="Glyph" Property="Visibility" Value="Visible"/>
               </Trigger>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource BAccent}"/>
+                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource BAccent}"/>
               </Trigger>
               <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Opacity" Value="0.5"/>
@@ -535,8 +535,8 @@
 
     <!-- P-C: акцентный прогрессбар (implicit — генерация и панель качества) -->
     <Style TargetType="ProgressBar">
-      <Setter Property="Background" Value="{StaticResource BSubtle}"/>
-      <Setter Property="Foreground" Value="{StaticResource BAccent}"/>
+      <Setter Property="Background" Value="{DynamicResource BSubtle}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BAccent}"/>
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Template">
         <Setter.Value>
@@ -555,18 +555,18 @@
     <!-- P-C: заголовки гридов (implicit — где нет локального стиля) -->
     <Style TargetType="DataGridColumnHeader">
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BTextSoft}"/>
       <Setter Property="FontSize" Value="12"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
       <Setter Property="Padding" Value="8,6"/>
       <Setter Property="BorderThickness" Value="0,0,0,1"/>
-      <Setter Property="BorderBrush" Value="{StaticResource BBorder}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
     </Style>
 
     <!-- P1-shell: пункты боковых списков (категории настроек, справочники) -->
     <Style TargetType="ListBoxItem">
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BTextSoft}"/>
       <Setter Property="Padding" Value="10,7"/>
       <Setter Property="FontSize" Value="13"/>
       <Setter Property="Template">
@@ -578,11 +578,11 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BSubtle}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BSubtle}"/>
               </Trigger>
               <Trigger Property="IsSelected" Value="True">
-                <Setter TargetName="Frame" Property="Background" Value="{StaticResource BAccentSoft}"/>
-                <Setter Property="Foreground" Value="{StaticResource BAccent}"/>
+                <Setter TargetName="Frame" Property="Background" Value="{DynamicResource BAccentSoft}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BAccent}"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
               </Trigger>
             </ControlTemplate.Triggers>
@@ -605,8 +605,8 @@
     </Style>
 
     <Style TargetType="Slider">
-      <Setter Property="Background" Value="{StaticResource BSubtle}"/>
-      <Setter Property="Foreground" Value="{StaticResource BAccent}"/>
+      <Setter Property="Background" Value="{DynamicResource BSubtle}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BAccent}"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
       <Setter Property="Template">
         <Setter.Value>
@@ -621,7 +621,7 @@
                   <Thumb Width="16" Height="16">
                     <Thumb.Template>
                       <ControlTemplate TargetType="Thumb">
-                        <Ellipse Fill="White" Stroke="{StaticResource BAccent}" StrokeThickness="2"/>
+                        <Ellipse Fill="White" Stroke="{DynamicResource BAccent}" StrokeThickness="2"/>
                       </ControlTemplate>
                     </Thumb.Template>
                   </Thumb>
@@ -639,7 +639,7 @@
     <!-- P1-shell: экспандеры со шевроном вместо штатного треугольника -->
     <Style TargetType="Expander">
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="{StaticResource BText}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
       <Setter Property="FontSize" Value="14"/>
       <Setter Property="Template">
         <Setter.Value>
@@ -650,7 +650,7 @@
                 <ToggleButton.Template>
                   <ControlTemplate TargetType="ToggleButton">
                     <StackPanel Orientation="Horizontal">
-                      <Path x:Name="Glyph" Data="M 0 0 L 0 8 L 5 4 Z" Fill="{StaticResource BTextSoft}"
+                      <Path x:Name="Glyph" Data="M 0 0 L 0 8 L 5 4 Z" Fill="{DynamicResource BTextSoft}"
                             VerticalAlignment="Center" Margin="0,0,8,0"/>
                       <ContentPresenter Content="{Binding Header, RelativeSource={RelativeSource AncestorType=Expander}}"
                                         VerticalAlignment="Center"/>
@@ -685,7 +685,7 @@
     <!-- P1-shell: кнопки навбар-рейла (иконка MDL2 из Tag + текст) -->
     <Style x:Key="NavBtn" TargetType="Button">
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BTextSoft}"/>
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Padding" Value="12,9"/>
       <Setter Property="FontSize" Value="13"/>
@@ -708,8 +708,8 @@
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource BSubtle}"/>
-                <Setter Property="Foreground" Value="{StaticResource BText}"/>
+                <Setter Property="Background" Value="{DynamicResource BSubtle}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BText}"/>
               </Trigger>
               <EventTrigger RoutedEvent="PreviewMouseDown">
                 <BeginStoryboard Storyboard="{StaticResource PressDown}"/>
@@ -730,15 +730,15 @@
     </Style>
 
     <Style x:Key="NavBtnActive" TargetType="Button" BasedOn="{StaticResource NavBtn}">
-      <Setter Property="Background" Value="{StaticResource BAccentSoft}"/>
-      <Setter Property="Foreground" Value="{StaticResource BAccent}"/>
+      <Setter Property="Background" Value="{DynamicResource BAccentSoft}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BAccent}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
 
     <!-- P1-shell: кнопки кастомного титулбара (SystemCommands — без кода) -->
     <Style x:Key="TitleBarBtn" TargetType="Button">
       <Setter Property="Background" Value="Transparent"/>
-      <Setter Property="Foreground" Value="{StaticResource BTextSoft}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BTextSoft}"/>
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Width" Value="46"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -758,8 +758,8 @@
       </Setter>
       <Style.Triggers>
         <Trigger Property="IsMouseOver" Value="True">
-          <Setter Property="Background" Value="{StaticResource BSubtle}"/>
-          <Setter Property="Foreground" Value="{StaticResource BText}"/>
+          <Setter Property="Background" Value="{DynamicResource BSubtle}"/>
+          <Setter Property="Foreground" Value="{DynamicResource BText}"/>
         </Trigger>
       </Style.Triggers>
     </Style>
@@ -778,7 +778,7 @@
     <Style x:Key="ChromeWindow" x:Shared="False" TargetType="Window">
       <Setter Property="WindowStyle" Value="None"/>
       <Setter Property="ResizeMode" Value="CanResize"/>
-      <Setter Property="Background" Value="{StaticResource BBg}"/>
+      <Setter Property="Background" Value="{DynamicResource BBg}"/>
       <Setter Property="WindowChrome.WindowChrome">
         <Setter.Value>
           <WindowChrome CaptionHeight="44" ResizeBorderThickness="6"
@@ -789,24 +789,24 @@
         <Setter.Value>
           <ControlTemplate TargetType="Window">
             <Border x:Name="ChromeFrame" Background="{TemplateBinding Background}"
-                    BorderBrush="{StaticResource BBorder}" BorderThickness="0,0,0,1">
+                    BorderBrush="{DynamicResource BBorder}" BorderThickness="0,0,0,1">
               <DockPanel>
-                <Grid DockPanel.Dock="Top" Height="44" Background="{StaticResource BCard}">
+                <Grid DockPanel.Dock="Top" Height="44" Background="{DynamicResource BCard}">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                   </Grid.ColumnDefinitions>
                   <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                    <Border Width="26" Height="26" CornerRadius="7" Background="{StaticResource BAccent}" VerticalAlignment="Center">
+                    <Border Width="26" Height="26" CornerRadius="7" Background="{DynamicResource BAccent}" VerticalAlignment="Center">
                       <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                         <Border Width="4" Height="9" CornerRadius="2" Background="White" VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <Border Width="4" Height="14" CornerRadius="2" Background="White" VerticalAlignment="Center" Margin="0,0,2,0"/>
                         <Border Width="4" Height="11" CornerRadius="2" Background="White" VerticalAlignment="Center"/>
                       </StackPanel>
                     </Border>
-                    <TextBlock Text="АМСУР" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BText}" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                    <Border Width="1" Background="{StaticResource BBorder}" Margin="10,8" VerticalAlignment="Stretch"/>
-                    <TextBlock Text="{TemplateBinding Title}" FontSize="12" Foreground="{StaticResource BTextSoft}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="АМСУР" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource BText}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    <Border Width="1" Background="{DynamicResource BBorder}" Margin="10,8" VerticalAlignment="Stretch"/>
+                    <TextBlock Text="{TemplateBinding Title}" FontSize="12" Foreground="{DynamicResource BTextSoft}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                   </StackPanel>
                   <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Style="{StaticResource TitleBarBtn}" Content="&#xE921;" Command="{x:Static SystemCommands.MinimizeWindowCommand}" ToolTip="Свернуть"/>

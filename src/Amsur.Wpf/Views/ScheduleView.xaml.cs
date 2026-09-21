@@ -212,6 +212,7 @@ public partial class ScheduleView : UserControl
         var card = Br("BCard", Brushes.White);
         var subtle = Br("BSubtle", Brushes.WhiteSmoke);
         var border = Br("BBorder", Brushes.LightGray);
+        var text = Br("BText", Brushes.Black);
         var textSoft = Br("BTextSoft", Brushes.Gray);
         var textMuted = Br("BTextMuted", Brushes.DarkGray);
 
@@ -241,7 +242,7 @@ public partial class ScheduleView : UserControl
                 {
                     Children =
                     {
-                        new TextBlock { Text = dayName, FontSize = 13, FontWeight = FontWeights.SemiBold },
+                        new TextBlock { Text = dayName, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = text },
                         new TextBlock { Text = $"{count} уроков", FontSize = 11, Foreground = textSoft },
                     },
                 },
@@ -259,6 +260,7 @@ public partial class ScheduleView : UserControl
                 Child = new TextBlock
                 {
                     Text = $"{s + 1} урок", FontSize = 13, FontWeight = FontWeights.SemiBold,
+                    Foreground = text,
                     VerticalAlignment = VerticalAlignment.Center,
                 },
             };
@@ -305,7 +307,7 @@ public partial class ScheduleView : UserControl
                         Margin = new Thickness(8, 0, 0, 0),
                         Children =
                         {
-                            new TextBlock { Text = row.SubjectName, FontSize = 13, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap },
+                            new TextBlock { Text = row.SubjectName, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = text, TextWrapping = TextWrapping.Wrap },
                             new TextBlock { Text = row.TeacherName, FontSize = 12, Foreground = textSoft, Margin = new Thickness(0, 2, 0, 0) },
                             chip,
                         },

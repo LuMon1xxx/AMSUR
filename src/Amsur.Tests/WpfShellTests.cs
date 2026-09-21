@@ -22,35 +22,11 @@ public sealed class WpfShellTests : IAsyncDisposable
         return ValueTask.CompletedTask;
     }
 
-    private static void RunSta(Func<System.Windows.Threading.Dispatcher, Task> body)
-    {
-        Exception? error = null;
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                var dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
-                dispatcher.InvokeAsync(async () =>
-                {
-                    try { await body(dispatcher); }
-                    catch (Exception ex) { error = ex; }
-                    finally { dispatcher.InvokeShutdown(); }
-                });
-                System.Windows.Threading.Dispatcher.Run();
-            }
-            catch (Exception ex) { error = ex; }
-        });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(60)), "STA thread hung");
-        if (error is not null) throw error;
-    }
-
     // --- 1. GenerateView собирается с VM (E4/E5/E6-разметка валидна) ---
     [Fact]
     public void GenerateWindow_ConstructsWithVm()
     {
-        RunSta(_ =>
+        UiTestHost.Run(() =>
         {
             var view = new GenerateView(new GenerateViewModel());
             Assert.Equal("Составление расписания", ((GenerateViewModel)view.DataContext).Title);
@@ -64,7 +40,7 @@ public sealed class WpfShellTests : IAsyncDisposable
     [Fact]
     public void GenerateWindow_RendersTop5Card()
     {
-        RunSta(_ =>
+        UiTestHost.Run(() =>
         {
             EnsureApp();
             var vm = new GenerateViewModel();
@@ -101,7 +77,7 @@ public sealed class WpfShellTests : IAsyncDisposable
     [Fact]
     public void DemoSchool_GenerateWindow_AcceptsBest()
     {
-        RunSta(async _ =>
+        UiTestHost.Run(async () =>
         {
             Directory.CreateDirectory(_dir);
             EnsureApp();
@@ -132,7 +108,7 @@ public sealed class WpfShellTests : IAsyncDisposable
     [Fact]
     public void ScheduleWindow_EmptyStateWhenNoActive()
     {
-        RunSta(async _ =>
+        UiTestHost.Run(async () =>
         {
             Directory.CreateDirectory(_dir);
             var session = new AppSession(_dir);
@@ -147,7 +123,7 @@ public sealed class WpfShellTests : IAsyncDisposable
     // --- 2b. SettingsWindow: карточка перегрузки строится (выкл. и вкл.) ---    [Fact]
     public void SettingsWindow_OverloadCard_Constructs()
     {
-        RunSta(async _ =>
+        UiTestHost.Run(async () =>
         {
             Directory.CreateDirectory(_dir);
             EnsureApp();
@@ -171,7 +147,7 @@ public sealed class WpfShellTests : IAsyncDisposable
     [Fact]
     public void ExportWindow_EmptyStateDraftAvailable()
     {
-        RunSta(async _ =>
+        UiTestHost.Run(async () =>
         {
             Directory.CreateDirectory(_dir);
             EnsureApp();
@@ -191,7 +167,7 @@ public sealed class WpfShellTests : IAsyncDisposable
     // --- 4. LoadRowWindow: диалог ручного ввода собирается и без ресурсов App ---    [Fact]
     public void LoadRowWindow_Constructs()
     {
-        RunSta(_ =>
+        UiTestHost.Run(() =>
         {
             var win = new LoadRowWindow(null, ["5А"], ["Мат"], ["Иванов"], ["101"]);
             Assert.Null(win.Result);
@@ -227,7 +203,7 @@ public sealed class WpfShellTests : IAsyncDisposable
     [Fact]
     public void ChromeTitleButtons_MinMaxWork()
     {
-        RunSta(async _ =>
+        UiTestHost.Run(async () =>
         {
             Directory.CreateDirectory(_dir);
             var app = EnsureApp();
@@ -255,30 +231,13 @@ public sealed class WpfShellTests : IAsyncDisposable
         });
     }
 
-    private static bool _appResourcesLoaded;
-    private static readonly object _appLock = new();
-
-    private static App EnsureApp()
-    {
-        // new App() не грузит App.xaml (в проде это делает generated-Main);
-        // здесь грузим ресурсы темы один раз, явно (только тесты).
-        lock (_appLock)
-        {
-            var app = System.Windows.Application.Current as App ?? new App();
-            if (!_appResourcesLoaded)
-            {
-                app.InitializeComponent();
-                _appResourcesLoaded = true;
-            }
-            return app;
-        }
-    }
+    private static App EnsureApp() => UiTestHost.EnsureApp();
 
     // --- 3. Новые окна: один STA-поток + один App (ресурсы темы на том же потоке) ---
     [Fact]
     public void NewWindows_Construct()
     {
-        RunSta(async _ =>
+        UiTestHost.Run(async () =>
         {
             Directory.CreateDirectory(_dir);
             var app = EnsureApp();

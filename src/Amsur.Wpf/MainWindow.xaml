@@ -7,7 +7,7 @@
         Background="{StaticResource BBg}">
   <!-- P-D0: оболочка одного окна. Контент разделов — views в ViewHost,
        навигация — Navigator в code-behind. Дашборд живёт в Views/DashboardView. -->
-  <DockPanel>
+  <DockPanel TextElement.Foreground="{DynamicResource BText}">
     <!-- Нижний статус-бар -->
     <Border DockPanel.Dock="Bottom" Background="{StaticResource BCard}"
             BorderBrush="{StaticResource BBorder}" BorderThickness="0,1,0,0" Padding="16,6">
@@ -76,6 +76,9 @@
               </StackPanel>
             </Border>
             <TextBlock Text="Версия 2.0 · .NET 10 WPF" FontSize="11" Foreground="{StaticResource BTextSoft}"/>
+            <CheckBox x:Name="ThemeBox" Content="Тёмная тема" Margin="0,8,0,0"
+                      ToolTip="Переключает светлую/тёмную тему. Применится после перезапуска."
+                      Checked="OnThemeChanged" Unchecked="OnThemeChanged"/>
           </StackPanel>
         </DockPanel>
       </Border>
