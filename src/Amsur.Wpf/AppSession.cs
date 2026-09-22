@@ -181,7 +181,7 @@ public sealed class AppSession
     /// <summary>Исходные строки нагрузки (источник истины для ручного ввода).</summary>
     public IReadOnlyList<LoadRow> LoadRows { get; private set; } = [];
 
-    /// <summary>Откуда данные: "excel" или "manual".</summary>
+    /// <summary>Откуда данные: "excel", "manual" или "demo".</summary>
     public string DataSource { get; private set; } = "";
 
     /// <summary>Ошибки последнего импорта (для dashboard; пусто — всё хорошо).</summary>
@@ -201,6 +201,17 @@ public sealed class AppSession
     {
         AcademicYearId = Guid.NewGuid();
         AcceptRows(rows, days, slots, source: "excel");
+        await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
+            Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
+        File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+    }
+
+    /// <summary>Демо-школа в 1 клик (без Excel): те же данные, что гоняют тесты.
+    /// Перезаписывает текущие данные; год пересоздаётся, как при Excel-импорте.</summary>
+    public async Task ImportDemoAsync(CancellationToken ct = default)
+    {
+        AcademicYearId = Guid.NewGuid();
+        AcceptRows(DemoSchoolData.Rows(), DemoSchoolData.Days, DemoSchoolData.Slots, source: "demo");
         await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
             Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
         File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));

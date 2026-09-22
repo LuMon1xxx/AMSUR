@@ -42,6 +42,7 @@ public sealed class SearchIndex
     private long _wSubj = RuleCatalog.SubjectMaxPerDay;
     private long _wCrowd = RuleCatalog.RoomCrowding;
     private long _wHeavy = RuleCatalog.HeavyEdge;
+    private long _wActiveDay = RuleCatalog.TeacherActiveDay;
 
     private SearchIndex(SchedulingProblem problem)
     {
@@ -66,6 +67,7 @@ public sealed class SearchIndex
             idx._wSubj = rules.Weight("subject-maxperday");
             idx._wCrowd = rules.Weight("room-crowding");
             idx._wHeavy = rules.Weight("heavy-edge");
+            idx._wActiveDay = rules.Weight("teacher-active-day");
         }
         foreach (var p in placements)
             idx.Insert(p.OccurrenceId, p.DayIndex, p.SlotIndex, p.RoomId);
@@ -361,6 +363,14 @@ public sealed class SearchIndex
         var tsNew = _teacherSlots.GetValueOrDefault((node.TeacherId, move.DayIndex), []);
         delta += TeacherCostAfter(tsNew, move.SlotIndex) - TeacherCostOf(tsNew);
         delta += TeacherCostOf(tsOld) - TeacherCostBefore(tsOld, old.Slot);
+        // D-50 teacher-active-day: день активен, пока в нём есть хоть 1 занятие.
+        // Индекс БЕЗ N: old-день был активен (там стояло N); new-день станет активен.
+        // Same-day ход: обе поправки схлопываются в 0 (день остаётся занят).
+        if (_wActiveDay != 0)
+        {
+            if (tsOld.Count == 0) delta -= _wActiveDay; // старый день освобождается
+            if (tsNew.Count == 0) delta += _wActiveDay; // новый день занимается
+        }
 
         if (_problem.Subjects.TryGetValue(node.SubjectId, out var subj))
         {

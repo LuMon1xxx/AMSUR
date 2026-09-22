@@ -248,11 +248,16 @@ public sealed class WpfShellTests : IAsyncDisposable
             Assert.Equal("Загрузить Excel", main.Dashboard.NextStepBtn.Content);
             Assert.Equal("Не загружены", main.Dashboard.MiniDataStatus.Text);
             Assert.Equal("Нет данных", main.FooterRightText.Text);
+            // Демо в 1 клик (22.09.2026): кнопка видна, пока нет данных.
+            Assert.Equal("Нет файла под рукой? Попробовать на демо-данных →",
+                main.Dashboard.DemoBtn.Content);
+            Assert.Equal(Visibility.Visible, main.Dashboard.DemoBtn.Visibility);
             main.Close();
             new SettingsView(session);
             new HelpView();
             new QualityDetailsWindow("Хорошее", ["Окна учителей: 5"]).Close();
-            new DataView(session);
+            var dataView = new DataView(session);
+            Assert.Equal("Демо", dataView.DemoBtn.Content);
         });
     }
 }

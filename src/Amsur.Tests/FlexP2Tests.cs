@@ -651,21 +651,24 @@ public sealed class FlexP2Tests
         }
     }
 
-    // Каталог v5 (B2, осознанно): v4-коды + teacher/class-maxperday как опасные.
-    // Дефолты v4 НЕ меняются (0 окон из коробки); новое — только DangerousCodes
-    // + OverrideRange 0..100 для ослабления строгого через подтверждение.
+    // Каталог v6 (D-50, осознанно): v5-коды + teacher-active-day (цена занятого
+    // учителе-дня, дефолт 0 = поведение не меняется). Дефолты v5 НЕ меняются;
+    // новое — только код + WeightRange 0..100 (настройка через CUSTOM/expert).
     [Fact]
     public void CatalogV4_Codes()
     {
-        Assert.Equal(5, RuleCatalog.Version);
+        Assert.Equal(6, RuleCatalog.Version);
         Assert.Contains("room-crowding", RuleCatalog.AllCodes);
         Assert.Contains("teacher-split", RuleCatalog.AllCodes);
+        Assert.Contains("teacher-active-day", RuleCatalog.AllCodes);
+        Assert.Equal(0, RuleCatalog.DefaultWeight("teacher-active-day"));
+        Assert.Equal((0, 100), RuleCatalog.WeightRange("teacher-active-day"));
         Assert.Equal(8, RuleCatalog.DefaultWeight("room-crowding"));
         Assert.Equal(25, RuleCatalog.DefaultWeight("teacher-split"));
         Assert.Equal((0, 50), RuleCatalog.WeightRange("room-crowding"));
         Assert.Equal((0, 100), RuleCatalog.WeightRange("teacher-split"));
         var rs = RuleResolver.Resolve("STANDARD");
-        Assert.Equal(5, rs.CatalogVersion);
+        Assert.Equal(6, rs.CatalogVersion);
         Assert.Equal(8, rs.Weight("room-crowding"));
         // B2: дефолтные цифры строгого те же (student 100/100), новое — механизм override.
         Assert.Equal(100, RuleCatalog.DefaultWeight("student-gap"));

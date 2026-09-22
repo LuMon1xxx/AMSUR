@@ -78,11 +78,18 @@
     <CornerRadius x:Key="RTag">4</CornerRadius>
     <Thickness x:Key="TCardPadding">16</Thickness>
 
-    <!-- P0-0: hero-градиент Stitch (135deg #2563EB → #4F46E5) -->
-    <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
+    <!-- P0-0: hero-градиент Stitch (135deg #2563EB → #4F46E5); D4: третий стоп
+         для глубины (индиго → фиолет), направление чуть круче -->
+    <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,0.85">
       <GradientStop Color="#2563EB" Offset="0"/>
-      <GradientStop Color="#4F46E5" Offset="1"/>
+      <GradientStop Color="#4F46E5" Offset="0.55"/>
+      <GradientStop Color="#7C3AED" Offset="1"/>
     </LinearGradientBrush>
+
+    <!-- D4: мягкая тень баннеров (hero + следующий шаг). Чёрная с низкой
+         непрозрачностью — корректна и в тёмной теме (там почти не видна). -->
+    <DropShadowEffect x:Key="BannerShadow" Color="Black" Opacity="0.18"
+                      BlurRadius="18" ShadowDepth="5" Direction="270"/>
 
     <Style x:Key="TH1" TargetType="TextBlock">
       <Setter Property="FontSize" Value="22"/>

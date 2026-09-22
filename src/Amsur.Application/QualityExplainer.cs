@@ -22,6 +22,7 @@ public static class QualityExplainer
         "student-late-start" => "Позднее начало дня у учеников",
         "teacher-gap" => "Окна у учителей",
         "teacher-cross-shift-gap" => "Перерывы между сменами у учителей",
+        "teacher-active-day" => "Занятые дни учителей",
         "primary-early-start" => "Раннее начало у начальной школы",
         "heavy-edge" => "Тяжёлые уроки на краю дня",
         "room-preference" => "Неподходящие кабинеты",
@@ -75,6 +76,11 @@ public static class QualityExplainer
                         units["teacher-cross-shift-gap"] += cross;
                 }
             }
+        // D-50: занятые учителе-дни (единицы для teacher-active-day).
+        if (units.ContainsKey("teacher-active-day"))
+            units["teacher-active-day"] = placements
+                .GroupBy(p => p.Occ.TeacherId)
+                .Sum(g => g.Select(p => p.Placed.DayIndex).Distinct().Count());
 
         foreach (var g in placements.GroupBy(p => (p.Occ.ClassId, p.Occ.SubjectId, p.Placed.DayIndex)))
         {
@@ -205,6 +211,7 @@ public static class QualityExplainer
                 ("student-late-start", _) when du != 0 => $"поздних начал {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 ("teacher-gap", _) when du != 0 => $"окон у учителей {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 ("teacher-cross-shift-gap", _) when du != 0 => $"перерывов между сменами {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
+                ("teacher-active-day", _) when du != 0 => $"занятых дней {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 ("subject-maxperday", _) when du != 0 => $"повторов {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 ("room-crowding", _) when du != 0 => $"тесноты в кабинетах {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 ("teacher-split", _) when du != 0 => $"разрывов закрепления {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",

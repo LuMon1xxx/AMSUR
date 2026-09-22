@@ -178,7 +178,8 @@ public partial class DashboardView : UserControl
             SchoolCardText.Text = summary;
             SchoolCardDetail.Text = $"{s.Lessons} уроков в неделю";
             DataDetailText.Text = $"{s.Days} дн. × {s.Slots} ур. · " +
-                (Session.DataSource == "manual" ? "Ручной ввод" : "Excel-импорт");
+                (Session.DataSource == "manual" ? "Ручной ввод"
+                    : Session.DataSource == "demo" ? "Демо-данные" : "Excel-импорт");
             MiniDataText.Text = summary;
             MiniDataStatus.Text = "Загружены";
             MiniDataStatus.Foreground = (Brush)FindResource("BGood");
@@ -229,6 +230,7 @@ public partial class DashboardView : UserControl
     {
         // Ввод сетки (дни/уроки) нужен только на шаге загрузки.
         NextStepInputs.Visibility = !hasData ? Visibility.Visible : Visibility.Collapsed;
+        DemoBtn.Visibility = !hasData ? Visibility.Visible : Visibility.Collapsed;
         if (!hasData)
         {
             _next = NextAction.Import;
@@ -442,6 +444,21 @@ public partial class DashboardView : UserControl
         if (raw.Contains("unknown", StringComparison.OrdinalIgnoreCase))
             return "В нагрузке есть ссылка на неизвестный класс, предмет или учителя: " + raw;
         return raw;
+    }
+
+    private async void OnDemoClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await Session.ImportDemoAsync();
+            ShowErrors([]);
+            RefreshAll();
+        }
+        catch (Exception ex)
+        {
+            ShowErrors([HumanError(ex.Message)]);
+            RefreshAll();
+        }
     }
 
     public void OnGenerateClick(object sender, RoutedEventArgs e)

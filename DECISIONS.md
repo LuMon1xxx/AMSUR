@@ -450,3 +450,12 @@
 - Chosen: App.OnStartup vozvraschaetsya srazu pod testhost/vstest (IsTestHost). Eto zashchischaet VSE tekuschie i buduschie STA-testy; kharness bolshe ne sozdayot realnye sessii.
 - Provereno: posle garda render-testy determinirovany (3× LoadAll pusto, odna sessiya), postoronnikh sessiy net.
 - Realnaya BD yuzera (396 foto-strok, import ~15:54) ne postradala: vse tablicy krome LoadRows/SchoolMeta pusto, syut zelyony. No polzovatelyu soobschit + izvinitisya za vozmozhnye vsplyvashki okon.
+
+## D-50 Teacher-gap optimizatsiya: activation-cost + TeacherDayLNS + compact-greedy (22.09.2026, prikaz polzovatelya "luchshe v razy")
+- Context: school bjyot dvizhok po oknam uchiteley 160 vs 315 (in-scope, bez sluzhebnogo). Izmereno: single-move chinka 1116/1 (dyry nesuschie), vesa TEACHER_FRIENDLY -3% (poisk v strukturnom tupike).
+- Chosen ①: RuleCatalog v6 + novyy kod "teacher-active-day" (tsena zanyatogo uchitele-dnya), DEFAULT 0 = povedenie ne menyaetsya; SoftEvaluator + SearchIndex-paritet + QualityExplainer-imya; testy ActiveDayTests 5/5 (paritet pri vesye 7). Eksperiment CUSTOM-ves: w=0..10 → gridGaps ~377 (0 effekta) — ves odin ne davit, zakryt den odinochnymi khodami nelzya. Default ostavlyon 0 (FROZEN-vesa ne tronuty po suti).
+- Chosen ②: TeacherDayLns (top-16 rvanykh dney → ruin uroki dnya + contention klasso-dney + sync → Replant ×4 + CompactRepair → strogaya lexikografiya gaps/failedDays/soft). Bez compact-hint: 377→371; s CompactHint (den pervym + sloty vplotnuyu): 377→285..310 (shum time-box, D-46). Testy TeacherDayLnsTests 4/4 (never-worsens, determinizm).
+- Chosen ③: GreedyPlacer.Place(compact) opt-in (default false = bit-v-bit staroye; D-28c pokrytie svyato). Compact-start + LNS: 271 (-28% ot 377, pupilHard=0, soft -25%). Sam compact bez LNS final ne uluchshaet + stoit -2 pokrytiya (863 vs 865) — izmereno, zafiksirovano.
+- gapsFirst-rezhim (tolko eksperimenty): dyry lyuboy tsenoy → 333 + failedDays=2 + soft+32%: myagkost i dyry svyazany, ignorirovat soft nelzya. V produkte default strogiy.
+- Granitsa na segodnya: 271 vs 160 shkoly (1.7x). Chelovecheskiy uroven NE dostignut; sled iteration: multi-seed otbor po gaps + polny pipeline do polnogo pokrytiya (novyy FINAL-kandidat).
+- Evidence: full suit 317+2/0; CatalogV4_Codes obnovlyon na v6 (osoznanno, politika bump soblyudena); sokhranyonnyye CUSTOM-profil polzovateley v5 autometom otkatyatsya na STANDARD (shtatny mekhanizm).

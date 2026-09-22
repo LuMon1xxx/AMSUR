@@ -23,6 +23,7 @@ public static class SoftEvaluator
         long wLate = rules.Weight("student-late-start");
         long wOrdinary = rules.Weight("teacher-gap");
         long wCross = rules.Weight("teacher-cross-shift-gap");
+        long wActiveDay = rules.Weight("teacher-active-day");
         long wSubj = rules.Weight("subject-maxperday");
         long wCrowd = rules.Weight("room-crowding");
         long wSplit = rules.Weight("teacher-split");
@@ -67,8 +68,12 @@ public static class SoftEvaluator
         }
 
         // Teacher gaps: split ordinary (внутри смен) / cross-shift (между сменами, S5).
+        // D-50 teacher-active-day: цена занятого учителе-дня (bin-packing-давление:
+        // сшить нагрузку в меньшее число дней). Дефолт 0 = не считается.
+        int activeDays = 0;
         foreach (var g in placements.GroupBy(p => occById[p.OccurrenceId].TeacherId))
         {
+            activeDays += g.Select(p => p.DayIndex).Distinct().Count();
             foreach (var day in g.GroupBy(p => p.DayIndex))
             {
                 var slots = day.Select(p => p.SlotIndex).OrderBy(s => s).ToList();
@@ -78,6 +83,8 @@ public static class SoftEvaluator
                 if (cross > 0) comps["teacher-cross-shift-gap"] += cross * wCross;
             }
         }
+        if (wActiveDay != 0 && activeDays > 0)
+            comps["teacher-active-day"] += (long)activeDays * wActiveDay;
 
         // Subject maxperday (× вес параллели, R8).
         foreach (var g in placements.GroupBy(p => (occById[p.OccurrenceId].ClassId, occById[p.OccurrenceId].SubjectId, p.DayIndex)))

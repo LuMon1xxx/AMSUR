@@ -306,6 +306,23 @@ public partial class DataView : UserControl
         }
     }
 
+    private async void OnDemoClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await _session.ImportDemoAsync();
+            ErrorCard.Visibility = Visibility.Collapsed;
+            LoadAll();
+        }
+        catch (Exception ex)
+        {
+            var errs = _session.LastImportErrors;
+            ErrorCard.Visibility = Visibility.Visible;
+            ErrorList.ItemsSource = (errs.Count > 0 ? errs : new[] { ex.Message }).Take(8).ToList();
+            LoadAll();
+        }
+    }
+
     // --- P3: ручной ввод строк нагрузки (без Excel) ---
     private int GridDays() =>
         int.TryParse(DaysBox.Text, out int days) && days > 0

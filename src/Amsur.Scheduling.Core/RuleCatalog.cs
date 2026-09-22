@@ -1,13 +1,15 @@
 namespace Amsur.Scheduling.Core;
 
-// Каталог правил: веса версии 5 (B2: +teacher-maxperday/+class-maxperday как
-// настраиваемые коды; DangerousCodes + OverrideRange для ослабления строгого).
-// Дефолты v4 НЕ меняются (дефолт = сегодняшнее поведение); teacher-maxperday/
-// class-maxperday дефолт 0 = hard-gate валидатора, soft — только при ослаблении.
+// Каталог правил: веса версии 6 (D-50: +teacher-active-day — цена открытого
+// учителе-дня, bin-packing-давление против размазывания нагрузки;
+// B2: +teacher-maxperday/+class-maxperday как настраиваемые коды;
+// DangerousCodes + OverrideRange для ослабления строгого).
+// Дефолты v5 НЕ меняются (дефолт нового кода 0 = сегодняшнее поведение);
+// teacher-maxperday/class-maxperday дефолт 0 = hard-gate валидатора.
 // Изменения только через A/B + bump Version (политика сохранена).
 public static class RuleCatalog
 {
-    public const int Version = 5;
+    public const int Version = 6;
 
     // DEFAULTS v3 (v2 без изменений, кроме двух новых кодов):
     // student-компактность доминирует: 1 окно ученика (100) не разменивается
@@ -24,6 +26,7 @@ public static class RuleCatalog
     public const long TeacherSplit = 25;  // R7-Soft: каждый лишний учитель на (класс,предмет)
     public const long TeacherMaxPerDay = 0; // B2: 0 = hard-gate; soft — только при ослаблении
     public const long ClassMaxPerDay = 0;   // B2: аналогично (включая норму 1-х классов)
+    public const long TeacherActiveDay = 0; // D-50: цена занятого учителе-дня; 0 = выкл (дефолт-поведение не меняется)
     public const long SubjectMaxPerDay = 15;
     public const long RelationViolation = 15;
     public const long StrictStudentGap = 50;
@@ -37,7 +40,7 @@ public static class RuleCatalog
     [
         "student-gap", "student-late-start", "teacher-gap", "teacher-cross-shift-gap", "primary-early-start",
         "heavy-edge", "room-preference", "room-crowding", "teacher-split",
-        "teacher-maxperday", "class-maxperday",
+        "teacher-maxperday", "class-maxperday", "teacher-active-day",
         "subject-maxperday", "relation-violation",
         "sanpin-peak-days", "sanpin-heavy-edge-limit", "sanpin-pe-spacing",
         "sanpin-doubles", "sanpin-primary-early"
@@ -57,6 +60,7 @@ public static class RuleCatalog
         "teacher-split" => TeacherSplit,
         "teacher-maxperday" => TeacherMaxPerDay,
         "class-maxperday" => ClassMaxPerDay,
+        "teacher-active-day" => TeacherActiveDay,
         "subject-maxperday" => SubjectMaxPerDay,
         "relation-violation" => RelationViolation,
         "strict-student-gap" => StrictStudentGap,
@@ -68,6 +72,7 @@ public static class RuleCatalog
     public static (long Min, long Max) WeightRange(string code) => code switch
     {
         "teacher-gap" => (0, 100),
+        "teacher-active-day" => (0, 100),
         "teacher-cross-shift-gap" => (0, 50),
         "primary-early-start" => (0, 100),
         "subject-maxperday" => (0, 100),

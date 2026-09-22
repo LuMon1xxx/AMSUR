@@ -17,6 +17,8 @@
           <TextBox x:Name="SlotsBox" Text="7" Width="36" Margin="6,0,10,0"/>
           <Button Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Click="OnTemplateClick"/>
           <Button Content="Загрузить Excel" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0" Padding="12,7" FontSize="13" Click="OnImportClick"/>
+          <Button x:Name="DemoBtn" x:FieldModifier="public" Content="Демо" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Padding="10,4"
+                  ToolTip="Загрузить маленькую демо-школу (6 классов) — попробовать без своего файла" Click="OnDemoClick"/>
           <Button Content="Применить сетку" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Padding="10,4"
                   ToolTip="Применить дни и уроки к текущим данным (без Excel)" Click="OnGridApplyClick"/>
         </StackPanel>

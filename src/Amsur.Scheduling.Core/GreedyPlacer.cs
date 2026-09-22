@@ -11,13 +11,18 @@ public sealed record GreedyPlacement(
 
 public static class GreedyPlacer
 {
+    /// <summary>D-50 шаг ②: компакт-подсказка для пересева — упаковать день
+    /// учителя (день первым + слоты вплотную к его занятиям). null = как раньше.</summary>
+    public sealed record CompactHint(Guid Teacher, int Day);
+
     // LNS-пересев (D-28d): досеять заданные юниты поверх ЗАМОРОЖЕННОГО состояния
     // (занятость от kept-размещений). Детерминирован сидом. Частичен честно.
     internal static GreedyPlacement Replant(
         SchedulingProblem problem,
         IReadOnlyDictionary<Guid, (int Day, int Slot, Guid? RoomId)> frozen,
         List<List<Guid>> units,
-        int seed)
+        int seed,
+        CompactHint? hint = null)
     {
         var occById = problem.Occurrences.ToDictionary(o => o.Id);
         var placed = new Dictionary<Guid, (int Day, int Slot, Guid? RoomId)>(frozen);
@@ -60,13 +65,19 @@ public static class GreedyPlacer
         foreach (var ids in ordered)
         {
             if (!TryPlaceUnit(problem, occById, ids, placed,
-                    teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, teacherDay, classDay, OccKey))
+                    teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, teacherDay, classDay, OccKey, hint))
                 unplaced.AddRange(ids);
         }
         return new GreedyPlacement(placed, unplaced);
     }
 
-    public static GreedyPlacement Place(SchedulingProblem problem, int seed = 0)
+    public static GreedyPlacement Place(SchedulingProblem problem, int seed = 0) =>
+        Place(problem, seed, compact: false);
+
+    /// <summary>D-50 шаг ③: compact=true — слоты вплотную к занятиям того же
+    /// учителя в тот же день (плотный старт для teacher-LNS). default false =
+    /// бит-в-бит старое поведение (D-28c: покрытие — главный приоритет).</summary>
+    public static GreedyPlacement Place(SchedulingProblem problem, int seed, bool compact)
     {
         var occById = problem.Occurrences.ToDictionary(o => o.Id);
         var placed = new Dictionary<Guid, (int Day, int Slot, Guid? RoomId)>();
@@ -107,7 +118,7 @@ public static class GreedyPlacer
         foreach (var ids in ordered)
         {
             if (!TryPlaceUnit(problem, occById, ids, placed,
-                    teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, teacherDay, classDay, OccKey))
+                    teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, teacherDay, classDay, OccKey, null, compact))
                 unplaced.AddRange(ids);
         }
         return new GreedyPlacement(placed, unplaced);
@@ -142,7 +153,9 @@ public static class GreedyPlacer
         Dictionary<(Guid, int, int), int> roomUsers,
         Dictionary<(Guid, int), int> teacherDay,
         Dictionary<(Guid, int), HashSet<int>> classDay,
-        Func<LessonOccurrence, Guid> occKey)
+        Func<LessonOccurrence, Guid> occKey,
+        CompactHint? hint = null,
+        bool compact = false)
     {
         var first = occById[ids[0]];
         var days = problem.AllowedDays.GetValueOrDefault(first.Id, []);
@@ -152,11 +165,31 @@ public static class GreedyPlacer
         // D-28c: first-fit (покрытие — главный приоритет; разброс нагрузки учителей
         // пробовали скорингом — режет покрытие 1196→1192, откачено).
         // Детерминировано: (заполнение, день), слоты по возрастанию от якоря.
-        foreach (int day in days
-                     .OrderBy(d => classDay.GetValueOrDefault((first.ClassId, d))?.Count ?? 0)
-                     .ThenBy(d => d))
+        // D-50: hint==null → порядок бит-в-бит как раньше (Place и старый Replant
+        // не меняются); hint → день учителя первым + слоты вплотную к его занятиям.
+        bool pack = hint is not null && first.TeacherId == hint.Teacher;
+        // D-50 шаг ③: compact-режим — слоты вплотную к своим же занятиям дня
+        // для ЛЮБОГО учителя (плотный старт); day-порядок при этом обычный.
+        bool adj = pack || compact;
+        IEnumerable<int> orderedDays = pack
+            ? days.OrderBy(d => d == hint!.Day ? 0 : 1)
+                .ThenBy(d => classDay.GetValueOrDefault((first.ClassId, d))?.Count ?? 0)
+                .ThenBy(d => d)
+            : days.OrderBy(d => classDay.GetValueOrDefault((first.ClassId, d))?.Count ?? 0)
+                .ThenBy(d => d);
+        foreach (int day in orderedDays)
         {
-            foreach (int slot in slots.OrderBy(x => x))
+            IEnumerable<int> orderedSlots;
+            if (adj)
+            {
+                var mine = teacherBusy.Where(k => k.Item1 == first.TeacherId && k.Item2 == day)
+                    .Select(k => k.Item3).ToList();
+                orderedSlots = mine.Count == 0
+                    ? slots.OrderBy(x => x)
+                    : slots.OrderBy(x => mine.Min(t => Math.Abs(t - x))).ThenBy(x => x);
+            }
+            else orderedSlots = slots.OrderBy(x => x);
+            foreach (int slot in orderedSlots)
             {
                 if (!UnitFits(problem, occById, ids, day, slot,
                         teacherBusy, groupBusy, wholeBusy, subBusy, teacherDay, classDay))
