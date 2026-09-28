@@ -7,6 +7,10 @@ using ClosedXML.Excel;
 // (флаг Split + TeacherB), а не N строк на один CurriculumItem.
 // Поэтому импорт никогда не создаёт дубликаты (UNIQUE-класс бага исключён форматом).
 // P0-scope: симметрия формата (export→import→semantic equality); привязка имён к Id — P2.
+// Pairs-v1 (decision-pairs.md): 10-я колонка Pair (опциональна; пусто = как раньше).
+// Одинаковое значение в 2 строках одного класса = одновременные уроки подгрупп.
+// G1-mini: 11-я колонка Shift (опциональна; пусто/1 = 1-я смена, 2 = 2-я).
+// Старые файлы из 7/9 колонок импортируются как раньше (лишних колонок просто нет).
 public sealed record LoadRow(
     string ClassName,
     string SubjectName,
@@ -18,13 +22,18 @@ public sealed record LoadRow(
     // P-DAYOFF: дни (1-based номера через запятую) и слоты, когда учителя нет.
     // Опциональны: старые файлы из 7 колонок импортируются как раньше.
     string? UnavailDays = null,
-    string? UnavailSlots = null);
+    string? UnavailSlots = null,
+    // Pairs-v1: имя пары в пределах класса (OrdinalIgnoreCase); null = без пары.
+    // Ручной ввод пар — backlog: диалог ставит null (Excel-first для пар).
+    string? PairName = null,
+    // G1-mini: null/1 = 1-я смена, 2 = 2-я смена (нумерация стены №1–12).
+    int? Shift = null);
 
 public static class ExcelLoadExchange
 {
     private static readonly string[] Header =
         ["Class", "Subject", "HoursPerWeek", "Teacher", "Split", "TeacherB", "Room",
-         "UnavailDays", "UnavailSlots"];
+         "UnavailDays", "UnavailSlots", "Pair", "Shift"];
 
     public static void ExportLoad(Stream destination, IReadOnlyList<LoadRow> rows)
     {
@@ -44,6 +53,8 @@ public static class ExcelLoadExchange
             ws.Cell(r + 2, 7).Value = row.RoomName ?? "";
             ws.Cell(r + 2, 8).Value = row.UnavailDays ?? "";
             ws.Cell(r + 2, 9).Value = row.UnavailSlots ?? "";
+            ws.Cell(r + 2, 10).Value = row.PairName ?? "";
+            ws.Cell(r + 2, 11).Value = row.Shift?.ToString() ?? "";
         }
         wb.SaveAs(destination);
     }
@@ -77,11 +88,24 @@ public static class ExcelLoadExchange
                 throw new InvalidOperationException($"Row {r}: split requires TeacherB.");
             if (!isSplit && !string.IsNullOrEmpty(teacherB))
                 throw new InvalidOperationException($"Row {r}: TeacherB without split flag.");
+            // Pairs-v1 + G1-mini (10-я/11-я колонки, опциональны: пустые ячейки = нет пары / 1-я смена).
+            string pair = ws.Cell(r, 10).GetString().Trim();
+            string shiftRaw = ws.Cell(r, 11).GetString().Trim();
+            int? shift = shiftRaw switch
+            {
+                "" => null,
+                "1" => 1,
+                "2" => 2,
+                _ => throw new InvalidOperationException(
+                    $"Строка {r}: смена — пусто (= 1-я) или 2 (задано '{shiftRaw}')."),
+            };
             rows.Add(new LoadRow(cls, subj, hours, teacher, isSplit,
                 string.IsNullOrEmpty(teacherB) ? null : teacherB,
                 string.IsNullOrEmpty(room) ? null : room,
                 string.IsNullOrEmpty(unavailDays) ? null : unavailDays,
-                string.IsNullOrEmpty(unavailSlots) ? null : unavailSlots));
+                string.IsNullOrEmpty(unavailSlots) ? null : unavailSlots,
+                string.IsNullOrEmpty(pair) ? null : pair,
+                shift));
             r++;
         }
         return rows;

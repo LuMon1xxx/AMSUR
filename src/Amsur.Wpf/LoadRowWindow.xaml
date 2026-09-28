@@ -34,6 +34,12 @@
     <TextBlock Text="Второй учитель (для подгруппы B)" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
     <TextBox x:Name="TeacherBBox" IsEnabled="False" ToolTip="Обязателен при делении на подгруппы"/>
 
+    <TextBlock Text="Смена (необязательно)" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
+    <TextBox x:Name="ShiftBox" x:FieldModifier="public" Width="80" HorizontalAlignment="Left"
+             ToolTip="Пусто или 1 — первая смена, 2 — вторая (№6–12). Новая строка подхватывает смену своего класса."/>
+    <TextBlock Style="{DynamicResource THCaption}" Margin="0,4,0,0" TextWrapping="Wrap"
+               Text="Профильные пары (10А/11А) задаются только через Excel — колонка Pair. Здесь пара сохраняется без изменений."/>
+
     <TextBlock x:Name="ErrorText" FontSize="13" Foreground="{DynamicResource BBad}" Margin="0,12,0,0" TextWrapping="Wrap" Text=""/>
 
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">

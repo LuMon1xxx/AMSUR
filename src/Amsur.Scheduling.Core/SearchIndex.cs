@@ -30,6 +30,8 @@ public sealed class SearchIndex
     private readonly Dictionary<(Guid Room, int Day, int Slot), Dictionary<Guid, int>> _roomKeys = [];
     // P2/R6: счётчик тяжёлых occurrence в клетке класса (для heavy-edge дельты).
     private readonly Dictionary<(Guid Class, int Day, int Slot), int> _heavyCount = [];
+    // D-51: eligible-слоты дубля по K=(класс,предмет,день) (для doubles-adjacency дельты).
+    private readonly Dictionary<(Guid Class, Guid Subject, int Day), List<int>> _dblSlots = [];
     // P2/R7: учителя целых (GroupId==null) по (класс,предмет) и (параллель,предмет).
     private readonly Dictionary<(Guid Class, Guid Subject), Dictionary<Guid, int>> _splitC = [];
     private readonly Dictionary<(int Grade, Guid Subject), Dictionary<Guid, int>> _splitP = [];
@@ -43,6 +45,7 @@ public sealed class SearchIndex
     private long _wCrowd = RuleCatalog.RoomCrowding;
     private long _wHeavy = RuleCatalog.HeavyEdge;
     private long _wActiveDay = RuleCatalog.TeacherActiveDay;
+    private long _wDoubles = RuleCatalog.DoublesAdjacency;
 
     private SearchIndex(SchedulingProblem problem)
     {
@@ -68,6 +71,7 @@ public sealed class SearchIndex
             idx._wCrowd = rules.Weight("room-crowding");
             idx._wHeavy = rules.Weight("heavy-edge");
             idx._wActiveDay = rules.Weight("teacher-active-day");
+            idx._wDoubles = rules.Weight("doubles-adjacency");
         }
         foreach (var p in placements)
             idx.Insert(p.OccurrenceId, p.DayIndex, p.SlotIndex, p.RoomId);
@@ -381,6 +385,20 @@ public sealed class SearchIndex
             delta += (Excess(oldC, subj.MaxPerDay) - Excess(oldC + 1, subj.MaxPerDay)) * _wSubj * gw;
         }
 
+        // D-51 doubles-adjacency дня (× вес параллели, INV-D8).
+        // Lift-паттерн как heavy-edge: списки БЕЗ N; With = список + слот N.
+        // INV-D4: guards запрещены — считаем всегда, независимо от subject-maxperday.
+        // INV-D6: room-only ход (тот же день+слот) схлопывается в 0.
+        if (_wDoubles != 0 && SoftUnits.IsDoubleEligible(node))
+        {
+            var oldKey = (node.ClassId, node.SubjectId, old.Day);
+            var newKey = (node.ClassId, node.SubjectId, move.DayIndex);
+            var lNew = _dblSlots.GetValueOrDefault(newKey, []);
+            var lOld = _dblSlots.GetValueOrDefault(oldKey, []);
+            delta += (DblWith(lNew, move.SlotIndex) - DblWithout(lNew)) * _wDoubles * gw;
+            delta += (DblWithout(lOld) - DblWith(lOld, old.Slot)) * _wDoubles * gw;
+        }
+
         // P2/R5 room-crowding клеток (без веса параллели; снятие −, установка +).
         if (old.Room.HasValue && _problem.Rooms.TryGetValue(old.Room.Value, out var oldRoom))
             delta -= CrowdStep(oldRoom, (old.Room.Value, old.Day, old.Slot), node.ClassId) * _wCrowd;
@@ -399,6 +417,12 @@ public sealed class SearchIndex
             s == slot
                 ? nodeHeavy || _heavyCount.GetValueOrDefault((classId, day, s)) > 0
                 : _heavyCount.GetValueOrDefault((classId, day, s)) > 0);
+
+    // D-51: единицы doubles-adjacency ключа БЕЗ N / С N (зеркало SoftUnits.DoublesUnits).
+    // Списки хранят только eligible-слоты (INV-D1 — по построению Insert/Remove).
+    private static int DblWithout(List<int> slots) => SoftUnits.DoublesUnits(slots);
+
+    private static int DblWith(List<int> slots, int slot) => SoftUnits.DoublesUnits([.. slots, slot]);
 
     // P2/R5: шаг тесноты клетки С N минус БЕЗ N (индекс БЕЗ N).
     private int CellUnitsWithout(Room room, (Guid Room, int Day, int Slot) cell)
@@ -506,6 +530,9 @@ public sealed class SearchIndex
         // P2: тяжёлые клетки, key-aware ключи комнат, split-индекс целых.
         if (IsHeavy(node))
             Bump(_heavyCount, (node.ClassId, day, slot));
+        // D-51: eligible-слоты дубля по K (только целые несинхронные).
+        if (SoftUnits.IsDoubleEligible(node))
+            SortedInsert(_dblSlots.GetOrAdd((node.ClassId, node.SubjectId, day)), slot);
         if (room.HasValue && _problem.Rooms.TryGetValue(room.Value, out var rm) && !rm.CountSubgroupAsGroup)
         {
             var cell = (room.Value, day, slot);
@@ -546,6 +573,9 @@ public sealed class SearchIndex
         // P2: откат структур выше.
         if (IsHeavy(node))
             Drop(_heavyCount, (node.ClassId, day, slot));
+        // D-51: откат eligible-слота дубля.
+        if (SoftUnits.IsDoubleEligible(node))
+            SortedRemove(_dblSlots[(node.ClassId, node.SubjectId, day)], slot);
         if (room.HasValue && _problem.Rooms.TryGetValue(room.Value, out var rm) && !rm.CountSubgroupAsGroup)
         {
             var cell = (room.Value, day, slot);
@@ -641,6 +671,14 @@ public sealed class SearchIndex
 file static class DictExt
 {
     internal static List<int> GetOrAdd(this Dictionary<(Guid, int), List<int>> d, (Guid, int) k)
+    {
+        if (!d.TryGetValue(k, out var l)) d[k] = l = [];
+        return l;
+    }
+
+    // D-51: тот же helper для ключей K=(класс,предмет,день).
+    internal static List<int> GetOrAdd<TKey>(this Dictionary<TKey, List<int>> d, TKey k)
+        where TKey : notnull
     {
         if (!d.TryGetValue(k, out var l)) d[k] = l = [];
         return l;

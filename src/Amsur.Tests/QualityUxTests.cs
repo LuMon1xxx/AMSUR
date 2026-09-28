@@ -50,8 +50,9 @@ public sealed class QualityUxTests
     {
         var ed = QualitySettingsEditor.FromRules(EffectiveRuleSet.Default);
         // B2 (осознанно): строгие стали настраиваемыми через подтверждение —
-        // 9 опасных (student-gap/late-start, teacher/class-maxperday, 5×sanpin) + 7 пожеланий.
-        Assert.Equal(16, ed.Options.Count);
+        // 9 опасных (student-gap/late-start, teacher/class-maxperday, 5×sanpin) + 8 пожеланий
+        // (S10: +doubles-adjacency слайдер 0..100, дефолт 10 — decision-teacher-gaps §1).
+        Assert.Equal(17, ed.Options.Count);
         Assert.All(ed.Options.Where(o => o.IsStrict), o => Assert.True(o.Tunable));
         var tg = ed.Options.First(o => o.Code == "teacher-gap");
         Assert.Equal(2, tg.Level); // дефолт = Стандарт

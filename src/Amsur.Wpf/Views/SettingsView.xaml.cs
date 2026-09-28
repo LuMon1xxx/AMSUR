@@ -791,7 +791,14 @@ public partial class SettingsView : UserControl
         if (!await ConfirmCapRaisesAsync()) { Say("Отменено — лимиты не тронуты.", true); return; }
         ApplyEntities();
         // B2: опасные — только с подтверждённым набором (тумблеры выше).
-        _session.ApplyOverrides(_editor.GetOverrides(), _confirmedDangerous);
+        // D-51: каталог v7 знает doubles-adjacency — вес слайдера применяется движком.
+        // Резолвер по-прежнему отклоняет громко (fail-loud, не молча), но теперь
+        // только truly-unknown коды — ловим в сообщение, а не в падение окна.
+        try
+        {
+            _session.ApplyOverrides(_editor.GetOverrides(), _confirmedDangerous);
+        }
+        catch (Exception ex) { Say("Не применено: " + ex.Message, true); return; }
         MarkClean();
         Say(_editor.IsModified
             ? "Применено: настройки будут действовать на следующие генерации (без сохранения)."

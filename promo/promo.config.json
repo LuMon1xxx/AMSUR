@@ -1,0 +1,23 @@
+{
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "duration": 30,
+  "scenes": [
+    {"id":"hook","start":0,"end":3,"asset":null,"headline":"Сотни уроков. Десятки ограничений. Одно расписание."},
+    {"id":"data","start":3,"end":7,"asset":"../.opencode/compose-plus/screens/v2-final.png","headline":"Загрузите нагрузку"},
+    {"id":"generate","start":7,"end":13,"asset":"../.opencode/compose-plus/screens/v2-generate.png","headline":"Первый рабочий вариант ~0,1 с","subhead":"Режим “Стандарт”: лимит поиска — 12 с","footnote":"~0,1 с — первый greedy-вариант на эталоне 1196 уроков; время зависит от ПК и режима"},
+    {"id":"quality","start":13,"end":18,"asset":"../.opencode/compose-plus/screens/v2-schedule-matrix.png","headline":"0 окон у учеников · 0 жёстких нарушений","subhead":"Эталон: 40 классов · 100 учителей · 1196 уроков","badge":"Окна учителей — отдельная метрика"},
+    {"id":"choices","start":18,"end":23,"asset":"../.opencode/compose-plus/screens/v2-generate.png","headline":"До пяти объяснённых вариантов"},
+    {"id":"roles","start":23,"end":27,"asset":null,"headline":"Не замена завуча. Освобождение от рутины"},
+    {"id":"end","start":27,"end":30,"asset":"../stitch_amsur_desktop_design_system/amsur_logo/screen.png","headline":"АМСУР. Человек решает. Программа считает.","footnote":"Показываем лучшее найденное, не “оптимальное”. СанПиН-блок требует сверки с НПА"}
+  ],
+  "voiceRate": 4,
+  "voice": [
+    {"id":"hook","start":0.25,"end":2.75,"text":"Расписание — не просто таблица"},
+    {"id":"data","start":3.2,"end":6.8,"text":"Загрузите нагрузку — АМСУР проверит данные"},
+    {"id":"generate","start":7.25,"end":12.75,"text":"Первый вариант — почти мгновенно. Стандартный поиск — до двенадцати секунд"},
+    {"id":"choices","start":18.2,"end":22.8,"text":"АМСУР объясняет варианты. Человек выбирает"},
+    {"id":"end","start":27.0,"end":29.85,"text":"Человек решает — АМСУР считает"}
+  ]
+}

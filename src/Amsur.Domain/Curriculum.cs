@@ -6,6 +6,7 @@ public sealed class Subject : Entity
     public string Name { get; set; } = "";
     public int Difficulty { get; set; } = 5;      // 1..10, конфигурируемо; IsHeavy = >=7 (P1 в каталог)
     public bool IsPhysicalEducation { get; set; } // явный флаг, не name-matching
+    public bool IsForeignLanguage { get; set; } // явный флаг (D-52): ин.яз идёт сразу после физры
     public int MaxPerDay { get; set; } = 1;
 }
 

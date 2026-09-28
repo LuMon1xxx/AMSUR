@@ -54,14 +54,7 @@
           <StackPanel DockPanel.Dock="Bottom">
             <Border Style="{StaticResource Card}" Padding="12" Margin="0,0,0,8" Background="{StaticResource BAccentSoft}">
               <StackPanel>
-                <StackPanel Orientation="Horizontal">
-                  <Border Width="26" Height="26" CornerRadius="13" Background="{StaticResource BAccent}"
-                          VerticalAlignment="Center" ToolTip="Гуфо — помощник АМСУР">
-                    <TextBlock Text="Г" FontSize="13" FontWeight="Bold" Foreground="White"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                  </Border>
-                  <TextBlock Text="Гуфо на связи" FontWeight="SemiBold" FontSize="13" Margin="6,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
+                <TextBlock Text="Нужна помощь?" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
                 <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,8"
                            Text="Быстрый старт и ответы — в справке. F1 открывает справку, F5 запускает генерацию."/>
                 <Button Style="{StaticResource BtnSecondary}" Click="OnHelpNav">

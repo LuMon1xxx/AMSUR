@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Amsur.Application;
 using Amsur.Domain;
 using Microsoft.Win32;
@@ -12,7 +13,9 @@ namespace Amsur.Wpf.Views;
 public sealed record LoadRowVm(
     int SourceIndex,
     string ClassName, string SubjectName, int Hours,
-    string TeacherName, string RoomName, string GroupText);
+    string TeacherName, string RoomName, string GroupText,
+    // Pairs-v1 + G1-mini: колонки пары и смены (S10).
+    string PairText, string ShiftText);
 
 // P3/R1–R9: редактируемые строки гибких настроек (plain settable — читаем по Apply).
 public sealed class ClassRowVm
@@ -66,6 +69,23 @@ public sealed class HourOverrideVm
     public int Hours { get; set; }
 }
 
+// Таблицы «Учителя»/«Подгруппы»: только чтение (plain settable — как остальные VM).
+public sealed class TeacherRowVm
+{
+    public string Name { get; set; } = "";
+    public int HoursPerWeek { get; set; }
+    public int SubjectCount { get; set; }
+    public int ClassCount { get; set; }
+}
+
+public sealed class GroupRowVm
+{
+    public string ClassName { get; set; } = "";
+    public string GroupName { get; set; } = "";
+    public int LoadRowCount { get; set; }
+    public int Hours { get; set; }
+}
+
 // P-D3: данные как view (логика из SchoolDataWindow 1-в-1).
 public partial class DataView : UserControl
 {
@@ -84,6 +104,8 @@ public partial class DataView : UserControl
     private ObservableCollection<RoomRowVm> _roomRows = [];
     private ObservableCollection<HourNormVm> _normRows = [];
     private ObservableCollection<HourOverrideVm> _overrideRows = [];
+    private ObservableCollection<TeacherRowVm> _teacherRows = [];
+    private ObservableCollection<GroupRowVm> _groupRows = [];
 
     public DataView(AppSession session)
     {
@@ -124,7 +146,8 @@ public partial class DataView : UserControl
             .Select((r, i) => (Row: r, Index: i))
             .OrderBy(x => x.Row.ClassName).ThenBy(x => x.Row.SubjectName)
             .Select(x => new LoadRowVm(x.Index, x.Row.ClassName, x.Row.SubjectName, x.Row.HoursPerWeek,
-                x.Row.TeacherName, x.Row.RoomName ?? "—", x.Row.SplitSubgroups ? "A/B" : "Весь класс")));
+                x.Row.TeacherName, x.Row.RoomName ?? "—", x.Row.SplitSubgroups ? "A/B" : "Весь класс",
+                x.Row.PairName ?? "—", x.Row.Shift == 2 ? "2-я" : "1-я")));
         LoadGrid.ItemsSource = _allLoad;
         DaysBox.Text = d.DaysCount.ToString();
         SlotsBox.Text = d.SlotsPerDay.ToString();
@@ -139,9 +162,37 @@ public partial class DataView : UserControl
 
         TeachersList.ItemsSource = d.Teachers.OrderBy(t => t.Name)
             .Select(t => $"{t.Name} — {d.Curriculum.Where(x => x.TeacherId == t.Id).Sum(x => x.HoursPerWeek)} ч/нед").ToList();
-        GroupsList.ItemsSource = d.Groups.Count == 0
-            ? new[] { "Делений на подгруппы нет." }
-            : d.Groups.Select(g => $"{CN(g.ClassId)} — группа {g.Name}").ToList();
+        // Учителя — грид только для чтения (считаем из curriculum сессии;
+        // TeacherSubject импортером не заполняется, нагрузка — тот же источник).
+        _teacherRows = new ObservableCollection<TeacherRowVm>(d.Teachers.OrderBy(t => t.Name)
+            .Select(t => new TeacherRowVm
+            {
+                Name = t.Name,
+                HoursPerWeek = d.Curriculum.Where(x => x.TeacherId == t.Id).Sum(x => x.HoursPerWeek),
+                SubjectCount = d.Curriculum.Where(x => x.TeacherId == t.Id).Select(x => x.SubjectId).Distinct().Count(),
+                ClassCount = d.Curriculum.Where(x => x.TeacherId == t.Id).Select(x => x.ClassId).Distinct().Count(),
+            }));
+        TeachersGrid.ItemsSource = _teacherRows;
+        // Подгруппы — грид только для чтения: сплит-строки класса относятся
+        // к обеим его подгруппам; члены пар — через GroupId curriculum.
+        _groupRows = new ObservableCollection<GroupRowVm>(d.Groups
+            .OrderBy(g => CN(g.ClassId)).ThenBy(g => g.Name)
+            .Select(g =>
+            {
+                string clsName = CN(g.ClassId);
+                var splitRows = _session.LoadRows
+                    .Where(r => string.Equals(r.ClassName, clsName, StringComparison.OrdinalIgnoreCase)
+                        && r.SplitSubgroups).ToList();
+                var pairItems = d.Curriculum.Where(c => c.GroupId == g.Id).ToList();
+                return new GroupRowVm
+                {
+                    ClassName = clsName,
+                    GroupName = g.Name,
+                    LoadRowCount = splitRows.Count + pairItems.Count,
+                    Hours = splitRows.Sum(r => r.HoursPerWeek) + pairItems.Sum(c => c.HoursPerWeek),
+                };
+            }));
+        GroupsGrid.ItemsSource = _groupRows;
         NotesList.ItemsSource = d.Notes.Count == 0
             ? new[] { "Замечаний нет." }
             : d.Notes.Take(20).ToList();
@@ -262,8 +313,23 @@ public partial class DataView : UserControl
         TeachersPanel.Visibility = i == 3 ? Visibility.Visible : Visibility.Collapsed;
         SubjectsPanel.Visibility = i == 4 ? Visibility.Visible : Visibility.Collapsed;
         RoomsPanel.Visibility = i == 5 ? Visibility.Visible : Visibility.Collapsed;
-        GroupsList.Visibility = i == 6 ? Visibility.Visible : Visibility.Collapsed;
+        GroupsPanel.Visibility = i == 6 ? Visibility.Visible : Visibility.Collapsed;
         CommonPanel.Visibility = i == 7 ? Visibility.Visible : Visibility.Collapsed;
+        // Счётчик снизу — по активному табу, а не всегда по нагрузке.
+        if (i > 0)
+        {
+            int n = i switch
+            {
+                1 => _normRows.Count + _overrideRows.Count,
+                2 => _classRows.Count,
+                3 => _teacherRows.Count,
+                4 => _subjectRows.Count,
+                5 => _roomRows.Count,
+                6 => _groupRows.Count,
+                _ => 0,
+            };
+            CountText.Text = n > 0 ? $"Записей: {n}" : "";
+        }
     }
 
     private void OnTemplateClick(object sender, RoutedEventArgs e)
@@ -330,13 +396,18 @@ public partial class DataView : UserControl
 
     private int GridSlots() =>
         int.TryParse(SlotsBox.Text, out int slots) && slots > 0
-            ? slots : _session.Data?.SlotsPerDay ?? 7;
+            ? slots : _session.Data?.SlotsPerDay ?? 8; // D-pair-01: дефолт сетки 5×8
 
     private IReadOnlyList<string> KnownClasses() => _session.LoadRows
         .Select(r => r.ClassName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s).ToList();
 
+    // D-54 (поверхность): списки диалога — union(строки, сущности, канон),
+    // чтобы серые предметы выбирались, а свободный ввод сохранялся (D-34).
     private IReadOnlyList<string> KnownSubjects() => _session.LoadRows
-        .Select(r => r.SubjectName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s).ToList();
+        .Select(r => r.SubjectName)
+        .Concat(_session.Data?.Subjects.Select(s => s.Name) ?? [])
+        .Concat(CanonicalSubjects.All)
+        .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(s => s).ToList();
 
     private IReadOnlyList<string> KnownTeachers() => _session.LoadRows
         .SelectMany(r => new[] { r.TeacherName, r.SplitTeacherBName })
@@ -349,8 +420,17 @@ public partial class DataView : UserControl
 
     private LoadRowWindow OpenRowDialog(LoadRow? existing)
     {
+        // S10 (наследование смены): новая строка того же класса подхватывает смену
+        // соседей (6–7-е → 2-я); смена класса правится разом через Excel.
+        int? InheritShift(string cls) =>
+            _session.LoadRows
+                .Where(r => string.Equals(r.ClassName, cls, StringComparison.OrdinalIgnoreCase))
+                .Select(r => r.Shift ?? 1)
+                .Cast<int?>()
+                .FirstOrDefault();
         var dlg = new LoadRowWindow(existing,
-            KnownClasses(), KnownSubjects(), KnownTeachers(), KnownRooms())
+            KnownClasses(), KnownSubjects(), KnownTeachers(), KnownRooms(),
+            inheritShift: InheritShift)
         {
             Owner = System.Windows.Window.GetWindow(this),
         };
@@ -396,21 +476,42 @@ public partial class DataView : UserControl
         await ApplyManualRows(rows, GridDays(), GridSlots());
     }
 
+    // Даблклик по строке нагрузки = кнопка «Изменить» (тот же путь;
+    // без выбора — та же подсказка в ErrorCard).
+    private void OnLoadGridDoubleClick(object sender, MouseButtonEventArgs e) =>
+        OnEditClick(sender, e);
+
+    // Delete на гриде нагрузки = удалить ВСЕ выбранные строки одним confirm.
+    private void OnLoadGridKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Delete)
+        {
+            OnDeleteClick(sender, e);
+            e.Handled = true;
+        }
+    }
+
     private async void OnDeleteClick(object sender, RoutedEventArgs e)
     {
-        if (LoadGrid.SelectedItem is not LoadRowVm sel)
+        var selected = LoadGrid.SelectedItems.OfType<LoadRowVm>()
+            .OrderByDescending(r => r.SourceIndex).ToList();
+        if (selected.Count == 0)
         {
             ErrorCard.Visibility = Visibility.Visible;
             ErrorList.ItemsSource = new[] { "Выберите строку в таблице, затем «Удалить»." };
             return;
         }
-        var row = _session.LoadRows[sel.SourceIndex];
-        if (MessageBox.Show(System.Windows.Window.GetWindow(this),
-                $"Удалить строку «{row.ClassName} — {row.SubjectName} ({row.TeacherName})»?",
+        string question = selected.Count == 1
+            ? $"Удалить строку «{_session.LoadRows[selected[0].SourceIndex].ClassName} — " +
+              $"{_session.LoadRows[selected[0].SourceIndex].SubjectName} " +
+              $"({_session.LoadRows[selected[0].SourceIndex].TeacherName})»?"
+            : $"Удалить выбранные строки нагрузки ({selected.Count})?";
+        if (MessageBox.Show(System.Windows.Window.GetWindow(this), question,
                 "Удаление строки", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
         var rows = _session.LoadRows.ToList();
-        rows.RemoveAt(sel.SourceIndex);
+        foreach (var s in selected)
+            rows.RemoveAt(s.SourceIndex);
         await ApplyManualRows(rows, GridDays(), GridSlots());
     }
 

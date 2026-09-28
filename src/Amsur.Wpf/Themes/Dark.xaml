@@ -25,7 +25,7 @@
   <Color x:Key="CGoodBg">#052E22</Color>
   <Color x:Key="CWarnBg">#451A03</Color>
   <Color x:Key="CBadBg">#450A0A</Color>
-  <!-- Тёплый акцент Гуфо в тёмной теме: глубокий янтарь -->
+  <!-- Тёплый акцент в тёмной теме: глубокий янтарь -->
   <Color x:Key="CWarm">#451A03</Color>
   <Color x:Key="CWarmBorder">#92400E</Color>
 

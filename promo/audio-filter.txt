@@ -1,0 +1,10 @@
+[1:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,adelay=250|250[vo1];
+[2:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,adelay=3200|3200[vo2];
+[3:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,adelay=7250|7250[vo3];
+[4:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,adelay=18200|18200[vo4];
+[5:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,adelay=27000|27000[vo5];
+[vo1][vo2][vo3][vo4][vo5]amix=inputs=5:duration=longest:dropout_transition=0:normalize=0[voice];
+[voice]asplit=2[voice_sc][voice_mix];
+[6:a]aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo,volume=0.12[music];
+[music][voice_sc]sidechaincompress=threshold=0.03:ratio=8:attack=20:release=350[ducked];
+[voice_mix][ducked]amix=inputs=2:duration=longest:dropout_transition=0:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11,alimiter=limit=0.95[aout]

@@ -46,7 +46,7 @@
     <SolidColorBrush x:Key="BGoodBg" Color="{DynamicResource CGoodBg}"/>
     <SolidColorBrush x:Key="BWarnBg" Color="{DynamicResource CWarnBg}"/>
     <SolidColorBrush x:Key="BBadBg" Color="{DynamicResource CBadBg}"/>
-    <!-- P-D0: тёплый сабтл для дружелюбных панелей + Гуфо -->
+    <!-- P-D0: тёплый сабтл для дружелюбных панелей -->
     <SolidColorBrush x:Key="BWarm" Color="#FFF7ED"/>
     <SolidColorBrush x:Key="BWarmBorder" Color="#FED7AA"/>
 
@@ -368,6 +368,9 @@
       <Setter Property="Padding" Value="8,5"/>
       <Setter Property="FontSize" Value="13"/>
       <Setter Property="Foreground" Value="{DynamicResource BText}"/>
+      <Setter Property="CaretBrush" Value="{DynamicResource BText}"/>
+      <Setter Property="SelectionBrush" Value="{DynamicResource BAccent}"/>
+      <Setter Property="SelectionOpacity" Value="0.25"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
       <Setter Property="Cursor" Value="IBeam"/>
       <Setter Property="Template">
@@ -570,6 +573,49 @@
       <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
     </Style>
 
+    <!-- Таблицы DataView: единый вид всех гридов (зебра только через
+         DynamicResource — белые строки в тёмной теме чинены здесь:
+         RowBackground=BCard, AlternatingRowBackground=BSubtle).
+         HeadersVisibility=All (а не Column): иначе заголовки строк
+         с номерами не видны. Локальные значения отдельных гридов
+         (например ScheduleView) перекрывают эти сеттеры. -->
+    <Style TargetType="DataGrid">
+      <Setter Property="Background" Value="{DynamicResource BCard}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="RowBackground" Value="{DynamicResource BCard}"/>
+      <Setter Property="AlternationCount" Value="2"/>
+      <Setter Property="AlternatingRowBackground" Value="{DynamicResource BSubtle}"/>
+      <Setter Property="HeadersVisibility" Value="All"/>
+      <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+      <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource BBorder}"/>
+      <Setter Property="RowStyle">
+        <Setter.Value>
+          <Style TargetType="DataGridRow">
+            <Style.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource BSubtle}"/>
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{DynamicResource BAccentSoft}"/>
+                <Setter Property="Foreground" Value="{DynamicResource BText}"/>
+              </Trigger>
+            </Style.Triggers>
+          </Style>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Номера строк: спокойный заголовок в цветах темы -->
+    <Style TargetType="DataGridRowHeader">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{DynamicResource BTextMuted}"/>
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Padding" Value="4,0"/>
+    </Style>
+
     <!-- P1-shell: пункты боковых списков (категории настроек, справочники) -->
     <Style TargetType="ListBoxItem">
       <Setter Property="Background" Value="Transparent"/>
@@ -687,6 +733,7 @@
       <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Padding" Value="6,4"/>
     </Style>
 
     <!-- P1-shell: кнопки навбар-рейла (иконка MDL2 из Tag + текст) -->

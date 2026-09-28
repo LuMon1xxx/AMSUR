@@ -1,0 +1,370 @@
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --accent: #4f46e5;
+  --text: #0f172a;
+  --muted: #475569;
+  --success: #059669;
+  --safe-x: 8%;
+  --safe-y: 8%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 1920px;
+  height: 1080px;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", "Noto Sans", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#stage {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Full-bleed real screenshot behind content: never distorted (contain only). */
+#bg-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+}
+
+#bg-layer.visible {
+  opacity: 0.22;
+}
+
+#asset-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Readability scrim over the background screenshot. */
+#scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96) 0%, rgba(248, 250, 252, 0.82) 45%, rgba(248, 250, 252, 0.94) 100%);
+  opacity: 0;
+}
+
+#scrim.visible {
+  opacity: 1;
+}
+
+/* Safe area: 8% on every side. All composition lives inside. */
+#safe {
+  position: absolute;
+  top: var(--safe-y);
+  right: var(--safe-x);
+  bottom: var(--safe-y);
+  left: var(--safe-x);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+#badge {
+  display: inline-block;
+  font-size: 28px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--surface);
+  background: var(--success);
+  border-radius: 999px;
+  padding: 10px 28px;
+}
+
+#badge[hidden] {
+  display: none;
+}
+
+#headline {
+  margin: 0;
+  max-width: 100%;
+  font-size: 72px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+#subhead {
+  margin: 0;
+  max-width: 100%;
+  font-size: 48px;
+  line-height: 1.4;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+#subhead[hidden] {
+  display: none;
+}
+
+#footnote {
+  margin: 8px 0 0;
+  max-width: 100%;
+  font-size: 26px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+#footnote[hidden] {
+  display: none;
+}
+
+/* Foreground card with the real UI screenshot: contain, never cropped. */
+#asset-card {
+  margin: 8px 0 0;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.14);
+  max-width: 100%;
+}
+
+#asset-card[hidden] {
+  display: none;
+}
+
+#asset-card-img {
+  display: block;
+  width: 1500px;
+  max-width: 100%;
+  height: 520px;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 12px;
+  background: var(--bg);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Abstract kinetic cards for hook/roles scenes (no fake app controls). */
+#cards {
+  display: flex;
+  gap: 32px;
+  margin-top: 16px;
+  max-width: 100%;
+}
+
+#cards[hidden] {
+  display: none;
+}
+
+.role-card {
+  flex: 1 1 0;
+  background: var(--surface);
+  border: 1px solid #e2e8f0;
+  border-top: 12px solid var(--accent);
+  border-radius: 24px;
+  padding: 36px 40px;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.12);
+  min-width: 0;
+}
+
+.role-card.green {
+  border-top-color: var(--success);
+}
+
+.role-card h2 {
+  margin: 0 0 16px;
+  font-size: 48px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.role-card ul {
+  margin: 0;
+  padding-left: 32px;
+  font-size: 32px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.role-card li + li {
+  margin-top: 8px;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  max-width: 1500px;
+}
+
+.chip {
+  font-size: 32px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(79, 70, 229, 0.1);
+  border: 2px solid rgba(79, 70, 229, 0.35);
+  border-radius: 999px;
+  padding: 12px 30px;
+  white-space: nowrap;
+}
+
+/* Kinetic motion: opacity + transform only. No strobe, no sharp zoom. */
+#safe > * {
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+#asset-card,
+#bg-layer img {
+  transition: opacity 0.45s ease, transform 0.6s ease;
+}
+
+/* Deterministic timeline progress (presentation chrome, not an app control).
+   Visual-fix round: top safe area so burned subtitles/footnote never overlap. */
+#progress {
+  position: absolute;
+  left: var(--safe-x);
+  right: var(--safe-x);
+  top: var(--safe-y);
+  bottom: auto;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+}
+
+#progress-fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #safe > *,
+  #asset-card,
+  #bg-layer img {
+    transition: none;
+  }
+}
+
+/* Visual-fix round (bounded): generate footnote order, desktop chrome crop,
+   end compact composition. No text/claim changes. */
+
+/* 1) Generate: footnote after subhead, before asset-card (DOM order untouched). */
+#stage[data-scene="generate"] #badge { order: 0; }
+#stage[data-scene="generate"] #headline { order: 1; }
+#stage[data-scene="generate"] #subhead { order: 2; }
+#stage[data-scene="generate"] #footnote {
+  order: 3;
+  margin: 0;
+  max-width: 100%;
+  font-size: 26px;
+  line-height: 1.5;
+  color: var(--muted);
+  background: rgba(15, 23, 42, 0.06);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 16px;
+}
+#stage[data-scene="generate"] #asset-card { order: 4; }
+#stage[data-scene="generate"] #cards { order: 5; }
+
+/* 3) Desktop chrome crop for generate/quality/choices: fixed 1500x520
+   viewport, overflow hidden, padding 0. Upscaled 1536x864 source (~1.113x
+   -> 1710x962) shifted to keep the AMSUR window and hide desktop icons.
+   Uniform scale only, no distortion. Background/scrim untouched. */
+#stage[data-scene="generate"] #asset-card,
+#stage[data-scene="quality"] #asset-card,
+#stage[data-scene="choices"] #asset-card {
+  width: 1500px;
+  max-width: 100%;
+  height: 520px;
+  overflow: hidden;
+  padding: 0;
+}
+
+#stage[data-scene="generate"] #asset-card-img,
+#stage[data-scene="quality"] #asset-card-img,
+#stage[data-scene="choices"] #asset-card-img {
+  display: block;
+  width: 1710px;
+  max-width: none;
+  height: 962px;
+  object-fit: fill;
+  object-position: top left;
+  position: relative;
+  left: -234px;
+  top: -111px;
+  border-radius: 0;
+  background: var(--surface);
+}
+
+/* 4) End: centered composition, no bg-layer/scrim, compact icon card.
+   Source logo is icon-only (~80x70): contain only, never redrawn. */
+#stage[data-scene="end"] #safe {
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+
+#stage[data-scene="end"] #bg-layer,
+#stage[data-scene="end"] #scrim {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+#stage[data-scene="end"] #headline,
+#stage[data-scene="end"] #footnote {
+  text-align: center;
+  max-width: 100%;
+}
+
+#stage[data-scene="end"] #asset-card {
+  width: 320px;
+  max-width: 100%;
+  padding: 32px;
+  margin: 8px 0 0;
+  overflow: hidden;
+}
+
+#stage[data-scene="end"] #asset-card-img {
+  display: block;
+  width: 240px;
+  max-width: 240px;
+  height: 210px;
+  max-height: 210px;
+  object-fit: contain;
+  object-position: center;
+  position: static;
+  left: auto;
+  top: auto;
+  border-radius: 12px;
+  background: var(--bg);
+  margin: 0 auto;
+}

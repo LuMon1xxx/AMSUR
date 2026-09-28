@@ -16,7 +16,10 @@ public sealed record StoredLoadRow(
     string? RoomName,
     // P-DAYOFF: опциональны (старые вызовы компилируются).
     string? UnavailDays = null,
-    string? UnavailSlots = null);
+    string? UnavailSlots = null,
+    // Pairs-v1 + G1-mini: опциональны (старые вызовы и старые БД компилируются/мигрируют).
+    string? PairName = null,
+    int? Shift = null);
 
 public sealed record SchoolDataset(
     Guid AcademicYearId,
@@ -46,21 +49,34 @@ public sealed class SqliteSchoolDataStore(string connectionString)
               TeacherB TEXT NULL,
               Room TEXT NULL,
               UnavailDays TEXT NULL,
-              UnavailSlots TEXT NULL);
+              UnavailSlots TEXT NULL,
+              Pair TEXT NULL,
+              Shift INTEGER NULL);
             """;
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = ddl;
         await cmd.ExecuteNonQueryAsync(ct);
-        // Миграция старых БД: колонки могут отсутствовать → ADD, дубль игнорируем.
-        foreach (var col in new[] { "UnavailDays", "UnavailSlots" })
+        // Миграция старых БД: сверяем фактические колонки через PRAGMA (Contains),
+        // добавляем только отсутствующие. Дубли исключены проверкой, а не перехватом.
+        var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        await using (var pragma = conn.CreateCommand())
         {
-            try
-            {
-                await using var mig = conn.CreateCommand();
-                mig.CommandText = $"ALTER TABLE LoadRows ADD COLUMN {col} TEXT NULL;";
-                await mig.ExecuteNonQueryAsync(ct);
-            }
-            catch (SqliteException ex) when (ex.SqliteErrorCode == 1) { /* duplicate column */ }
+            pragma.CommandText = "PRAGMA table_info(LoadRows);";
+            await using var pr = await pragma.ExecuteReaderAsync(ct);
+            while (await pr.ReadAsync(ct))
+                existing.Add(pr.GetString(1));
+        }
+        foreach (var (col, type) in new[]
+                 {
+                     ("UnavailDays", "TEXT NULL"), ("UnavailSlots", "TEXT NULL"),
+                     ("Pair", "TEXT NULL"), ("Shift", "INTEGER NULL"),
+                 })
+        {
+            if (existing.Contains(col)) continue;
+            await using var mig = conn.CreateCommand();
+            mig.CommandText = $"ALTER TABLE LoadRows ADD COLUMN {col} {type};";
+            await mig.ExecuteNonQueryAsync(ct);
+            existing.Add(col);
         }
     }
 
@@ -94,8 +110,8 @@ public sealed class SqliteSchoolDataStore(string connectionString)
             await using var ins = conn.CreateCommand();
             ins.Transaction = tx;
             ins.CommandText = """
-                INSERT INTO LoadRows(ClassName, SubjectName, HoursPerWeek, TeacherName, Split, TeacherB, Room, UnavailDays, UnavailSlots)
-                VALUES($c, $s, $h, $t, $sp, $tb, $rm, $ud, $us);
+                INSERT INTO LoadRows(ClassName, SubjectName, HoursPerWeek, TeacherName, Split, TeacherB, Room, UnavailDays, UnavailSlots, Pair, Shift)
+                VALUES($c, $s, $h, $t, $sp, $tb, $rm, $ud, $us, $pair, $shift);
                 """;
             ins.Parameters.AddWithValue("$c", r.ClassName);
             ins.Parameters.AddWithValue("$s", r.SubjectName);
@@ -106,6 +122,8 @@ public sealed class SqliteSchoolDataStore(string connectionString)
             ins.Parameters.AddWithValue("$rm", (object?)r.RoomName ?? DBNull.Value);
             ins.Parameters.AddWithValue("$ud", (object?)r.UnavailDays ?? DBNull.Value);
             ins.Parameters.AddWithValue("$us", (object?)r.UnavailSlots ?? DBNull.Value);
+            ins.Parameters.AddWithValue("$pair", (object?)r.PairName ?? DBNull.Value);
+            ins.Parameters.AddWithValue("$shift", (object?)r.Shift ?? DBNull.Value);
             await ins.ExecuteNonQueryAsync(ct);
         }
         await tx.CommitAsync(ct);
@@ -131,7 +149,7 @@ public sealed class SqliteSchoolDataStore(string connectionString)
         await using (var q = conn.CreateCommand())
         {
             q.CommandText = """
-                SELECT ClassName, SubjectName, HoursPerWeek, TeacherName, Split, TeacherB, Room, UnavailDays, UnavailSlots
+                SELECT ClassName, SubjectName, HoursPerWeek, TeacherName, Split, TeacherB, Room, UnavailDays, UnavailSlots, Pair, Shift
                 FROM LoadRows ORDER BY Id;
                 """;
             await using var r = await q.ExecuteReaderAsync(ct);
@@ -143,7 +161,9 @@ public sealed class SqliteSchoolDataStore(string connectionString)
                     r.IsDBNull(5) ? null : r.GetString(5),
                     r.IsDBNull(6) ? null : r.GetString(6),
                     r.IsDBNull(7) ? null : r.GetString(7),
-                    r.IsDBNull(8) ? null : r.GetString(8)));
+                    r.IsDBNull(8) ? null : r.GetString(8),
+                    r.IsDBNull(9) ? null : r.GetString(9),
+                    r.IsDBNull(10) ? null : r.GetInt32(10)));
             }
         }
         return new SchoolDataset(yearId, rows, days, slots, source);

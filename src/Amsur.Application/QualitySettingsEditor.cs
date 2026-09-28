@@ -31,6 +31,10 @@ public sealed class QualitySettingsEditor
 {
     public List<QualityOption> Options { get; } = [];
 
+    // D-51 (decision-teacher-gaps §1, каталог v7): слайдер doubles-adjacency 0..100,
+    // дефолт 10 — из RuleCatalog (вес применяется движком: SoftEvaluator + SearchIndex).
+    public const string DoublesCode = "doubles-adjacency";
+
     public static QualitySettingsEditor FromRules(EffectiveRuleSet rules)
     {
         var ed = new QualitySettingsEditor();
@@ -59,17 +63,18 @@ public sealed class QualitySettingsEditor
         // Пожелания (слайдеры).
         foreach (string code in new[] { "teacher-gap", "teacher-cross-shift-gap",
                      "subject-maxperday", "heavy-edge", "room-preference",
-                     "room-crowding", "teacher-split" })
+                     "room-crowding", "teacher-split", DoublesCode })
         {
             var h = QualityHints.For(code);
             var (min, max) = RuleCatalog.WeightRange(code);
             long w = rules.Weight(code);
+            long def = RuleCatalog.DefaultWeight(code);
             ed.Options.Add(new QualityOption
             {
                 Code = code, Title = h.Title, Kind = "Пожелание",
                 Hint = $"{h.What} {h.UpDown} Дефолт: {h.Default} {h.When}",
                 IsStrict = false, Tunable = true, Level = WeightToLevel(code, w),
-                Weight = w, DefaultWeight = RuleCatalog.DefaultWeight(code),
+                Weight = w, DefaultWeight = def,
                 Min = min, Max = max,
             });
         }

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, height=1080">
+<title>AMSUR Promo — 1920×1080</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="stage" data-scene="hook">
+  <div id="bg-layer" aria-hidden="true">
+    <img id="asset-img" alt="" draggable="false">
+  </div>
+  <div id="scrim" aria-hidden="true"></div>
+  <main id="safe">
+    <div id="badge" hidden></div>
+    <h1 id="headline"></h1>
+    <p id="subhead" hidden></p>
+    <div id="cards" hidden></div>
+    <figure id="asset-card" hidden>
+      <img id="asset-card-img" alt="Кадр интерфейса АМСУР (демо-данные)" draggable="false">
+    </figure>
+    <p id="footnote" hidden></p>
+  </main>
+  <div id="progress" aria-hidden="true"><span id="progress-fill"></span></div>
+</div>
+<script src="scene.js"></script>
+<script>
+(function () {
+  // Standalone preview: load config relative to this file and show t=0.
+  // Deterministic capture always drives window.renderFrame(t, config) explicitly.
+  function boot(cfg) {
+    try {
+      var imgs = (cfg.scenes || []).filter(function (s) { return s.asset; }).map(function (s) {
+        var im = new Image();
+        im.src = s.asset;
+        return im;
+      });
+      void imgs;
+    } catch (e) { /* preload is best-effort */ }
+    if (typeof window.renderFrame === 'function') window.renderFrame(0, cfg);
+  }
+  fetch('promo.config.json')
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(boot)
+    .catch(function (err) {
+      // file:// preview without config (or fetch blocked): show a visible
+      // fallback instead of swallowing the error. Capture path is unaffected
+      // (it injects config via evaluate).
+      var headline = document.getElementById('headline');
+      var stage = document.getElementById('stage');
+      if (stage) stage.setAttribute('data-scene', 'config-error');
+      if (headline) {
+        headline.hidden = false;
+        headline.style.opacity = '1';
+        headline.style.transform = 'none';
+        headline.textContent = 'Не удалось загрузить promo.config.json' +
+          (err && err.message ? ': ' + err.message : '') +
+          '. Откройте через локальный сервер или используйте capture.mjs.';
+      }
+    });
+})();
+</script>
+</body>
+</html>

@@ -10,6 +10,8 @@ public sealed record QualityRatingResult(
 
 public static class QualityRating
 {
+    // decision-teacher-gaps §1 (каталог v7): дефолт doubles-adjacency = 10
+    // (порядок heavy-edge 20 / subject-maxperday 15) — из RuleCatalog.
     public static QualityRatingResult FromBreakdown(PenaltyBreakdown breakdown)
     {
         var units = new List<(string Code, long Units, long Value)>();
@@ -22,6 +24,8 @@ public static class QualityRating
                 "student-late-start" => RuleCatalog.StudentLateStart,
                 "teacher-gap" => RuleCatalog.TeacherGap,
                 "teacher-cross-shift-gap" => RuleCatalog.TeacherCrossShiftGap,
+                "teacher-active-day" => RuleCatalog.TeacherActiveDay, // 0 = units как есть (дни)
+                "doubles-adjacency" => RuleCatalog.DoublesAdjacency,
                 "subject-maxperday" => RuleCatalog.SubjectMaxPerDay,
                 "room-preference" => RuleCatalog.RoomPreference,
                 "room-crowding" => RuleCatalog.RoomCrowding,

@@ -1,0 +1,13 @@
+{
+  "name": "amsur-promo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/*.test.mjs\"",
+    "capture": "node capture.mjs",
+    "render": "powershell -NoProfile -ExecutionPolicy Bypass -File render.ps1"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

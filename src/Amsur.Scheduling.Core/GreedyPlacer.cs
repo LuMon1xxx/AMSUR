@@ -15,6 +15,16 @@ public static class GreedyPlacer
     /// учителя (день первым + слоты вплотную к его занятиям). null = как раньше.</summary>
     public sealed record CompactHint(Guid Teacher, int Day);
 
+    /// <summary>Фаза 1 (DayClose): подсказка переиспользования дней — сначала
+    /// ОТКРЫТЫЕ дни учителя (где teacherDay &gt; 0), потом остальные; внутри дня
+    /// обычный порядок. Opt-in: null = бит-в-бит старое поведение.</summary>
+    public sealed record DayReuseHint(Guid Teacher);
+
+    /// <summary>Фаза E (CrossShift): держать учителя в одной смене — слоты
+    /// мажоритарной смены дня первыми; ничья — пропуск цели (естественный порядок).
+    /// Opt-in: null = бит-в-бит старое поведение.</summary>
+    public sealed record ShiftCohesionHint();
+
     // LNS-пересев (D-28d): досеять заданные юниты поверх ЗАМОРОЖЕННОГО состояния
     // (занятость от kept-размещений). Детерминирован сидом. Частичен честно.
     internal static GreedyPlacement Replant(
@@ -22,7 +32,10 @@ public static class GreedyPlacer
         IReadOnlyDictionary<Guid, (int Day, int Slot, Guid? RoomId)> frozen,
         List<List<Guid>> units,
         int seed,
-        CompactHint? hint = null)
+        CompactHint? hint = null,
+        DayReuseHint? reuse = null,
+        bool anchorSlots = false,
+        ShiftCohesionHint? shift = null)
     {
         var occById = problem.Occurrences.ToDictionary(o => o.Id);
         var placed = new Dictionary<Guid, (int Day, int Slot, Guid? RoomId)>(frozen);
@@ -65,7 +78,8 @@ public static class GreedyPlacer
         foreach (var ids in ordered)
         {
             if (!TryPlaceUnit(problem, occById, ids, placed,
-                    teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, teacherDay, classDay, OccKey, hint))
+                    teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, teacherDay, classDay, OccKey, hint,
+                    reuse: reuse, anchorSlots: anchorSlots, shift: shift))
                 unplaced.AddRange(ids);
         }
         return new GreedyPlacement(placed, unplaced);
@@ -77,7 +91,9 @@ public static class GreedyPlacer
     /// <summary>D-50 шаг ③: compact=true — слоты вплотную к занятиям того же
     /// учителя в тот же день (плотный старт для teacher-LNS). default false =
     /// бит-в-бит старое поведение (D-28c: покрытие — главный приоритет).</summary>
-    public static GreedyPlacement Place(SchedulingProblem problem, int seed, bool compact)
+    /// <summary>Фаза 3 (bin-pack): dayReuse=true — day-ordering как в DayReuseHint
+    /// для ВСЕХ учителей с первого размещения. default false = старое поведение.</summary>
+    public static GreedyPlacement Place(SchedulingProblem problem, int seed, bool compact, bool dayReuse = false)
     {
         var occById = problem.Occurrences.ToDictionary(o => o.Id);
         var placed = new Dictionary<Guid, (int Day, int Slot, Guid? RoomId)>();
@@ -118,7 +134,8 @@ public static class GreedyPlacer
         foreach (var ids in ordered)
         {
             if (!TryPlaceUnit(problem, occById, ids, placed,
-                    teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, teacherDay, classDay, OccKey, null, compact))
+                    teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, teacherDay, classDay, OccKey, null, compact,
+                    dayReuse: dayReuse))
                 unplaced.AddRange(ids);
         }
         return new GreedyPlacement(placed, unplaced);
@@ -155,7 +172,11 @@ public static class GreedyPlacer
         Dictionary<(Guid, int), HashSet<int>> classDay,
         Func<LessonOccurrence, Guid> occKey,
         CompactHint? hint = null,
-        bool compact = false)
+        bool compact = false,
+        DayReuseHint? reuse = null,
+        bool anchorSlots = false,
+        ShiftCohesionHint? shift = null,
+        bool dayReuse = false)
     {
         var first = occById[ids[0]];
         var days = problem.AllowedDays.GetValueOrDefault(first.Id, []);
@@ -171,7 +192,24 @@ public static class GreedyPlacer
         // D-50 шаг ③: compact-режим — слоты вплотную к своим же занятиям дня
         // для ЛЮБОГО учителя (плотный старт); day-порядок при этом обычный.
         bool adj = pack || compact;
-        IEnumerable<int> orderedDays = pack
+        // Фаза 1/2 (DayClose/Sync-joint): reuse покрывает юнит, если reuse-учитель
+        // среди участников (для одиночки — равенство; для sync — любой участник).
+        // Фаза 3: dayReuse — тот же day-ordering для всех учителей с первого размещения.
+        var unitTeachers = ids.Select(id => occById[id].TeacherId).ToHashSet();
+        bool reuseApplies = reuse is not null && unitTeachers.Contains(reuse.Teacher);
+        HashSet<Guid>? openTeachers = (reuseApplies || dayReuse) ? unitTeachers : null;
+        IEnumerable<int> orderedDays;
+        if (openTeachers is not null)
+        {
+            // Открытые дни (где ВСЕ участники уже заняты) первыми, затем
+            // класс-заполнение как было, затем день. Sync-joint: дни, где все
+            // участники открыты.
+            orderedDays = days
+                .OrderBy(d => openTeachers.All(t => teacherDay.GetValueOrDefault((t, d)) > 0) ? 0 : 1)
+                .ThenBy(d => classDay.GetValueOrDefault((first.ClassId, d))?.Count ?? 0)
+                .ThenBy(d => d);
+        }
+        else orderedDays = pack
             ? days.OrderBy(d => d == hint!.Day ? 0 : 1)
                 .ThenBy(d => classDay.GetValueOrDefault((first.ClassId, d))?.Count ?? 0)
                 .ThenBy(d => d)
@@ -179,16 +217,64 @@ public static class GreedyPlacer
                 .ThenBy(d => d);
         foreach (int day in orderedDays)
         {
-            IEnumerable<int> orderedSlots;
-            if (adj)
+            // Якорные учителя для слот-близости: anchorSlots+reuse — занятия
+            // reuse-учителя (вплотную к ним); reuse/sync-joint — все участники
+            // (слот смежный со всеми — якорь, не hard); pack/compact — свой учитель.
+            List<Guid> anchorTeachers;
+            if (anchorSlots && reuse is not null)
+                anchorTeachers = [reuse.Teacher];
+            else if (reuseApplies)
+                anchorTeachers = unitTeachers.OrderBy(t => t).ToList();
+            else if (adj)
+                anchorTeachers = [first.TeacherId];
+            else
+                anchorTeachers = [];
+            var busyByTeacher = anchorTeachers.ToDictionary(
+                t => t,
+                t => teacherBusy.Where(k => k.Item1 == t && k.Item2 == day)
+                    .Select(k => k.Item3).ToList());
+            bool hasAnchor = busyByTeacher.Values.Any(v => v.Count > 0);
+            // Фаза E: слоты мажоритарной смены дня первыми; ничья — пропуск цели.
+            int majorityBand = -1;
+            if (shift is not null && problem.ShiftBands is { Count: >= 2 })
             {
-                var mine = teacherBusy.Where(k => k.Item1 == first.TeacherId && k.Item2 == day)
-                    .Select(k => k.Item3).ToList();
-                orderedSlots = mine.Count == 0
-                    ? slots.OrderBy(x => x)
-                    : slots.OrderBy(x => mine.Min(t => Math.Abs(t - x))).ThenBy(x => x);
+                var bandCount = new Dictionary<int, int>();
+                foreach (var k in teacherBusy)
+                {
+                    if (k.Item2 != day) continue;
+                    int b = GapUtils.ShiftIndex(k.Item3, problem.ShiftBands);
+                    if (b < 0) continue;
+                    bandCount[b] = bandCount.GetValueOrDefault(b) + 1;
+                }
+                if (bandCount.Count > 0)
+                {
+                    int top = bandCount.Values.Max();
+                    var leaders = bandCount.Where(kv => kv.Value == top).Select(kv => kv.Key).ToList();
+                    if (leaders.Count == 1) majorityBand = leaders[0];
+                }
             }
-            else orderedSlots = slots.OrderBy(x => x);
+            int CohesionRank(int s) =>
+                majorityBand < 0 ? 0 :
+                GapUtils.ShiftIndex(s, problem.ShiftBands) == majorityBand ? 0 : 1;
+            int AdjScore(int s)
+            {
+                if (!hasAnchor) return 0;
+                // Близость ко ВСЕМ якорным (худшая дистанция первой):
+                // одиночка сводится к старой формуле min-дистанции.
+                int worst = 0;
+                foreach (var t in anchorTeachers)
+                {
+                    var mine = busyByTeacher[t];
+                    if (mine.Count == 0) continue;
+                    int d = mine.Min(tt => Math.Abs(tt - s));
+                    if (d > worst) worst = d;
+                }
+                return worst;
+            }
+            IEnumerable<int> orderedSlots = slots
+                .OrderBy(CohesionRank)
+                .ThenBy(AdjScore)
+                .ThenBy(x => x);
             foreach (int slot in orderedSlots)
             {
                 if (!UnitFits(problem, occById, ids, day, slot,

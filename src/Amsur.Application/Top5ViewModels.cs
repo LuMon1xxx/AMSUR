@@ -41,10 +41,16 @@ public sealed class Top5PanelModel
 
     // E5: problem даёт имена (классы/учителя) для QualityLines; без него —
     // совместимость E4 (строки качества пустые, итог — Soft total).
+    // Критерий Top-5 — min-gaps (decision-teacher-gaps §3, вместо min-soft):
+    // ученические окна — hard (в архиве всегда 0), упорядочиваем по учительским
+    // (teacher-gap + teacher-cross-shift-gap); Best-of-3 даёт −10..−20 бесплатно.
+    // Архив одного запуска — один профиль весов, поэтому взвешенная сумма
+    // упорядочивает так же, как юниты; тай-брейк — SoftTotal.
     public static Top5PanelModel FromArchive(
         ScheduleCandidateArchive archive, SchedulingProblem? problem = null)
     {
-        var members = archive.Members; // уже отсортированы по SoftTotal
+        var members = archive.Members
+            .OrderBy(GapKey).ThenBy(m => m.SoftTotal).ToList();
         var cards = new List<CandidateCardModel>();
         var best = members.Count == 0 ? null : members[0];
         int occCount = best?.Placements.Count ?? 0;
@@ -71,6 +77,12 @@ public sealed class Top5PanelModel
         }
         return new Top5PanelModel { Cards = cards, TotalFound = members.Count };
     }
+
+    /// <summary>Ключ min-gaps: учительские окна кандидата (ordinary + cross-shift).</summary>
+    internal static long GapKey(ScheduleCandidate m) =>
+        m.Breakdown.Components
+            .Where(c => c.Code is "teacher-gap" or "teacher-cross-shift-gap")
+            .Sum(c => c.Value);
 }
 
 // E4 §10 — компактная diagnostics-панель (по умолчанию свернута).

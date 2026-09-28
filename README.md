@@ -28,11 +28,14 @@ dotnet test src/Amsur.Tests   # ~3 мин
 
 ## Документы
 
-- `PROJECT_STATUS.md` — статус, тесты, настройка (единый файл состояния).
-- `MASTER_PLAN.md`, `DECISIONS.md`, `BENCHMARKS.md` — план, журнал решений, замеры.
-- `SANPIN_RB.md`, `SUBJECTS_RB.md` — нормы и предметы РБ (рабочие выборки, NEEDS-CHECK).
-- `WORK_LOG.md` — журнал работ. `Docs_Contest/` — материалы к конкурсам.
-- `КАК_ЗАПУСТИТЬ_НА_ЧУЖОМ_ПК.md` — запуск вне dev-машины.
+Вся документация — в [`docs/`](docs/) ([карта](docs/README.md)):
+
+- `docs/PROJECT_STATUS.md` — статус, тесты, настройка (единый файл состояния).
+- `docs/MASTER_PLAN.md`, `docs/DECISIONS.md`, `docs/BENCHMARKS.md` — план, журнал решений, замеры.
+- `docs/SANPIN_RB.md`, `docs/SUBJECTS_RB.md` — нормы и предметы РБ (рабочие выборки, NEEDS-CHECK).
+- `docs/WORK_LOG.md` — журнал работ. `Docs_Contest/` — материалы к конкурсам.
+- `docs/КАК_ЗАПУСТИТЬ_НА_ЧУЖОМ_ПК.md` — запуск вне dev-машины.
+- `docs/ПРОСТАЯ_ИНСТРУКЦИЯ_ЗАВУЧУ.md` — 1 страница для завуча.
 
 ## Лицензия
 

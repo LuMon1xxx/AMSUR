@@ -242,7 +242,7 @@ public partial class DashboardView : UserControl
         {
             _next = NextAction.Generate;
             NextStepTitle.Text = "Всё готово — создавайте расписание";
-            NextStepText.Text = "Проверьте режим справа и нажмите кнопку. Гуфо всё посчитает сам.";
+            NextStepText.Text = "Проверьте режим справа и нажмите кнопку. Расчёт выполнится автоматически.";
             NextStepBtn.Content = "Сгенерировать";
         }
         else if (!hasQuality)

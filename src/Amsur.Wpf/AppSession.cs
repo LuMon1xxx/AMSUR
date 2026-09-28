@@ -255,15 +255,17 @@ public sealed class AppSession
         await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
             Data.DaysCount, Data.SlotsPerDay, DataSource, ct);
     }
+    // Ручной carry-over (S10): Pair/Shift переживают персист и ручные правки
+    // (ручной ввод пар — backlog: диалог пару не задаёт, но и не теряет).
     private static IReadOnlyList<StoredLoadRow> ToStored(IReadOnlyList<LoadRow> rows) =>
         rows.Select(r => new StoredLoadRow(r.ClassName, r.SubjectName, r.HoursPerWeek,
             r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName,
-            r.UnavailDays, r.UnavailSlots)).ToList();
+            r.UnavailDays, r.UnavailSlots, r.PairName, r.Shift)).ToList();
 
     private static IReadOnlyList<LoadRow> FromStored(IReadOnlyList<StoredLoadRow> rows) =>
         rows.Select(r => new LoadRow(r.ClassName, r.SubjectName, r.HoursPerWeek,
             r.TeacherName, r.SplitSubgroups, r.SplitTeacherBName, r.RoomName,
-            r.UnavailDays, r.UnavailSlots)).ToList();
+            r.UnavailDays, r.UnavailSlots, r.PairName, r.Shift)).ToList();
 
     private void AcceptRows(IReadOnlyList<LoadRow> rows, int days, int slots, string source) =>
         AcceptRows(rows, days, slots, source, null);

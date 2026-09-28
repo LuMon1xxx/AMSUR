@@ -108,6 +108,19 @@ public static class ProblemBuilder
         string Key(Guid classId, Guid subjectId, Guid teacherId, Guid? groupId, int hour) =>
             $"{clsById[classId].Name}|{subjById[subjectId].Name}|{teacherById[teacherId].Name}|" +
             $"{(groupId.HasValue && groupNames.TryGetValue(groupId.Value, out var gn) ? gn : "Whole")}#{hour}";
+        // Pairs-v1: один предмет может идти несколькими строками-item'ами
+        // (10А «Биология (проф)» — в П3, П6 и plain): счётчик часов — сквозной
+        // на (класс,предмет,учитель,группа), иначе StableKey дублируются
+        // (per-item h перезапускается с 0). Для старых входов (один item на поток)
+        // нумерация та же 0..n-1 — поведения не меняет.
+        var hourSeq = new Dictionary<string, int>();
+        int NextHour(Guid classId, Guid subjectId, Guid teacherId, Guid? groupId)
+        {
+            string k = $"{classId:N}|{subjectId:N}|{teacherId:N}|{groupId?.ToString("N") ?? "-"}";
+            int h = hourSeq.GetValueOrDefault(k);
+            hourSeq[k] = h + 1;
+            return h;
+        }
 
         foreach (var item in input.Curriculum)
         {
@@ -128,18 +141,21 @@ public static class ProblemBuilder
                 if (item.SyncGroupId.HasValue && !itemGroup.HasValue)
                 { errors.Add($"CurriculumItem {item.Id}: sync needs a subgroup (GroupId)."); continue; }
                 for (int h = 0; h < item.HoursPerWeek; h++)
+                {
+                    int seq = NextHour(item.ClassId, item.SubjectId, item.TeacherId, itemGroup);
                     occurrences.Add(new LessonOccurrence
                     {
                         // E11: Id детерминирован из StableKey (пересборки одного входа
                         // дают те же Id → персист/правка переживают перезапуск).
-                        Id = StableId(Key(item.ClassId, item.SubjectId, item.TeacherId, itemGroup, h)),
+                        Id = StableId(Key(item.ClassId, item.SubjectId, item.TeacherId, itemGroup, seq)),
                         CurriculumItemId = item.Id, ClassId = item.ClassId,
                         SubjectId = item.SubjectId, TeacherId = item.TeacherId,
                         GroupId = itemGroup,
                         SyncGroupId = item.SyncGroupId.HasValue
                             ? StableId($"{item.SyncGroupId.Value:N}|h{h}") : null,
-                        StableKey = Key(item.ClassId, item.SubjectId, item.TeacherId, itemGroup, h),
+                        StableKey = Key(item.ClassId, item.SubjectId, item.TeacherId, itemGroup, seq),
                     });
+                }
             }
             else
             {
@@ -159,21 +175,23 @@ public static class ProblemBuilder
                 for (int h = 0; h < item.HoursPerWeek; h++)
                 {
                     var sync = Guid.NewGuid(); // per hour-instance (INV-03)
+                    int seqA = NextHour(item.ClassId, item.SubjectId, pair.TeacherA, groups[0].Id);
+                    int seqB = NextHour(item.ClassId, item.SubjectId, pair.TeacherB, groups[1].Id);
                     occurrences.Add(new LessonOccurrence
                     {
-                        Id = StableId(Key(item.ClassId, item.SubjectId, pair.TeacherA, groups[0].Id, h)),
+                        Id = StableId(Key(item.ClassId, item.SubjectId, pair.TeacherA, groups[0].Id, seqA)),
                         CurriculumItemId = item.Id, ClassId = item.ClassId,
                         SubjectId = item.SubjectId, TeacherId = pair.TeacherA,
                         GroupId = groups[0].Id, SyncGroupId = sync,
-                        StableKey = Key(item.ClassId, item.SubjectId, pair.TeacherA, groups[0].Id, h),
+                        StableKey = Key(item.ClassId, item.SubjectId, pair.TeacherA, groups[0].Id, seqA),
                     });
                     occurrences.Add(new LessonOccurrence
                     {
-                        Id = StableId(Key(item.ClassId, item.SubjectId, pair.TeacherB, groups[1].Id, h)),
+                        Id = StableId(Key(item.ClassId, item.SubjectId, pair.TeacherB, groups[1].Id, seqB)),
                         CurriculumItemId = item.Id, ClassId = item.ClassId,
                         SubjectId = item.SubjectId, TeacherId = pair.TeacherB,
                         GroupId = groups[1].Id, SyncGroupId = sync,
-                        StableKey = Key(item.ClassId, item.SubjectId, pair.TeacherB, groups[1].Id, h),
+                        StableKey = Key(item.ClassId, item.SubjectId, pair.TeacherB, groups[1].Id, seqB),
                     });
                 }
             }

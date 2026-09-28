@@ -26,3 +26,13 @@ TestResults/
 
 # Публикация single-exe
 *.publish.xml
+
+# Регенерируемый мусор (не коммитить)
+node_modules/
+promo/out/
+__pycache__/
+*.pyc
+.ruff_cache/
+*_out.txt
+*.bak
+*.bak.py

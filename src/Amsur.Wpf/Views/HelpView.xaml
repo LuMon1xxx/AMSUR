@@ -6,12 +6,7 @@
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" MaxWidth="860" TextElement.Foreground="{DynamicResource BText}">
       <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-        <Border Width="40" Height="40" CornerRadius="20" Background="{StaticResource BAccent}"
-                VerticalAlignment="Center" ToolTip="Гуфо — помощник АМСУР">
-          <TextBlock Text="Г" FontSize="18" FontWeight="Bold" Foreground="White"
-                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        </Border>
-        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+        <StackPanel VerticalAlignment="Center">
           <TextBlock Style="{StaticResource TH1}" FontSize="20" Text="Справочный центр"/>
           <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
                      Text="Путь работы: Данные → Профиль → Генерация → Проверка → Печать."/>
@@ -69,6 +64,14 @@
                      Text="Ошибки загрузки показывают список «что исправить»?"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
                      Text="Да — прямо на главном экране и в окне «Школа и данные», до 8 первых замечаний."/>
+          <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                     Text="Как задать профильные пары (10А/11А — два предмета одновременно)?"/>
+          <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                     Text="Только через Excel: колонка Pair — одинаковое значение в двух строках одного класса (например, П1). Часы равные, учителя разные, сплиты в парах не участвуют. Ошибка в паре — громкое сообщение, что исправить."/>
+          <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                     Text="Как указать вторую смену (6–7-е классы)?"/>
+          <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                     Text="Колонка Shift в Excel: 2 — вторая смена (уроки №6–12), пусто — первая (№1–8). У класса смена одна на все строки. Двухсменка требует сетку 12 уроков в день."/>
         </StackPanel>
       </Border>
 

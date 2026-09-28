@@ -15,8 +15,12 @@ public partial class LoadRowWindow : Window
         IReadOnlyList<string>? knownClasses = null,
         IReadOnlyList<string>? knownSubjects = null,
         IReadOnlyList<string>? knownTeachers = null,
-        IReadOnlyList<string>? knownRooms = null)
+        IReadOnlyList<string>? knownRooms = null,
+        // S10 (наследование смены): для новой строки класса со сменой — её смена.
+        Func<string, int?>? inheritShift = null)
     {
+        _inheritShift = inheritShift;
+        _existing = existing;
         InitializeComponent();
         if (knownClasses is { Count: > 0 })
             ClassKnown.Text = "Уже есть: " + string.Join(", ", knownClasses.Take(12));
@@ -36,8 +40,14 @@ public partial class LoadRowWindow : Window
             SplitBox.IsChecked = existing.SplitSubgroups;
             TeacherBBox.Text = existing.SplitTeacherBName ?? "";
             TeacherBBox.IsEnabled = existing.SplitSubgroups;
+            // Ручной carry-over: пара не редактируется (backlog, Excel-first),
+            // но сохраняется в Result без изменений.
+            ShiftBox.Text = existing.Shift?.ToString() ?? "";
         }
     }
+
+    private readonly Func<string, int?>? _inheritShift;
+    private readonly LoadRow? _existing;
 
     private void OnSplitToggled(object sender, RoutedEventArgs e) =>
         TeacherBBox.IsEnabled = SplitBox.IsChecked == true;
@@ -56,8 +66,10 @@ public partial class LoadRowWindow : Window
         string room = (RoomBox.Text ?? "").Trim();
         string teacherB = (TeacherBBox.Text ?? "").Trim();
         bool split = SplitBox.IsChecked == true;
+        string shiftRaw = (ShiftBox.Text ?? "").Trim();
 
         string? err = null;
+        int? shift = null;
         if (cls.Length == 0) err = "Укажите класс.";
         else if (subj.Length == 0) err = "Укажите предмет.";
         else if (teacher.Length == 0) err = "Укажите учителя.";
@@ -66,14 +78,19 @@ public partial class LoadRowWindow : Window
         else if (split && teacherB.Length == 0) err = "Для деления нужен второй учитель (подгруппа B).";
         else if (split && string.Equals(teacherB, teacher, StringComparison.OrdinalIgnoreCase))
             err = "Учителя A и B должны различаться.";
+        else if (shiftRaw.Length > 0 && shiftRaw is not ("1" or "2"))
+            err = "Смена — пусто (= 1-я) или 2 (вторая, уроки №6–12).";
         if (err is not null)
         {
             ErrorText.Text = err;
             return;
         }
+        // Наследование смены: пустое поле + известный класс со сменой → смена класса.
+        shift = shiftRaw switch { "1" => 1, "2" => 2, _ => _inheritShift?.Invoke(cls) };
 
         Result = new LoadRow(cls, subj, int.Parse(HoursBox.Text.Trim()), teacher, split,
-            split ? teacherB : null, room.Length == 0 ? null : room);
+            split ? teacherB : null, room.Length == 0 ? null : room,
+            _existing?.UnavailDays, _existing?.UnavailSlots, _existing?.PairName, shift);
         DialogResult = true;
         Close();
     }

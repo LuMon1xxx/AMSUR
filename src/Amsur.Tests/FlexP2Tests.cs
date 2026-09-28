@@ -651,25 +651,35 @@ public sealed class FlexP2Tests
         }
     }
 
-    // Каталог v6 (D-50, осознанно): v5-коды + teacher-active-day (цена занятого
-    // учителе-дня, дефолт 0 = поведение не меняется). Дефолты v5 НЕ меняются;
-    // новое — только код + WeightRange 0..100 (настройка через CUSTOM/expert).
+    // Каталог v7 (D-51 / decision-teacher-gaps §1, осознанно): v6-коды +
+    // doubles-adjacency (разбросанный дубль дня, дефолт 10 — порядок heavy-edge 20 /
+    // subject-maxperday 15, слабее student-gap 100; профили одинаково).
+    // Дефолты v6 НЕ меняются; новое — только код + WeightRange 0..100
+    // (настройка через CUSTOM/expert). Сохранённые CUSTOM старых версий
+    // откатываются на STANDARD штатным механизмом проверки версии (как D-50).
     [Fact]
     public void CatalogV4_Codes()
     {
-        Assert.Equal(6, RuleCatalog.Version);
+        Assert.Equal(7, RuleCatalog.Version);
         Assert.Contains("room-crowding", RuleCatalog.AllCodes);
         Assert.Contains("teacher-split", RuleCatalog.AllCodes);
         Assert.Contains("teacher-active-day", RuleCatalog.AllCodes);
+        Assert.Contains("doubles-adjacency", RuleCatalog.AllCodes);
         Assert.Equal(0, RuleCatalog.DefaultWeight("teacher-active-day"));
         Assert.Equal((0, 100), RuleCatalog.WeightRange("teacher-active-day"));
+        Assert.Equal(10, RuleCatalog.DefaultWeight("doubles-adjacency"));
+        Assert.Equal((0, 100), RuleCatalog.WeightRange("doubles-adjacency"));
         Assert.Equal(8, RuleCatalog.DefaultWeight("room-crowding"));
         Assert.Equal(25, RuleCatalog.DefaultWeight("teacher-split"));
         Assert.Equal((0, 50), RuleCatalog.WeightRange("room-crowding"));
         Assert.Equal((0, 100), RuleCatalog.WeightRange("teacher-split"));
         var rs = RuleResolver.Resolve("STANDARD");
-        Assert.Equal(6, rs.CatalogVersion);
+        Assert.Equal(7, rs.CatalogVersion);
         Assert.Equal(8, rs.Weight("room-crowding"));
+        // D-51: профили одинаково (терм ученический) — дефолт 10 везде.
+        Assert.Equal(10, RuleResolver.Resolve("STUDENT_FRIENDLY").Weight("doubles-adjacency"));
+        Assert.Equal(10, RuleResolver.Resolve("TEACHER_FRIENDLY").Weight("doubles-adjacency"));
+        Assert.Equal(10, rs.Weight("doubles-adjacency"));
         // B2: дефолтные цифры строгого те же (student 100/100), новое — механизм override.
         Assert.Equal(100, RuleCatalog.DefaultWeight("student-gap"));
         Assert.Equal(100, RuleCatalog.DefaultWeight("student-late-start"));

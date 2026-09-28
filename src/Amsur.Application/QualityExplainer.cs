@@ -7,7 +7,8 @@ namespace Amsur.Application;
 // Источник истины: PenaltyBreakdown кандидата (SoftEvaluator) + имена из SchedulingProblem.
 // Честность:
 // - объясняет ТОЛЬКО то, что движок реально считает ( student-gap / teacher-gap /
-//   subject-maxperday ); коды без продьюсера — общей строкой без выдуманных причин;
+//   subject-maxperday / heavy-edge / doubles-adjacency и др. с продьюсером );
+//   коды без продьюсера — общей строкой без выдуманных причин;
 // - sanpin-* при value>0 — только с пометкой «требует сверки с нормами» (D-11);
 // - никогда не пишет «оптимально/идеально/невозможно/нормативно» (проверено тестами);
 // - жёсткие нарушения здесь НЕ объясняются (разделение hard/soft: hard — валидатор,
@@ -23,6 +24,7 @@ public static class QualityExplainer
         "teacher-gap" => "Окна у учителей",
         "teacher-cross-shift-gap" => "Перерывы между сменами у учителей",
         "teacher-active-day" => "Занятые дни учителей",
+        "doubles-adjacency" => "Разбросанные сдвоенные уроки",
         "primary-early-start" => "Раннее начало у начальной школы",
         "heavy-edge" => "Тяжёлые уроки на краю дня",
         "room-preference" => "Неподходящие кабинеты",
@@ -118,6 +120,10 @@ public static class QualityExplainer
                 units["teacher-split"] += SoftUnits.Split(
                     g.Select(p => p.Occ.TeacherId).Distinct().Count());
 
+        // D-51: разбросанные дубли — через SoftUnits (единый источник с SoftEvaluator).
+        units["doubles-adjacency"] = SoftUnits.DoublesScattered(
+            placements.Select(p => (p.Occ, p.Placed.DayIndex, p.Placed.SlotIndex)));
+
         return units;
     }
 
@@ -178,6 +184,9 @@ public static class QualityExplainer
                 case "heavy-edge":
                     lines.AddRange(HeavyLines(reference, candidate));
                     break;
+                case "doubles-adjacency":
+                    lines.AddRange(DoublesLines(reference, candidate));
+                    break;
                 default:
                     lines.Add(OtherCodeLine(comp.Code, comp.Value));
                     break;
@@ -216,6 +225,7 @@ public static class QualityExplainer
                 ("room-crowding", _) when du != 0 => $"тесноты в кабинетах {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 ("teacher-split", _) when du != 0 => $"разрывов закрепления {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 ("heavy-edge", _) when du != 0 => $"тяжёлых на краю дня {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
+                ("doubles-adjacency", _) when du != 0 => $"разбросанных сдвоенных {(du > 0 ? "больше" : "меньше")} на {Math.Abs(du)}",
                 _ => HumanName(code).ToLowerInvariant(),
             };
             lines.Add($"Здесь {dir}: {detail} ({(db > 0 ? "+" : "")}{db} к оценке)");
@@ -387,6 +397,26 @@ public static class QualityExplainer
             if (edges.Count > 0)
                 yield return $"Класс {ClassName(reference, g.Key.ClassId)}, день {g.Key.DayIndex + 1}: " +
                     $"тяжёлый урок на краю дня (урок {string.Join(" и ", edges)})";
+        }
+    }
+
+    // D-51: разбросанные дубли с привязкой к классу, предмету и дню
+    // (строки только по разбросанным: день+1, слоты a/b).
+    private static IEnumerable<string> DoublesLines(
+        SchedulingProblem reference, ScheduleCandidate candidate)
+    {
+        var placements = Resolve(reference, candidate);
+        foreach (var g in placements
+                     .GroupBy(p => (p.Occ.ClassId, p.Occ.SubjectId, p.Placed.DayIndex))
+                     .OrderBy(g => ClassName(reference, g.Key.ClassId)))
+        {
+            var (classId, subjectId, day) = g.Key;
+            var slots = g.Where(p => SoftUnits.IsDoubleEligible(p.Occ))
+                .Select(p => p.Placed.SlotIndex).OrderBy(s => s).ToList();
+            if (SoftUnits.DoublesUnits(slots) == 0) continue;
+            reference.Subjects.TryGetValue(subjectId, out var subj);
+            yield return $"Класс {ClassName(reference, classId)}, {subj?.Name ?? "предмет"}: " +
+                $"сдвоенный урок разбросан в день {day + 1} (уроки {slots[0]} и {slots[1]})";
         }
     }
 

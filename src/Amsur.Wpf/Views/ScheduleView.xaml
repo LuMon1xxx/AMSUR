@@ -47,10 +47,10 @@
                        Text="Выберите урок в сетке или таблице" TextWrapping="Wrap"/>
           </StackPanel>
           <TextBlock Text="День:" VerticalAlignment="Center" Margin="16,0,0,0" FontSize="13"/>
-          <TextBox x:Name="DayBox" Width="40" Margin="6,0,12,0" VerticalAlignment="Center"
+          <TextBox x:Name="DayBox" Width="48" Padding="6,4" Margin="6,0,12,0" VerticalAlignment="Center"
                    ToolTip="Номер дня 1..N (дни недели слева направо в сетке)"/>
           <TextBlock Text="Урок:" VerticalAlignment="Center" FontSize="13"/>
-          <TextBox x:Name="SlotBox" Width="40" Margin="6,0,12,0" VerticalAlignment="Center"
+          <TextBox x:Name="SlotBox" Width="48" Padding="6,4" Margin="6,0,12,0" VerticalAlignment="Center"
                    ToolTip="Номер урока в день (строки сетки сверху вниз)"/>
           <Button x:Name="PreviewBtn" Content="Проверить ход" Style="{DynamicResource BtnSecondary}" Click="OnPreviewClick"/>
           <Button x:Name="CommitBtn" Content="Сохранить ход" Style="{DynamicResource BtnPrimary}"

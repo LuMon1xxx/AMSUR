@@ -26,6 +26,13 @@ public sealed record SchoolData(
     /// <summary>P1: гибкие настройки R1–R9, применённые при импорте (дефолт — Empty).</summary>
     public FlexDataset Flex { get; init; } = FlexDataset.Empty;
 
+    /// <summary>
+    /// Pairs-v1 + G1-mini: посменные слоты (ClassId → номера уроков стены).
+    /// Пусто = односменка (все слоты, backward compatible).
+    /// </summary>
+    public IReadOnlyDictionary<Guid, IReadOnlyList<int>> ClassSlots { get; init; } =
+        new Dictionary<Guid, IReadOnlyList<int>>();
+
     /// <summary>P-DAYOFF: недоступность учителей (из колонок UnavailDays/UnavailSlots).</summary>
     public IReadOnlyList<TeacherDayOff> DaysOff { get; init; } = [];
 
@@ -66,6 +73,11 @@ public sealed record SchoolData(
             DaysCount: DaysCount, SlotsPerDay: SlotsPerDay,
             SplitTeachers: new Dictionary<Guid, (Guid, Guid)>(SplitTeachers),
             rooms: Rooms, // P0-8: кабинеты из импорта обязаны доходить до solver (было: дроп в []).
+            classSlots: new Dictionary<Guid, IReadOnlyList<int>>(ClassSlots),
+            // R-G1: ShiftBands перекрытия [(1,8),(6,12)] небезопасны для gap-split
+            // (слот стыка считается дважды, ordinary превышает total) — осознанно null:
+            // билдер ставит одну полосу [(1,SP)], cross-shift схлопнут в ordinary.
+            // Веса/капы/поиск не тронуты.
             commonLesson: common is null ? null : new CommonLesson
             {
                 Enabled = common.Enabled, DayIndex = common.DayIndex,
@@ -105,13 +117,19 @@ public static class SchoolDataImporter
         Guid academicYearId,
         IReadOnlyList<LoadRow> rows,
         int daysCount = 5,
-        int slotsPerDay = 7,
+        // D-pair-01: дефолт сетки 5×7 → 5×8 (надмножество: слоты 1–7 ⊆ 1–8,
+        // ранее возможные решения остаются возможны; капы дней не меняются).
+        // L8 drift-guard: дефолт 8 зафиксирован тестом DefaultGrid_Is5x8.
+        int slotsPerDay = 8,
         FlexDataset? flex = null)
     {
         if (rows.Count == 0)
             throw new InvalidOperationException("Файл не содержит строк нагрузки.");
         if (daysCount <= 0 || slotsPerDay <= 0)
             throw new InvalidOperationException("Дни и уроки в день должны быть положительными.");
+        // S10-уточнение (V1 baseline): стена №1–12 ограничивает только двухсменку
+        // (полосы [1..8]/[6..12] — номера стены). Односменка с абстрактной сеткой
+        // (D-28: 5×14, полосы задаёт код) работает как раньше — см. RealTeacherTests.
         flex ??= FlexDataset.Empty;
 
         var classes = new Dictionary<string, SchoolClass>(StringComparer.OrdinalIgnoreCase);
@@ -122,6 +140,9 @@ public static class SchoolDataImporter
         var curriculum = new List<CurriculumItem>();
         var splitTeachers = new Dictionary<Guid, (Guid, Guid)>();
         var notes = new List<string>();
+        // Pairs-v1/G1-mini: сырые данные строк для пост-валидации (после цикла).
+        var pairMembers = new List<(string ClsName, string Pair, CurriculumItem Item, LoadRow Row)>();
+        var shiftOfClassRow = new List<(string ClsName, int Shift)>();
 
         SchoolClass Cls(string name)
         {
@@ -179,7 +200,15 @@ public static class SchoolDataImporter
                 // запрещён только для произвольных строк; официальное имя — факт.
                 if (string.Equals(key, "Физическая культура и здоровье",
                         StringComparison.OrdinalIgnoreCase))
+                {
                     s.IsPhysicalEducation = true;
+                    // D-52: у физры повтор за день — soft (subject-maxperday 15),
+                    // дефолт MaxPerDay=1 (меняется в Настройках → Предметы, D-34).
+                    s.MaxPerDay = 1;
+                }
+                // D-52: ин.яз идёт сразу после физры (тир — SubjectTiers).
+                if (SubjectTiers.IsForeignLanguageName(key))
+                    s.IsForeignLanguage = true;
                 // R6: явная сложность предмета (1..10) бьёт дефолт 5.
                 var diff = flex.SubjectDifficulty.FirstOrDefault(x =>
                     string.Equals(x.SubjectName, key, StringComparison.OrdinalIgnoreCase));
@@ -203,6 +232,13 @@ public static class SchoolDataImporter
             // R2: часы по приоритету Класс > Параллель > Предмет-дефолт > строка.
             int hours = HourResolution.ResolveHours(cls.Name, cls.Grade, subj.Name,
                 r.HoursPerWeek, flex.HourNorms, flex.HourOverrides);
+            // G1-mini: смена строки (null/пусто = 1-я); мусор — громко (и из Excel
+            // отбор уже строгий, и ручные строки проверяем здесь же).
+            int shift = r.Shift ?? 1;
+            if (shift is not (1 or 2))
+                throw new InvalidOperationException(
+                    $"Класс '{cls.Name}': смена — 1 (или пусто) или 2 (задано {r.Shift}).");
+            shiftOfClassRow.Add((cls.Name, shift));
             var item = new CurriculumItem
             {
                 ClassId = cls.Id, SubjectId = subj.Id, TeacherId = teacher.Id,
@@ -249,7 +285,94 @@ public static class SchoolDataImporter
                 splitTeachers[item.Id] = (teacher.Id, teacherB.Id);
             }
             curriculum.Add(item);
+            // Pairs-v1: кандидат в пару (валидация и проводка — после цикла,
+            // когда все классы/часы известны; fail-loud с русскими текстами).
+            string? pairName = string.IsNullOrWhiteSpace(r.PairName) ? null : r.PairName.Trim();
+            if (pairName is not null)
+                pairMembers.Add((cls.Name, pairName, item, r));
         }
+
+        // Pairs-v1: scope PairId — в пределах класса (одинаковое имя в разных
+        // классах = разные пары). Pair — OrdinalIgnoreCase (ключ строкой с компарером).
+        var pairGroups = new Dictionary<string, List<(CurriculumItem Item, LoadRow Row)>>(
+            StringComparer.OrdinalIgnoreCase);
+        foreach (var (clsName, pairName, item, row) in pairMembers)
+        {
+            string key = clsName.Trim() + "\0" + pairName;
+            if (!pairGroups.TryGetValue(key, out var list))
+                pairGroups[key] = list = [];
+            list.Add((item, row));
+        }
+        int pairCount = 0;
+        foreach (var (key, members) in pairGroups)
+        {
+            int sep = key.IndexOf('\0');
+            string clsName = key[..sep], pairName = key[(sep + 1)..];
+            if (members.Count != 2)
+                throw new InvalidOperationException(
+                    $"Пара '{pairName}' класса '{clsName}': строк {members.Count}, " +
+                    "нужно ровно 2 (две строки одного класса с равными часами).");
+            var (first, second) = (members[0], members[1]);
+            if (first.Row.SplitSubgroups || second.Row.SplitSubgroups)
+                throw new InvalidOperationException(
+                    $"Пара '{pairName}' класса '{clsName}': сплит-строка не может быть " +
+                    "парой — уберите Split или Pair.");
+            // Равные часы — на resolved-часах (нормы/переопределения уже применены).
+            var grade = classes[clsName].Grade;
+            int h1 = HourResolution.ResolveHours(clsName, grade, first.Row.SubjectName,
+                first.Row.HoursPerWeek, flex.HourNorms, flex.HourOverrides);
+            int h2 = HourResolution.ResolveHours(clsName, grade, second.Row.SubjectName,
+                second.Row.HoursPerWeek, flex.HourNorms, flex.HourOverrides);
+            if (h1 != h2)
+                throw new InvalidOperationException(
+                    $"Пара '{pairName}' класса '{clsName}': часы различаются " +
+                    $"({h1} vs {h2}) — укажите равные часы.");
+            if (string.Equals(first.Row.TeacherName.Trim(), second.Row.TeacherName.Trim(),
+                    StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException(
+                    $"Пара '{pairName}' класса '{clsName}': один учитель " +
+                    $"'{first.Row.TeacherName.Trim()}' — партнёры пары ведут разные учителя.");
+            // Проводка: группы A/B класса (создаём при отсутствии — те же, что у сплитов),
+            // member1 → A, member2 → B (порядок файла, детерминирован).
+            var clsId = classes[clsName].Id;
+            if (!groups.TryGetValue(clsId, out var ab))
+            {
+                ab = (new StudentGroup { ClassId = clsId, Name = "A" },
+                      new StudentGroup { ClassId = clsId, Name = "B" });
+                groups[clsId] = ab;
+            }
+            var sync = Guid.NewGuid();
+            first.Item.GroupId = ab.A.Id;
+            first.Item.SyncGroupId = sync;
+            second.Item.GroupId = ab.B.Id;
+            second.Item.SyncGroupId = sync;
+            pairCount++;
+        }
+
+        // G1-mini: смена класса — одна на все его строки (несогласие — fail-loud);
+        // twoShift ⟺ есть Shift==2. Полосы — нумерация стены: shift1=[1..8], shift2=[6..12].
+        var shiftOfClass = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (clsName, shift) in shiftOfClassRow)
+        {
+            if (shiftOfClass.TryGetValue(clsName, out int prev) && prev != shift)
+                throw new InvalidOperationException(
+                    $"Класс '{clsName}': смена указана по-разному ({prev} и {shift}) — " +
+                    "укажите одну смену для всех строк класса.");
+            shiftOfClass[clsName] = shift;
+        }
+        bool twoShift = shiftOfClass.Values.Any(s => s == 2);
+        if (twoShift && slotsPerDay > 12)
+            throw new InvalidOperationException(
+                $"Двухсменка: уроков в день — не больше 12 (нумерация стены №1–12; задано {slotsPerDay}).");
+        if (twoShift && slotsPerDay < 12)
+            throw new InvalidOperationException(
+                "Двухсменка: поставьте 12 уроков в день (нумерация стены №1–12).");
+        var classSlots = new Dictionary<Guid, IReadOnlyList<int>>();
+        if (twoShift)
+            foreach (var (clsName, shift) in shiftOfClass)
+                classSlots[classes[clsName].Id] = shift == 2
+                    ? Enumerable.Range(6, 7).ToList()   // №6–12
+                    : Enumerable.Range(1, 8).ToList();  // №1–8
 
         // P-DAYOFF: недоступность учителей (UnavailDays/UnavailSlots строк).
         // Дни — 1-based номера через запятую → DayIndex; слоты — как есть.
@@ -297,6 +420,9 @@ public static class SchoolDataImporter
 
         // R7: один учитель на (класс,предмет). Сплиты освобождены (A/B — штатно два учителя).
         // Режим из FlexSettings (дефолт HardClass, D-34); Soft/Off — только заметка.
+        // R7 строже (S10): пары — обычные не-сплит строки, исключений для них нет:
+        // легитимные пары (разные предметы) R7 не задевает, а пара из двух строк
+        // одного предмета с разными учителями громко отклоняется здесь.
         var mode = flex.Settings.AssignMode;
         if (mode is TeacherAssignMode.HardClass or TeacherAssignMode.HardParallel)
         {
@@ -330,12 +456,24 @@ public static class SchoolDataImporter
             $"сплитов: {splitTeachers.Count}, кабинетов: {rooms.Count}.");
         if (groups.Count > 0)
             notes.Add("Подгруппы A/B созданы по одной паре на класс (разные деления по предметам — позже).");
+        if (pairCount > 0)
+            notes.Add($"Профильные пары: {pairCount} (одновременные уроки подгрупп A/B).");
+        if (twoShift)
+        {
+            int second = shiftOfClass.Values.Count(s => s == 2);
+            notes.Add($"Двухсменка: классов во 2-й смене — {second} " +
+                "(полосы №1–8 / №6–12).");
+            // R-G1: cross-shift Soft схлопнут (ShiftBands=null, см. ToProblemInput) —
+            // веса/капы/поиск не тронуты; детали — decision-pairs.md.
+            notes.Add("R-G1: разрывы учителей между сменами считаются упрощённо " +
+                "(полосы пересекаются — отдельный учёт небезопасен).");
+        }
 
         return new SchoolData(academicYearId,
             classes.Values.ToList(), teachers.Values.ToList(), subjects.Values.ToList(),
             curriculum, groups.Values.SelectMany(g => new[] { g.A, g.B }).ToList(),
             rooms.Values.ToList(), splitTeachers, daysCount, slotsPerDay, notes)
-        { Flex = flex, DaysOff = daysOff, Unavailability = unavailability };
+        { Flex = flex, DaysOff = daysOff, Unavailability = unavailability, ClassSlots = classSlots };
     }
 
     private static IReadOnlyList<int> ParseDays(string raw, string teacher, int daysCount)

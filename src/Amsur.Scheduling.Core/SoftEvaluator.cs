@@ -24,6 +24,7 @@ public static class SoftEvaluator
         long wOrdinary = rules.Weight("teacher-gap");
         long wCross = rules.Weight("teacher-cross-shift-gap");
         long wActiveDay = rules.Weight("teacher-active-day");
+        long wDoubles = rules.Weight("doubles-adjacency");
         long wSubj = rules.Weight("subject-maxperday");
         long wCrowd = rules.Weight("room-crowding");
         long wSplit = rules.Weight("teacher-split");
@@ -93,6 +94,16 @@ public static class SoftEvaluator
                 && g.Count() > subj.MaxPerDay)
                 comps["subject-maxperday"] += (g.Count() - subj.MaxPerDay) * wSubj * GradeW(g.Key.ClassId);
         }
+
+        // D-51 doubles-adjacency: разбросанный дубль дня (× вес параллели, R8/INV-D8).
+        // INV-D4: аддитивен с subject-maxperday без guards — оба терма считают независимо.
+        if (wDoubles != 0)
+            foreach (var g in placements.GroupBy(p => (occById[p.OccurrenceId].ClassId, occById[p.OccurrenceId].SubjectId, p.DayIndex)))
+            {
+                int units = SoftUnits.DoublesScattered(g.Select(p => (occById[p.OccurrenceId], p.DayIndex, p.SlotIndex)));
+                if (units > 0)
+                    comps["doubles-adjacency"] += (long)units * wDoubles * GradeW(g.Key.ClassId);
+            }
 
         // R5 room-crowding: единицы сверх «желательно» (флаг-aware через RoomPolicy).
         // Невзвешенный: кабинет — общий ресурс (как окна учителей).
