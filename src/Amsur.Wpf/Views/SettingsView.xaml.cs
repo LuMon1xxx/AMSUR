@@ -728,16 +728,25 @@ public partial class SettingsView : UserControl
         return true;
     }
 
-    private bool ReadExpertBoxes()
+    private bool ReadExpertBoxes(out string? badTitle)
     {
         foreach (var (code, box) in _expertBoxes)
         {
-            if (!long.TryParse(box.Text, out long w)) return false;
             var o0 = _editor.Options.First(x => x.Code == code);
+            if (!long.TryParse(box.Text, out long w))
+            {
+                badTitle = $"{o0.Title} ({o0.Min}..{o0.Max})";
+                return false;
+            }
             bool confirmed = !o0.IsStrict || _confirmedDangerous.Contains(code);
             try { _editor.SetWeight(code, w, confirmed); }
-            catch { return false; }
+            catch
+            {
+                badTitle = $"{o0.Title} ({o0.Min}..{o0.Max})";
+                return false;
+            }
         }
+        badTitle = null;
         BuildQualityPanel();
         RefreshJsonPreview();
         return true;
@@ -787,9 +796,18 @@ public partial class SettingsView : UserControl
     private async void OnApplyClick(object sender, RoutedEventArgs e)
     {
         if (!ReadEntityBoxes(out string? err)) { Say(err!, true); return; }
-        if (!ReadExpertBoxes()) { Say("В экспертном режиме — только числа из указанных диапазонов.", true); return; }
+        // Лимиты классов/учителей применяются независимо от Эксперта:
+        // кривой вес больше не блокирует дневные нормы.
+        bool expertOk = ReadExpertBoxes(out string? expertBad);
         if (!await ConfirmCapRaisesAsync()) { Say("Отменено — лимиты не тронуты.", true); return; }
         ApplyEntities();
+        if (!expertOk)
+        {
+            MarkClean();
+            Say($"Лимиты применены — действуют на следующие генерации. " +
+                $"Эксперт НЕ применён — поле «{expertBad}»: только числа из указанного диапазона.", true);
+            return;
+        }
         // B2: опасные — только с подтверждённым набором (тумблеры выше).
         // D-51: каталог v7 знает doubles-adjacency — вес слайдера применяется движком.
         // Резолвер по-прежнему отклоняет громко (fail-loud, не молча), но теперь
@@ -809,7 +827,11 @@ public partial class SettingsView : UserControl
     private async void OnSaveCustomClick(object sender, RoutedEventArgs e)
     {
         if (!ReadEntityBoxes(out string? err)) { Say(err!, true); return; }
-        if (!ReadExpertBoxes()) { Say("В экспертном режиме — только числа из указанных диапазонов.", true); return; }
+        if (!ReadExpertBoxes(out string? expertBad))
+        {
+            Say($"Не сохранено — поле «{expertBad}»: только числа из указанного диапазона.", true);
+            return;
+        }
         string name = CustomNameBox.Text.Trim();
         if (name.Length == 0) { Say("Введите имя профиля.", true); return; }
         try
