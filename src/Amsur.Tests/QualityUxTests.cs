@@ -7,15 +7,18 @@ namespace Amsur.Tests;
 public sealed class QualityUxTests
 {
     [Fact]
-    public void Modes_Mapping()
+    public void Modes_HonestBudgets()
     {
-        Assert.Equal(4, GenerateModes.All.Count);
+        Assert.Equal(5, GenerateModes.All.Count);
         Assert.Equal(3, GenerateModes.ByCode("QUICK").BudgetSeconds);
         Assert.Single(GenerateModes.ByCode("QUICK").Seeds);
         Assert.Equal(12, GenerateModes.ByCode("STANDARD").BudgetSeconds);
         Assert.Equal(3, GenerateModes.ByCode("STANDARD").Seeds.Count);
         Assert.Equal(30, GenerateModes.ByCode("MAXIMUM").BudgetSeconds);
         Assert.True(GenerateModes.ByCode("MAXIMUM").Seeds.Count >= 5);
+        // ТОП (окт. 2026): 5 запусков по минуте + grind-lite — всего около 10 минут.
+        Assert.Equal(60, GenerateModes.ByCode("TOP").BudgetSeconds);
+        Assert.Equal(5, GenerateModes.ByCode("TOP").Seeds.Count);
         Assert.Equal("STANDARD", GenerateModes.ByCode("nope").Code); // дефолт
         Assert.DoesNotContain("seed", GenerateModes.ByCode("QUICK").Description,
             StringComparison.OrdinalIgnoreCase);
@@ -50,9 +53,10 @@ public sealed class QualityUxTests
     {
         var ed = QualitySettingsEditor.FromRules(EffectiveRuleSet.Default);
         // B2 (осознанно): строгие стали настраиваемыми через подтверждение —
-        // 9 опасных (student-gap/late-start, teacher/class-maxperday, 5×sanpin) + 8 пожеланий
-        // (S10: +doubles-adjacency слайдер 0..100, дефолт 10 — decision-teacher-gaps §1).
-        Assert.Equal(17, ed.Options.Count);
+        // 9 опасных (student-gap/late-start, teacher/class-maxperday, 5×sanpin) + 12 пожеланий
+        // (S10: +doubles-adjacency слайдер 0..100, дефолт 10 — decision-teacher-gaps §1;
+        // НДТП-7: +peak-days/edge-once/alternation; PE-видимость: +pe-consecutive).
+        Assert.Equal(21, ed.Options.Count);
         Assert.All(ed.Options.Where(o => o.IsStrict), o => Assert.True(o.Tunable));
         var tg = ed.Options.First(o => o.Code == "teacher-gap");
         Assert.Equal(2, tg.Level); // дефолт = Стандарт

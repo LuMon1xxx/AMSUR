@@ -330,10 +330,11 @@ public sealed class RealSchoolStressTests(Xunit.Abstractions.ITestOutputHelper o
 
     // EPIC-H H6/H10: Phase B пропускается на большой школе (порог 300 occ),
     // качество ведёт LS+VND; контракт (Feasible/Hard=0/Accept-gate) сохранён.
+    // НДТП-7 (v8): новым термам нужно больше времени на полировку — бюджет 30с.
     [Fact]
     public async Task PhaseBSkipped_OnRealSchool()
     {
-        var problem = BuildRealSchool(budget: 10);
+        var problem = BuildRealSchool(budget: 30);
         Assert.True(problem.Occurrences.Count >= OrToolsSolver.LargeSchoolPhaseBThreshold);
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var result = await new OrToolsSolver().SolveAsync(problem);

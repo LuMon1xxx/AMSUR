@@ -65,7 +65,8 @@ public sealed class ManualEditTests : IAsyncDisposable
         var preview = svc.Preview(p, Start(p),
             new CandidateMove(occ.Id, DayIndex: 1, SlotIndex: 1, RoomId: null));
         Assert.True(preview.CanCommit);
-        Assert.Equal(0, preview.SoftDelta);
+        // НДТП-7: ход чинит чередование дня (−5) — улучшение, тоже «Можно».
+        Assert.Equal(-5, preview.SoftDelta);
         Assert.Contains("Можно", preview.VerdictText);
     }
 

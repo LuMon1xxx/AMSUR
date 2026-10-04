@@ -58,4 +58,56 @@ public static class SoftUnits
                 .Select(x => x.Slot).ToList());
         return units;
     }
+
+    // НДТП-7 (02.10.2026): пиковые дни школы — Вт/Ср/Пт (0-based 1,2,4).
+    // Данные (школа меняет без кода через SchoolPeakDays); дефолт — ответ школы.
+    public static readonly IReadOnlySet<int> DefaultPeakDays = new HashSet<int> { 1, 2, 4 };
+
+    /// <summary>Тяжёлый урок вне пиковых дней: 1 единица за каждый (extra исключены вызывателем).</summary>
+    public static int PeakOutside(int dayIndex, bool isHeavy, IReadOnlySet<int>? peakDays = null) =>
+        isHeavy && !(peakDays ?? DefaultPeakDays).Contains(dayIndex) ? 1 : 0;
+
+    /// <summary>
+    /// НДТП-7: предмет входит в список «край 1 раз/нед»
+    /// (физра, математика/алгебра/геометрия, русский, белорусский, иностранный,
+    /// химия, физика). Физра/ин.яз — по флагам, остальное — по именам (офиц. + алиасы).
+    /// </summary>
+    public static bool IsEdgeOnceSubject(Subject s)
+    {
+        if (s.IsPhysicalEducation || s.IsForeignLanguage) return true;
+        string n = (s.Name ?? "").Trim().ToLowerInvariant();
+        return n is "математика" or "алгебра" or "геометрия"
+            or "русский язык" or "русская литература"
+            or "белорусский язык" or "беларуская мова" or "белорусская литература"
+            or "химия" or "физика"
+            or "матем" or "рус" or "бел" or "англ";
+    }
+
+    /// <summary>Крайние постановки сверх 1/нед: max(0, edgeCount-1) на (класс,предмет).</summary>
+    public static int EdgeOnceExcess(int edgeCount) => Math.Max(0, edgeCount - 1);
+
+    /// <summary>
+    /// НДТП-7: нарушение чередования — соседние distinct-слоты дня одинаковой
+    /// тяжести (оба тяжёлые или оба лёгкие). Вход — тяжести по слотам по порядку.
+    /// </summary>
+    public static int AlternationBreaks(IReadOnlyList<bool> heavinessBySlot)
+    {
+        int u = 0;
+        for (int i = 1; i < heavinessBySlot.Count; i++)
+            if (heavinessBySlot[i] == heavinessBySlot[i - 1]) u++;
+        return u;
+    }
+
+    /// <summary>
+    /// PE-видимость: тройки физкультуры подряд у класса. Вход — distinct-дни
+    /// с физрой (extra исключены вызывателем). 4-подряд = 2 единицы.
+    /// </summary>
+    public static int PeRuns(IReadOnlyList<int> peDays)
+    {
+        var d = peDays.Distinct().OrderBy(x => x).ToList();
+        int u = 0;
+        for (int i = 2; i < d.Count; i++)
+            if (d[i] == d[i - 1] + 1 && d[i - 1] == d[i - 2] + 1) u++;
+        return u;
+    }
 }

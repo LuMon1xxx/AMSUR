@@ -35,13 +35,13 @@ public sealed class PoolExpansionUnitTests
     public void Merge_Dedupes_And_PreservesBest()
     {
         var problem = Problem();
-        var a = Cand(problem, 0, 1, 0, 2); // soft 0
+        var a = Cand(problem, 0, 1, 0, 2); // лучший (край+чередование: 10+5=15, НДТП-7)
         var b = Cand(problem, 0, 1, 0, 2); // exact dup
         var c = Cand(problem, 0, 2, 0, 3); // другой слот, чисто (старт со 2-го)
         var merged = CandidatePoolMerger.Merge([a, b, c]);
         Assert.Equal(2, CandidatePoolMerger.UniqueFingerprints([a, b, c]));
         Assert.True(merged.Members.Count <= 3);
-        Assert.Contains(merged.Members, m => m.SoftTotal == 0); // best сохранён
+        Assert.Contains(merged.Members, m => m.SoftTotal == 15); // best сохранён
     }
 
     [Fact]

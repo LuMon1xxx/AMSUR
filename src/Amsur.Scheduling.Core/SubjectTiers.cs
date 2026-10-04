@@ -19,6 +19,21 @@ public static class SubjectTiers
         : OrdinaryTier;
 
     /// <summary>
+    /// НДТП-7: имя внеурочки (классный час, ВОВ, факультативы) — факт по списку,
+    /// не эвристика. Совпадение — OrdinalIgnoreCase; «Факультатив*» — префикс.
+    /// </summary>
+    public static bool IsNonLessonName(string name)
+    {
+        var n = (name ?? "").Trim();
+        if (n.StartsWith("Факультатив", StringComparison.OrdinalIgnoreCase)) return true;
+        return n.Equals("Классный час", StringComparison.OrdinalIgnoreCase)
+            || n.Equals("ВОВ", StringComparison.OrdinalIgnoreCase)
+            || n.Equals("Великая Отечественная война", StringComparison.OrdinalIgnoreCase)
+            || n.StartsWith("Великая Отечественная война ", StringComparison.OrdinalIgnoreCase)
+            || n.Equals("Час здоровья и спорта", StringComparison.OrdinalIgnoreCase)
+            || n.Equals("Информационный час", StringComparison.OrdinalIgnoreCase);
+    }
+    /// <summary>
     /// Официальное имя иностранного языка — факт, не эвристика (ср. P-PE-FLAG):
     /// «Иностранный язык» (SUBJECTS_RB.md §1) или «Английский язык» с необязательным
     /// уточнением профиля « (проф)»/« (база)». Произвольные строки не трогаем.

@@ -537,3 +537,151 @@
 - Ne trogato (osoznanno): dva smysla «Primenit» (stroki — srazu, nastroyki — knopkoy) —
   nuzhen dirty-check, eto otdelnaya zadacha; «← Na glavnuyu» vnizu — terпимо.
 - Evidence: build 0 errors; polny suit 388+4skip/0 (392).
+
+## D-56 Sem pravil shkoly + kataloh v8 (02.10.2026, NDTP-7, srok podachi 05.10)
+- Context: vstrecha v shkole: klassny chas/fakultativy — ne uroki; piki Vt/Sr/Pt;
+  fizra ne 3 dnya podryad; 7 predmetov na krayu 1 raz/ned; cheredovanie;
+  norma uchitelya 25 ch; VOV u 9-kh obyazatelen (nachalo/konets dnya, ne urok).
+- Chosen: Subject.IsNonLesson + LessonOccurrence.IsExtra (schetchiki ignoriruyut,
+  kollizii deistvuyut; CommonLesson + nagruzochnaya vneurochka pin k krayu smeny);
+  novye soft-kody peak-days (5) / edge-once (10) / alternation (5), katalog v7→v8;
+  pe-consecutive — Hard cherez Dangerous sanpin-pe-spacing (relax v Warnings);
+  norma 25 — indikator + SanPinChecker (Hard net: russkii blok 122ch/3 uchitelya
+  inache infeasible — osoznanno); VOV — load-driven (stroka «VOV» v Excel →
+  IsNonLesson + krai) bez avtоsinteza (sovmestimost so starymi testami).
+- Why: polny Hard na vsyo lomal by plotnye shkoly i stabilny rezultat 134 vs 140.
+- Evidence: Ndtp7Tests 11 + parity 4 (vklyuchaya svopy); parity index==full sokhranen
+  (edge-once pereschyot po klyucham + tochny EdgeSwapDelta); suit 419+3skip/0;
+  PhaseBSkipped budget 10→30 (v8-landshaftu nuzhno bolshe polirovki).
+- Consequences: zolotye tsifry obnovleny osoznanno (125/5/±10); ThinClose —
+  priced tradeoff (defolt strogii, softCap zakryvaet); PDF+DOCX v Docs_Contest.
+
+## D-57 Idealnaya shkola + shablonnye nastroiki (03.10.2026, avtonomno, po prosbe)
+- Context: uchitel prosit testy na «idealnoi shkole» (bez shtrafov, chasy delyatsya
+  rovno), bazovye nastroiki pod shkolu iz korobki, udobstvo; bolshoi UI-rework — potom.
+- Chosen: fixture 2 klassa × 17 ch (Muzyka 4, Istoriya 3, Fizra 2, Biologiya 3,
+  Trud 3, IZO 2; dni [L]/[L,H,L,H,L]×2/[L]/[L,H,L,H,L]) — ruchnoi etalon SoftTotal=0
+  + Valid dokazan testom; konveier (greedy+repair+LS best-of-3) valid + ≤70
+  (chestnyi potolok: zhadnik ne znaet tyazhest, LS zastryaet — togda kak 0 dostizhim).
+  SchoolPresets.SubjectDifficulties (ofits. imena RB, NEEDS-CHECK; yavnyi flex byot
+  preset) primenyaetsya importerom avtomaticheski; shablon Excel: 2-i list «Primer»
+  (smeny/split/VOV/fakultativ; 1-i list pust — testy Roundtrip/HeaderOnly tsely).
+- Why: udobstvo = menshe ruchnykh nastroek; preset — dannye, ne kod; avtоprimenenie
+  bezopasno: greedy ne ispolzuet Difficulty, testy tochnogo soft na ofits. imenakh —
+  tolko feasibility/coverage (suit podtverdil: 423+3/0).
+- Evidence: IdealSchoolTests 4/4; polny suit 423+3skip/0.
+- Consequences: zapiska docs/АМСУР_ПРОСТЫМИ_СЛОВАМИ.md (kak rabotaet, defaulty,
+  chto mozhno/nelzya, vremya, varianty UI-redizaina A/B/C + rekomendatsiya A);
+  roadmap: tyazhyoly greedy (ideal 0 rukami est, konveier 65–70).
+
+## D-59 PE-vidimost + dva dokumenta 24 klassa (04.10.2026, avtonomno, po prosbe)
+- Context: pokazat raspisanie; v dokладе 7 klassov (mini-fixture, ne shkola);
+  nuzhny 2 dokumenta na 24 klassakh: idealnyi i tyazhyolyi. V1 (167 uchitelei)
+  upyorlas v 6 troek fizry: LS ikh ne videl (tolko Hard-gate) i ne chinil.
+- Chosen: pe-consecutive soft (25, katalog v9) + PeSpacingRepair (core,
+  determin.); ExportDraftGrid prinimaet rules (B2-relax dlya v2-chernovika).
+  v1: te zhe 408 strok (shtat kak v faile, vse ≤21ch); v2: tot zhe massiv,
+  uchitelei v ~3 raza menshe (K=max(2,n/3) na predmet).
+- Zamer: v1 884/884 + valid + pWin/pLate 0 (tWin 156); v2 815/884 (69 ne vlezli:
+  matematika 29 + angliiskii 40), tWin 320, topLoads 30. Dokumenty:
+  Samples_Export/RealSchool_v1_ideal.xlsx + RealSchool_v2_hard.xlsx
+  (v2 — s relax pe, warnings v faile).
+- Why: poisk dolzhen videt to, chto geit zapreshchaet; remont — kak CompactRepair.
+- Evidence: Ndtp7 PeRepair-test + Parity_OnlyPe + DefaultSwaps (s pe) zelenye;
+  polny suit 430+3skip/0.
+- Consequences: slaidery 21, explainer/hints; BENCHMARKS-soft na importer-dannykh
+  poplyl (v9) — istoricheskie tsifry ne perepisyvaem, novye zamerayem po faktu.
+
+## D-60 Klassny chas — chetverg pervym urokom PO UMOLCHANIYU (04.10.2026, po prosbe)
+- Context: trebovanie: chetverg, pervy urok kazhdoi smeny — NO otklyuchaemo
+  (iznachalno sdelal gate v bildere; polzovatel popravil: ne zakon, a default).
+- Chosen: gate UBRAN; defaulty: DayIndex=3, SlotIndex=1 (UI tak i predlagaet),
+  den v UI svoboden. Fakt pro dopusk «6 ili 7» ostalsya v WorkLog (strogy minimum
+  oprovergnut realnymi 6-mi).
+- Evidence: suit 431+3skip/0 (R3_ThursdayOnly udalyon; R3-testy na chetverge).
+
+## D-61 Kachestvennye dokumenty v1/v2 2026 (04.10.2026, po prosbe, plan est)
+- Context: 2–3 raspisaniya cherez programmu, compliant SanPiN+2026/27,
+  kachestvenno (ne bystro): v1 ideal, v2 v razy tyazhelee (shtat kak zhivoi).
+- Chosen: oba — te zhe 408 strok (kl.chas → sintez Cht 1/6, extra; dnevnye kapy
+  strogo SanPiN 6/7); konveier BestOf 5 seed × (LS + GrindLite) — tot zhe kod,
+  chto rezhim TOP. v1: shtat iz faila (167, ≤21ch).
+  v2 (shtat po slovam shkoly: angl/rus/bel po 4, matematikov 5 semyami):
+  70 uchitelei (D-39 overload cap 12; nedelnye 25 svetyatsya).
+- Zamer: v1 884/884, hard/pupil/daycaps/pe 0, kl.chas 24/24, tWin 74/510
+  (8.4/100 — luchshe rekorda 132), over25 0; nedelnye: baza — preduprezhdeniya,
+  potolok — 13 klassov (5/7/8 + kraya s vneurochkoi: vopros k nagruzke).
+  v2: 868/884 — ne vlezlo 16 (angliiskii 10 — vse splity, matematika 3,
+  fizika 3); tWin 273/217, over25 16–17. Chernovik s relax pe.
+- Failes: Samples_Export/RealSchool_2026_v1.xlsx + _v2.xlsx (list «Неназначенные»).
+- Why: dokumenty = to, chto vidit shkola; chestnost: narusheniya nagruzki
+  pokazyvaem, a ne pryachem.
+- Evidence: QualityDocsTests (postoyannyi); polny suit 432+3skip/0.
+
+## D-62 GrindLite + rezhim TOP-10min + plotnye dni (04.10.2026, po prosbe)
+- Context: polzovatel: 1) ne delat uchitelyam 1–2 uroka v den (plotnye dni:
+  smenu tselikom — zavtra vykhodnoi); 2) light-versiyu «olimpiiskogo»
+  v programmu (TOP za ~10 min, a ne musor za 1 min).
+- Chosen: GrindLite.Polish v yadre (ThinDay→TeacherDay-bin-pack→CrossShift→Swap→
+  CompactRepair→PeRepair; dvukhtirovaya priyomka: current bez regressa
+  (pupil,hard), bestClean tolko 0/0 + min (okna,soft); never-worsens).
+  Rezhim TOP (60s × 5 seed ≈ 10 min): SolverOptions.EnableGrindLite (solver ego
+  ne ispolnyaet — chitaet kompozitsiya GenerateHost: polish finala pered arkhivom
+  s pereschetom Objective/Breakdown/Hard + log v Diagnostics).
+  Plotnost dnei — cherez TeacherDayLns (min chisla dnei) + priemka po oknam.
+  Defaulty/rezhimy ne tronuty (HARD-gate arkhiva tsel: gryaznoe otpolirovannoe
+  otklonyaetsya Create).
+- Zamer: v1 tWin 156→74/510 (8.4/100) — luchshe rekorda 132/14.9; soft 6820–7790.
+- Why: TOP — prodaktizatsiya grinda; flag v optsiyakh, a ne sniffing rezhima.
+- Evidence: GrindLiteTests 2/2 (validity, plotnost, determinizm); QualityDocs 2/2;
+  polny suit 435+3skip/0.
+
+## D-64 FINAL na zhivoi shkole: dopy + sportzal + normy (04.10.2026, po prosbe)
+- Context: 1) dobavit predmetnikov-dopov (Матем.Доп i t.p.) chtoby ubrat
+  peregruzy; 2) sravnit normy po klassam (5А +1 i dr.); 3) minimum okon;
+  4) sportzal: 4 klassa max na urok.
+- Chosen: AddReliefTeachers v teste (tselye pachki klass-predmet ot >25ch
+  v «<Predmet>.Dop[.N]», fail ne trogaem, A/B storony razdelno; B-nagruzki
+  tozhe schitayutsya); PE-stroki → RoomName «Спортзал» + flex кап 4
+  (v faile u fizry komnat net — zal sozdan testom, zafiksirovano);
+  profilnyi potolok +8 (11А: angl+khimiya odnovremenno — parallelnye podgruppy).
+- Zamer FINAL (seed 7, real 45+7 dopov=52 uchitelya, 27 komnat):
+  870/890, hard=1 (placement-count), pupil 0, tWin 313/226;
+  sanpin-ERR 13 — VSE nedelnye (5А-Г 28>27, 7-е 31–32>30, 8А 32>31, 8Б 33>31),
+  peregruzov uchitelei 0 (dopy srabotali).
+  Ne vlezlo 20: profilnye pary 10А/11А bez sinkhrona (G3 backlog) + splity
+  (ДМП, angl-prof) + khvostiki (matem/fizika/geo/bel).
+- Why: fail ne trogaem (ofits. dannye); DOPy i zal — testovyi sloi podgotovki.
+- Evidence: FinalSchoolRunTests (zapushchen PO KOMANDE, zelenyi);
+  RealSchool_FINAL_2026.xlsx zapisan.
+
+## D-63 Melye pravki + FINAL-test gotov, NE zapushchen (04.10.2026, po prosbe)
+- Context: 1) krai schitaetsya POPREDMETNO (podtverzhdeno: kod tak i schital —
+  test EdgeOnce_PerSubject); 2) kl.chas 2-i smeny — uniform 6 ILI 7
+  (ran'she: 7-e na 6-m, 6-e na 7-m — neuniform!); 3) 10A/11A 42ch — norma
+  (profili — parallelnye podgruppy: 11A angl+khimiya odnovremenno).
+- Chosen: slot2=6 (mapping s foto); WeeklyProfileExtra=8 dlya klassov s «(prof)»
+  (dopusk, distinct-schotchik i tak skhlopyvaet sinkhronnye pary);
+  4 klassa s chasom ne po pravilu: 6А–6Г (7-i urok) — v novom budet 6.
+  FinalSchoolRunTests napisan (real uchitelya + sintez Cht + compliance +
+  export) — ZHDET KOMANDY, ne zapushchen.
+- Evidence: build 0 errors; tochechnye (edge/profile) zelenye.
+- Consequences: QualityDocs idut tem zhe kodom (koroche byudzhety); UI spiski
+  rezhimov podkhvatili TOP avtomaticheski (GenerateModes.All).
+
+## D-58 Foto SanPiN + nasha idealnaya shkola 5-11 (04.10.2026, avtonomno, po prosbe)
+- Context: uchitel: 1) idealnuyu delat na osnove NASHEI (5–11, norm. shtat);
+  2) v dannye/ — dop. info ot sostavitelya (foto stranits sbornika SanPiN).
+- Chosen: shkala trudnosti Tabl.3 (post. №35) → map ball−2 (math 10 … fizra 1;
+  stroki foto sdvignuty — otneseno po ubyvaniyu; khimiya/trud 4–5 — lyogkie pri
+  lyubom chtenii, na porog 7 ne vliyaet); nedelnye normy (baza/maks) → SanPinLimits
+  + checker (baza — warning, potolok — error; vneurochka v bazu ne vkhodit).
+  OurIdealSchoolTests 3/3: struktura SSh8 5–11 (225 urokov, smeny, realnye chasy,
+  na (klass,predmet) — svoy uchitel ≤5 ch): greedy 225/225 + srazu valid (soft 2770);
+  checker flaganet 5А (29 > 25) — konflikt planov s foto, vopros zavuchu №1.
+  Malaya idealnaya peredelana pod foto-kartu (tyazhyolye serediny — khimiya/fizika).
+- Why: foto — pervichnyi istochnik (svoi sbornik shkoly), zamenyaet NEEDS-CHECK
+  apriornye tsifry; konflikt 29>25 ne zamalchivaem, a pokazyvaem nakhodkoi.
+- Evidence: polny suit 426+3skip/0 (karta i nedelny kontrol nichego ne slomali).
+- Consequences: SANPIN_RB §9 (tablitsy + raskhozhdenie); stroka v PROSTYMI_SLOVAMI;
+  roadmap: tyazhyoly greedy zhiv (ideal-0 est, konveier 65–70).

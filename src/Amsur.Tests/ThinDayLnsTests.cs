@@ -84,7 +84,12 @@ public sealed class ThinDayLnsTests
         var p = Tiny(5, out var placements);
         var occById = p.Occurrences.ToDictionary(o => o.Id);
         Assert.Equal(3, ThinDayLns.TeacherDayCount(occById, placements));
-        var res = ThinDayLns.Improve(p, placements, TimeSpan.FromSeconds(5), seed: 11);
+        // НДТП-7: вселение {2}→{1,2} растит чередование (+5) — строгий дефолт
+        // держит 3 дня, priced-режим (softCap) закрывает как раньше.
+        var strict = ThinDayLns.Improve(p, placements, TimeSpan.FromSeconds(5), seed: 11);
+        Assert.Equal(3, strict.TeacherDays);
+        var res = ThinDayLns.Improve(p, placements, TimeSpan.FromSeconds(5),
+            seed: 11, gapsCap: 0, softCap: 100);
         // Тощий день 0 ({2}) вселяется в день 2 ({1}→{1,2}): 3 дня → 2.
         Assert.Equal(2, res.TeacherDays);
         Assert.Equal(0, res.TeacherGaps);

@@ -218,6 +218,9 @@ public static class ProblemBuilder
                 errors.Add("CommonLesson: сбор всех классов в один зал задаётся выбором зала (P3).");
                 return (null, errors);
             }
+            // Дефолт школы (окт. 2026): классный час — в четверг первым уроком
+            // смены (UI так и предлагает). Но это НАСТРОЙКА, а не закон: другое
+            // значение собирается как обычно (валидатор честно проверит).
             var targets = input.Classes.Where(c => commonLesson.Grades.Contains(c.Grade)).ToList();
             if (targets.Count == 0)
             {
@@ -228,9 +231,10 @@ public static class ProblemBuilder
                 string.Equals(s.Name, "Классный час", StringComparison.OrdinalIgnoreCase));
             if (hourSubject is null)
             {
-                hourSubject = new Subject { Name = "Классный час", Difficulty = 1, MaxPerDay = 1 };
+                hourSubject = new Subject { Name = "Классный час", Difficulty = 1, MaxPerDay = 1, IsNonLesson = true };
                 subjById[hourSubject.Id] = hourSubject;
             }
+            else hourSubject.IsNonLesson = true; // НДТП-7: классный час — внеурочка
             IReadOnlyList<int> BandOf(SchoolClass c) => input.ClassSlots.GetValueOrDefault(
                 c.Id, Enumerable.Range(1, input.SlotsPerDay).ToList());
             var groupA = targets.Where(c => BandOf(c).Contains(commonLesson.SlotIndex)).ToList();
@@ -273,6 +277,7 @@ public static class ProblemBuilder
                         CurriculumItemId = StableId("amsur-common-item|" + cls.Name),
                         ClassId = cls.Id, SubjectId = hourSubject.Id, TeacherId = tid,
                         SyncGroupId = syncId, StableKey = key,
+                        IsExtra = true, // НДТП-7: классный час уроком не считается
                     };
                     occurrences.Add(co);
                     commonOccIds.Add(co.Id);
@@ -355,6 +360,23 @@ public static class ProblemBuilder
                 }
             }
             if (errors.Count > 0) return (null, errors);
+        }
+
+        // НДТП-7: внеурочка из нагрузки (ВОВ 9-х, факультативы) — только край дня
+        // (первый/последний слот смены класса), уроком не считается (IsExtra).
+        // Покрытие свято: если оба края недоступны учителю — оставляем как есть.
+        foreach (var occ in occurrences.Where(o => !commonOccIds.Contains(o.Id)))
+        {
+            bool nonLesson = occ.IsExtra ||
+                (subjById.TryGetValue(occ.SubjectId, out var es) && es.IsNonLesson);
+            if (!nonLesson) continue;
+            occ.IsExtra = true;
+            var band = input.ClassSlots.GetValueOrDefault(
+                occ.ClassId, Enumerable.Range(1, input.SlotsPerDay).ToList());
+            if (band.Count == 0) continue;
+            var edges = new HashSet<int> { band.Min(), band.Max() };
+            var fit = allowedSlots[occ.Id].Where(s => edges.Contains(s)).ToList();
+            if (fit.Count > 0) allowedSlots[occ.Id] = fit;
         }
 
         // E3 perturbation-исключения (до sync-пересечения, по StableKey).

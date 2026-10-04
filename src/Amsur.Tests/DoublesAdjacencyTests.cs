@@ -62,7 +62,7 @@ public sealed class DoublesAdjacencyTests
         Assert.NotEqual("", a.When);
     }
 
-    // --- 5. Слайдер doubles 0..100 в редакторе (17 опций суммарно) ---
+    // --- 5. Слайдер doubles 0..100 в редакторе (21 опция суммарно: 9 строгих + 12 пожеланий) ---
     [Fact]
     public void Editor_HasDoublesSlider_0to100()
     {
@@ -83,7 +83,7 @@ public sealed class DoublesAdjacencyTests
         // P3 (каталог v7): вес слайдера применяется движком — резолвер код знает.
         var rs = RuleResolver.Resolve("CUSTOM", ed.GetOverrides());
         Assert.Equal(50, rs.Weight("doubles-adjacency"));
-        Assert.Equal(7, rs.CatalogVersion);
+        Assert.Equal(9, rs.CatalogVersion);
     }
 
     // --- 6. Top-5: min-gaps вместо min-soft (Best-of-3, §3) ---

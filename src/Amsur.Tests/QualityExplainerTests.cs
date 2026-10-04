@@ -69,11 +69,25 @@ public sealed class QualityExplainerTests(Xunit.Abstractions.ITestOutputHelper o
     }
 
     // --- 1. Ноль: честная строка без сильных утверждений ---
+    // НДТП-7: ноль достижим только осознанно (край/пик/чередование считают):
+    // лёгкий–тяжёлый–лёгкий некраевых предметов в пиковый день.
     [Fact]
     public void ZeroCandidate_HonestLines()
     {
-        var p = Build(InputQ());
-        var c = MustCreate(p, Place(p, (0, 1), (0, 2), (0, 3)));
+        var cls = new SchoolClass { AcademicYearId = Guid.NewGuid(), Name = "5А", Grade = 5, StudentCount = 25 };
+        var teacher = new Teacher { Name = "Иванов", MaxLessonsPerDay = 6 };
+        var music = new Subject { Name = "Музыка", MaxPerDay = 2, Difficulty = 3 };
+        var history = new Subject { Name = "История", MaxPerDay = 2, Difficulty = 8 };
+        var geo = new Subject { Name = "География", MaxPerDay = 2, Difficulty = 4 };
+        var curriculum = new[]
+        {
+            new CurriculumItem { ClassId = cls.Id, SubjectId = music.Id, TeacherId = teacher.Id, HoursPerWeek = 1 },
+            new CurriculumItem { ClassId = cls.Id, SubjectId = history.Id, TeacherId = teacher.Id, HoursPerWeek = 1 },
+            new CurriculumItem { ClassId = cls.Id, SubjectId = geo.Id, TeacherId = teacher.Id, HoursPerWeek = 1 },
+        };
+        var p = Build(new ProblemInput([cls], [teacher], [music, history, geo], curriculum,
+            [], [], [], DaysCount: 5, SlotsPerDay: 3));
+        var c = MustCreate(p, Place(p, (1, 1), (1, 2), (1, 3)));
         Assert.Equal(0, c.SoftTotal);
         var lines = QualityExplainer.Explain(p, c);
         Assert.Single(lines);
@@ -178,7 +192,8 @@ public sealed class QualityExplainerTests(Xunit.Abstractions.ITestOutputHelper o
             Assert.DoesNotContain(card.QualityLines, l => l.ToLowerInvariant().Contains("жёстк"));
             Assert.DoesNotContain(card.QualitySummary.ToLowerInvariant(), "жёстк");
         }
-        Assert.Equal("Без мягких нарушений", panel.Cards[0].QualitySummary);
+        Assert.Equal("0 жёстких нарушений", panel.Cards[0].HardText);
+        Assert.StartsWith("Основное:", panel.Cards[0].QualitySummary);
         Assert.StartsWith("Основное:", panel.Cards[1].QualitySummary);
         Assert.NotEmpty(panel.Cards[0].QualityLines);
         Assert.NotEmpty(panel.Cards[1].QualityLines);

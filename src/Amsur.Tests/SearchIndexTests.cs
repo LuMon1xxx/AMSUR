@@ -248,9 +248,10 @@ public sealed class SearchIndexTests
                 OccurrenceId = x.First.Id, DayIndex = x.Second.Item1, SlotIndex = x.Second.Item2
             }).ToList();
         var res = LocalSearch.Improve(p, start, TimeSpan.FromSeconds(5), seed: 42);
-        Assert.Equal(0, res.SoftTotal);
+        // НДТП-7: пол чередования 5 (один предмет — чередовать не с чем).
+        Assert.Equal(5, res.SoftTotal);
         Assert.True(PlacementValidator.Validate(p, res.Placements).IsValid);
-        Assert.Equal(0, SoftEvaluator.Evaluate(p, res.Placements).Total);
+        Assert.Equal(5, SoftEvaluator.Evaluate(p, res.Placements).Total);
     }
 
     // Накопленный curSoft обязан совпадать с полным пересчётом в конце.

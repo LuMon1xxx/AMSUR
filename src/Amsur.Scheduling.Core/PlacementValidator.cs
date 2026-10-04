@@ -20,6 +20,12 @@ public static class PlacementValidator
         var result = new ValidationResult();
         var occById = problem.Occurrences.ToDictionary(o => o.Id);
         var relaxed = rules?.RelaxedStrict ?? (IReadOnlySet<string>)new HashSet<string>();
+        // НДТП-7: внеурочка (классный час/ВОВ/факультативы) занимает слот
+        // (коллизии выше действуют), но не считается уроком: компактность,
+        // дневные капы и часы её игнорируют.
+        bool IsCounted(LessonOccurrence occ) =>
+            !occ.IsExtra &&
+            !(problem.Subjects.TryGetValue(occ.SubjectId, out var cs) && cs.IsNonLesson);
 
         // INV-06: полнота размещения.
         if (placements.Count != problem.Occurrences.Count)
@@ -166,7 +172,8 @@ public static class PlacementValidator
         }
 
         // Teacher MaxPerDay (Hard FROZEN, D-04) — или Warning при ослаблении (B2).
-        foreach (var g in known.GroupBy(p => (occById[p.OccurrenceId].TeacherId, p.DayIndex)))
+        // НДТП-7: внеурочка не в счёт (ведёт классный руководитель, не предметник).
+        foreach (var g in known.Where(p => IsCounted(occById[p.OccurrenceId])).GroupBy(p => (occById[p.OccurrenceId].TeacherId, p.DayIndex)))
         {
             var teacherId = g.Key.TeacherId;
             if (problem.Teachers.TryGetValue(teacherId, out var t) && g.Count() > t.MaxLessonsPerDay)
@@ -180,7 +187,8 @@ public static class PlacementValidator
 
         // Компактность ученика (D-28, SANPIN_RB.md §5): внутренние окна запрещены,
         // старт не позже anchor+1. B2: ослабленные пользователем — Warnings.
-        foreach (var g in known.GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
+        // НДТП-7: внеурочка на краю дня окном/поздним стартом не считается.
+        foreach (var g in known.Where(p => IsCounted(occById[p.OccurrenceId])).GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
         {
             var classId = g.Key.ClassId;
             var slots = g.Select(p => p.SlotIndex).OrderBy(s => s).ToList();
@@ -205,7 +213,9 @@ public static class PlacementValidator
 
         // Дневной максимум класса по СанПиН (SANPIN_RB.md §3): HARD — или Warning (B2).
         // Считаем ЗАНЯТЫЕ СЛОТЫ (distinct), а не placements: сплит-час — 2 placements в 1 слоте.
-        foreach (var g in known.GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
+        // НДТП-7: внеурочка не в счёт.
+        var countedKnown = known.Where(p => IsCounted(occById[p.OccurrenceId])).ToList();
+        foreach (var g in countedKnown.GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
         {
             int slotCount = g.Select(p => p.SlotIndex).Distinct().Count();
             if (problem.Classes.TryGetValue(g.Key.ClassId, out var cls) && slotCount > cls.MaxLessonsPerDay)
@@ -218,7 +228,7 @@ public static class PlacementValidator
             // 1-е классы: дней с 5 уроками — не более 1 в неделю (норма «4 + 1×5»).
             if (problem.Classes.TryGetValue(g.Key.ClassId, out var cls1) && cls1.Grade == 1 && slotCount == 5)
             {
-                int fiveDays = known
+                int fiveDays = countedKnown
                     .Where(p => occById[p.OccurrenceId].ClassId == g.Key.ClassId)
                     .GroupBy(p => p.DayIndex)
                     .Count(dg => dg.Select(p => p.SlotIndex).Distinct().Count() == 5);
@@ -288,6 +298,32 @@ public static class PlacementValidator
                     TeacherId = teachers[0]
                 });
             }
+        }
+
+        // НДТП-7: физкультура не может стоять 3 дня подряд у класса.
+        // Строгое по дефолту; ослабление — через Dangerous `sanpin-pe-spacing`
+        // (B2-паттерн: уходит в Warnings). Внеурочка физрой не считается.
+        foreach (var cg in countedKnown.GroupBy(p => occById[p.OccurrenceId].ClassId))
+        {
+            var peDays = cg
+                .Where(p =>
+                {
+                    var o = occById[p.OccurrenceId];
+                    return problem.Subjects.TryGetValue(o.SubjectId, out var ps) && ps.IsPhysicalEducation;
+                })
+                .Select(p => p.DayIndex).Distinct().OrderBy(d => d).ToList();
+            for (int i = 2; i < peDays.Count; i++)
+                if (peDays[i] == peDays[i - 1] + 1 && peDays[i - 1] == peDays[i - 2] + 1)
+                {
+                    AddHardOrWarn(result, relaxed, "sanpin-pe-spacing", new ValidationIssue
+                    {
+                        Code = "sanpin-pe-spacing",
+                        Message = $"Класс {ClassName(problem, cg.Key)}: физкультура 3 дня подряд " +
+                                  $"({peDays[i - 2] + 1}–{peDays[i] + 1} дни недели).",
+                        ClassId = cg.Key
+                    });
+                    break;
+                }
         }
 
         return result;

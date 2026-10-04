@@ -103,16 +103,17 @@ public sealed class RealityCheckTests(Xunit.Abstractions.ITestOutputHelper outpu
         };
         Assert.True(PlacementValidator.Validate(problem, altB).IsValid);
         long softB = SoftEvaluator.Evaluate(problem, altB).Total;
-        Assert.Equal(0, softB);
+        // НДТП-7: пол чередования 5 (два лёгких рядом) — оптимум B теперь 5, не 0.
+        Assert.Equal(5, softB);
 
         var result = await new OrToolsSolver().SolveAsync(problem);
         Assert.Equal(SolverStatus.Feasible, result.Status);
         Assert.True(PlacementValidator.Validate(problem, result.Placements).IsValid);
         long softResult = SoftEvaluator.Evaluate(problem, result.Placements).Total;
         var slots = result.Placements.OrderBy(p => p.SlotIndex).Select(p => p.SlotIndex).ToList();
-        output.WriteLine($"PROXY-AUDIT: solver slots=[{string.Join(",", slots)}] soft={softResult} (alt B soft=0)");
+        output.WriteLine($"PROXY-AUDIT: solver slots=[{string.Join(",", slots)}] soft={softResult} (alt B soft=5)");
         // E12: solver доводит до оптимума настоящим soft (LS), а не proxy.
         Assert.Equal([2, 3], slots);
-        Assert.Equal(0, softResult);
+        Assert.Equal(5, softResult);
     }
 }

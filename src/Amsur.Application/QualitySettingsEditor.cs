@@ -60,10 +60,12 @@ public sealed class QualitySettingsEditor
             });
             _ = relaxed; // факт ослабления читается через GetOverrides/RelaxedStrict
         }
-        // Пожелания (слайдеры).
+        // Пожелания (слайдеры). НДТП-7: +peak-days/edge-once/alternation.
+        // PE-видимость: +pe-consecutive (зеркало Hard-гейта).
         foreach (string code in new[] { "teacher-gap", "teacher-cross-shift-gap",
                      "subject-maxperday", "heavy-edge", "room-preference",
-                     "room-crowding", "teacher-split", DoublesCode })
+                     "room-crowding", "teacher-split", DoublesCode,
+                     "peak-days", "edge-once", "alternation", "pe-consecutive" })
         {
             var h = QualityHints.For(code);
             var (min, max) = RuleCatalog.WeightRange(code);

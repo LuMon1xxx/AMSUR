@@ -32,6 +32,13 @@ public sealed class SearchIndex
     private readonly Dictionary<(Guid Class, int Day, int Slot), int> _heavyCount = [];
     // D-51: eligible-слоты дубля по K=(класс,предмет,день) (для doubles-adjacency дельты).
     private readonly Dictionary<(Guid Class, Guid Subject, int Day), List<int>> _dblSlots = [];
+    // НДТП-7: edge-once структуры (только counted edge-предметы):
+    // слоты ключа по дням + ключи классо-дня (для кросс-ключевого пересчёта).
+    private readonly Dictionary<(Guid Class, Guid Subject, int Day), List<int>> _keyDaySlots = [];
+    private readonly Dictionary<(Guid Class, int Day), HashSet<(Guid Class, Guid Subject)>> _classDayKeys = [];
+    // PE-видимость: счётчик физры класса по дням (только counted).
+    private readonly Dictionary<(Guid Class, int Day), int> _peDays = [];
+    // НДТП-7: члены ключа (класс,предмет) — статический состав occurrences.
     // P2/R7: учителя целых (GroupId==null) по (класс,предмет) и (параллель,предмет).
     private readonly Dictionary<(Guid Class, Guid Subject), Dictionary<Guid, int>> _splitC = [];
     private readonly Dictionary<(int Grade, Guid Subject), Dictionary<Guid, int>> _splitP = [];
@@ -46,6 +53,10 @@ public sealed class SearchIndex
     private long _wHeavy = RuleCatalog.HeavyEdge;
     private long _wActiveDay = RuleCatalog.TeacherActiveDay;
     private long _wDoubles = RuleCatalog.DoublesAdjacency;
+    private long _wPeak = RuleCatalog.PeakDays;
+    private long _wEdgeOnce = RuleCatalog.EdgeOnce;
+    private long _wAlternation = RuleCatalog.Alternation;
+    private long _wPe = RuleCatalog.PeConsecutive;
 
     private SearchIndex(SchedulingProblem problem)
     {
@@ -72,6 +83,10 @@ public sealed class SearchIndex
             idx._wHeavy = rules.Weight("heavy-edge");
             idx._wActiveDay = rules.Weight("teacher-active-day");
             idx._wDoubles = rules.Weight("doubles-adjacency");
+            idx._wPeak = rules.Weight("peak-days");
+            idx._wEdgeOnce = rules.Weight("edge-once");
+            idx._wAlternation = rules.Weight("alternation");
+            idx._wPe = rules.Weight("pe-consecutive");
         }
         foreach (var p in placements)
             idx.Insert(p.OccurrenceId, p.DayIndex, p.SlotIndex, p.RoomId);
@@ -170,9 +185,10 @@ public sealed class SearchIndex
         CheckRoomCap(a, pa.Room, pb.Day, pb.Slot, hard);
         CheckRoomCap(b, pb.Room, pa.Day, pa.Slot, hard);
 
+        // НДТП-7: слепок не нужен — своп-дельта считается по truth (_pos),
+        // слепки инкрементальных структур для week-Эксцесса хрупки.
         Remove(a, pa.Day, pa.Slot, pa.Room);
         Remove(b, pb.Day, pb.Slot, pb.Room);
-
         if (hard.Count == 0)
         {
             CheckScopes(a, new CandidateMove(aId, pb.Day, pb.Slot, pa.Room), hard);
@@ -181,8 +197,12 @@ public sealed class SearchIndex
         }
         long delta = 0;
         if (hard.Count == 0)
-            delta = SoftDelta(a, pa, new CandidateMove(aId, pb.Day, pb.Slot, pa.Room))
-                + SoftDelta(b, pb, new CandidateMove(bId, pa.Day, pa.Slot, pb.Room));
+            // НДТП-7: edge-once идёт точным своп-пересчётом (week-Эксцесс не
+            // раскладывается в сумму двух синглов) — из сингл-дельт исключён.
+            delta = SoftDelta(a, pa, new CandidateMove(aId, pb.Day, pb.Slot, pa.Room), includeEdge: false, includePe: false)
+                + SoftDelta(b, pb, new CandidateMove(bId, pa.Day, pa.Slot, pb.Room), includeEdge: false, includePe: false)
+                + EdgeSwapDelta(a, pa, b, pb)
+                + PeSwapDelta(a, pa, b, pb);
 
         Insert(aId, pa.Day, pa.Slot, pa.Room);
         Insert(bId, pb.Day, pb.Slot, pb.Room);
@@ -283,8 +303,9 @@ public sealed class SearchIndex
 
         // P2/R7: один учитель на (класс,предмет) / (параллель,предмет).
         // Ходы учителей не меняют (INV-02) → проверяем текущую группу с N.
+        // НДТП-7: внеурочка не проверяется (классный руководитель ≠ предметник).
         var mode = _problem.Flex.AssignMode;
-        if (!node.GroupId.HasValue &&
+        if (IsCounted(node) && !node.GroupId.HasValue &&
             mode is TeacherAssignMode.HardClass or TeacherAssignMode.HardParallel)
         {
             if (SplitDistinctWith(node) > 1)
@@ -314,7 +335,8 @@ public sealed class SearchIndex
             }
         }
 
-        if (_problem.Teachers.TryGetValue(node.TeacherId, out var teacher))
+        // НДТП-7: дневной лимит учителя — только уроки (внеурочка не в счёт).
+        if (IsCounted(node) && _problem.Teachers.TryGetValue(node.TeacherId, out var teacher))
         {
             int count = _teacherDay.GetValueOrDefault((node.TeacherId, move.DayIndex)) + 1;
             if (count > teacher.MaxLessonsPerDay)
@@ -328,7 +350,8 @@ public sealed class SearchIndex
 
         // СанПиН-кэп класса (D-28): distinct-слоты дня (сплит-час — 1 слот).
         // Индекс БЕЗ N (lift) → считаем distinct БЕЗ N плюс целевой слот.
-        if (_problem.Classes.TryGetValue(node.ClassId, out var cls))
+        // НДТП-7: внеурочка не в счёт.
+        if (IsCounted(node) && _problem.Classes.TryGetValue(node.ClassId, out var cls))
         {
             var list = _classSlots.GetValueOrDefault((node.ClassId, move.DayIndex), []);
             int count = list.Contains(move.SlotIndex) ? new HashSet<int>(list).Count : new HashSet<int>(list).Count + 1;
@@ -342,12 +365,21 @@ public sealed class SearchIndex
         }
     }
 
-    private long SoftDelta(LessonOccurrence node, (int Day, int Slot, Guid? Room) old, CandidateMove move)
+    private long SoftDelta(LessonOccurrence node, (int Day, int Slot, Guid? Room) old, CandidateMove move, bool includeEdge = true, bool includePe = true)
     {
         long delta = 0;
         // P2/R8: вес параллели класса (student-сторона; учителя/кабинеты — без веса).
         int gw = _problem.Flex.WeightForGrade(
             _problem.Classes.TryGetValue(node.ClassId, out var clsg) ? clsg.Grade : 0);
+        // НДТП-7: внеурочка в мягких термах не участвует — только физика кабинетов.
+        if (!IsCounted(node))
+        {
+            if (old.Room.HasValue && _problem.Rooms.TryGetValue(old.Room.Value, out var or0))
+                delta -= CrowdStep(or0, (old.Room.Value, old.Day, old.Slot), node.ClassId) * _wCrowd;
+            if (move.RoomId.HasValue && _problem.Rooms.TryGetValue(move.RoomId.Value, out var nr0))
+                delta += CrowdStep(nr0, (move.RoomId.Value, move.DayIndex, move.SlotIndex), node.ClassId) * _wCrowd;
+            return delta;
+        }
         // Индекс сейчас — БЕЗ N (lift): old-множества уже без старого слота.
         int anchor = StudentCompactness.AnchorFor(_problem, node.ClassId);
         var csOld = _classSlots.GetValueOrDefault((node.ClassId, old.Day), []);
@@ -399,6 +431,46 @@ public sealed class SearchIndex
             delta += (DblWithout(lOld) - DblWith(lOld, old.Slot)) * _wDoubles * gw;
         }
 
+        // НДТП-7: пик Вт/Ср/Пт — тяжёлый урок вне пика (день-гранулярность).
+        if (_wPeak != 0 && IsHeavy(node))
+            delta += (SoftUnits.PeakOutside(move.DayIndex, true) -
+                      SoftUnits.PeakOutside(old.Day, true)) * _wPeak * gw;
+
+        // НДТП-7: чередование дня (× вес параллели; lift-паттерн как heavy-edge).
+        if (_wAlternation != 0)
+        {
+            delta += (AltWith(csNew, node.ClassId, move.DayIndex, move.SlotIndex, nodeHeavy) -
+                      AltWithout(csNew, node.ClassId, move.DayIndex)) * _wAlternation * gw;
+            delta += (AltWithout(csOld, node.ClassId, old.Day) -
+                      AltWith(csOld, node.ClassId, old.Day, old.Slot, nodeHeavy)) * _wAlternation * gw;
+        }
+
+        // НДТП-7: край 1 раз/нед (× вес параллели). Кросс-ключевой эффект:
+        // ход меняет края дня и для других предметов дня → пересчитываем все
+        // edge-ключи старого и нового классо-дня (зеркало SoftEvaluator).
+        // В свопах выключается (includeEdge:false) — там точный EdgeSwapDelta.
+        if (includeEdge && _wEdgeOnce != 0)
+        {
+            var movedKey = (node.ClassId, node.SubjectId);
+            var affected = new HashSet<(Guid Class, Guid Subject)>();
+            if (_classDayKeys.TryGetValue((node.ClassId, old.Day), out var so))
+                foreach (var k in so) affected.Add(k);
+            if (_classDayKeys.TryGetValue((node.ClassId, move.DayIndex), out var sn))
+                foreach (var k in sn) affected.Add(k);
+            if (IsEdgeSubject(node)) affected.Add(movedKey);
+            foreach (var k in affected)
+            {
+                bool isMoved = IsEdgeSubject(node) && k == movedKey;
+                delta += (EdgeKeyUnits(k, move.DayIndex, move.SlotIndex, isMoved, node.ClassId) -
+                          EdgeKeyUnits(k, old.Day, old.Slot, isMoved, node.ClassId)) * _wEdgeOnce * gw;
+            }
+        }
+
+        // PE-видимость (× вес параллели; lift-паттерн: индекс БЕЗ N).
+        if (includePe && _wPe != 0 && IsPeCounted(node))
+            delta += (PeUnits(node.ClassId, move.DayIndex) -
+                      PeUnits(node.ClassId, old.Day)) * _wPe * gw;
+
         // P2/R5 room-crowding клеток (без веса параллели; снятие −, установка +).
         if (old.Room.HasValue && _problem.Rooms.TryGetValue(old.Room.Value, out var oldRoom))
             delta -= CrowdStep(oldRoom, (old.Room.Value, old.Day, old.Slot), node.ClassId) * _wCrowd;
@@ -423,6 +495,212 @@ public sealed class SearchIndex
     private static int DblWithout(List<int> slots) => SoftUnits.DoublesUnits(slots);
 
     private static int DblWith(List<int> slots, int slot) => SoftUnits.DoublesUnits([.. slots, slot]);
+
+    // НДТП-7: единицы чередования дня БЕЗ N / С N (зеркало SoftUnits.AlternationBreaks).
+    private int AltWithout(List<int> slots, Guid classId, int day)
+    {
+        var d = slots.Distinct().OrderBy(s => s).ToList();
+        return SoftUnits.AlternationBreaks(d.Select(s =>
+            _heavyCount.GetValueOrDefault((classId, day, s)) > 0).ToList());
+    }
+
+    private int AltWith(List<int> slots, Guid classId, int day, int slot, bool nodeHeavy)
+    {
+        var d = slots.Append(slot).Distinct().OrderBy(s => s).ToList();
+        return SoftUnits.AlternationBreaks(d.Select(s =>
+            s == slot
+                ? nodeHeavy || _heavyCount.GetValueOrDefault((classId, day, s)) > 0
+                : _heavyCount.GetValueOrDefault((classId, day, s)) > 0).ToList());
+    }
+
+    // НДТП-7: единицы edge-once ключа K при гипотетическом N в (nDay,nSlot).
+    // Индекс БЕЗ N: слоты классо-дня из _classSlots + nSlot; слоты ключа из
+    // _keyDaySlots + nSlot (если N — член ключа). Та же группировка, что в
+    // SoftEvaluator (край = первый/последний distinct-слот дня).
+    private int EdgeKeyUnits((Guid Class, Guid Subject) key, int nDay, int nSlot, bool nIsMember, Guid classId)
+    {
+        var classDay = new Dictionary<int, List<int>>();
+        var keyDay = new Dictionary<int, List<int>>();
+        for (int day = 0; day < _problem.DaysCount; day++)
+        {
+            if (_classSlots.TryGetValue((classId, day), out var sl) && sl.Count > 0)
+                classDay[day] = sl;
+            if (_keyDaySlots.TryGetValue((key.Class, key.Subject, day), out var kl) && kl.Count > 0)
+                keyDay[day] = kl;
+        }
+        if (nIsMember)
+        {
+            if (!keyDay.TryGetValue(nDay, out var kn) || !kn.Contains(nSlot))
+                keyDay[nDay] = kn is null ? [nSlot] : [.. kn, nSlot];
+        }
+        if (!classDay.TryGetValue(nDay, out var cn) || !cn.Contains(nSlot))
+            classDay[nDay] = cn is null ? [nSlot] : [.. cn, nSlot];
+        return EdgeWeekUnits(classDay, keyDay, _problem.DaysCount);
+    }
+
+    // НДТП-7: чистое ядро подсчёта edge-единиц ключа по готовым словарям
+    // (день → слоты). Единый источник для синглов и свопов.
+    private static int EdgeWeekUnits(
+        IReadOnlyDictionary<int, List<int>> classDaySlots,
+        IReadOnlyDictionary<int, List<int>> keyDaySlots,
+        int daysCount)
+    {
+        int count = 0;
+        for (int day = 0; day < daysCount; day++)
+        {
+            if (!keyDaySlots.TryGetValue(day, out var kl) || kl.Count == 0) continue;
+            if (!classDaySlots.TryGetValue(day, out var sl) || sl.Count == 0) continue;
+            var d = sl.Distinct().OrderBy(x => x).ToList();
+            if (d.Count == 0) continue;
+            var ks = new HashSet<int>(kl);
+            if (ks.Contains(d[0])) count++;
+            if (d[^1] != d[0] && ks.Contains(d[^1])) count++;
+        }
+        return SoftUnits.EdgeOnceExcess(count);
+    }
+
+    // НДТП-7: точная edge-дельта свопа по truth (_pos). Вызывается при ОБОИХ
+    // снятых (lift) — «до» восстанавливается виртуально (a@pa + b@pb),
+    // «после» — виртуально (a@pb + b@pa). O(n) сканирование _pos + O(ключи).
+    private long EdgeSwapDelta(
+        LessonOccurrence a, (int Day, int Slot, Guid? Room) pa,
+        LessonOccurrence b, (int Day, int Slot, Guid? Room) pb)
+    {
+        if (_wEdgeOnce == 0) return 0;
+        bool ca = IsCounted(a), cb = IsCounted(b);
+        if (!ca && !cb) return 0;
+        var cls = new Dictionary<(Guid Class, int Day), HashSet<int>>();
+        var key = new Dictionary<(Guid Class, Guid Subject, int Day), HashSet<int>>();
+        void Add(Guid cc, Guid ss, bool edge, int day, int slot)
+        {
+            if (!cls.TryGetValue((cc, day), out var s)) cls[(cc, day)] = s = [];
+            s.Add(slot);
+            if (!edge) return;
+            if (!key.TryGetValue((cc, ss, day), out var k)) key[(cc, ss, day)] = k = [];
+            k.Add(slot);
+        }
+        foreach (var (id, pos) in _pos)
+        {
+            var o = _occById[id];
+            if (!IsCounted(o)) continue;
+            Add(o.ClassId, o.SubjectId, IsEdgeSubject(o), pos.Day, pos.Slot);
+        }
+        // Затронутые ключи: edge-ключи 4 классо-дней + ключи a/b.
+        var affDays = new HashSet<(Guid Class, int Day)>
+        {
+            (a.ClassId, pa.Day), (a.ClassId, pb.Day), (b.ClassId, pb.Day), (b.ClassId, pa.Day)
+        };
+        var affKeys = new HashSet<(Guid Class, Guid Subject)>();
+        foreach (var t in key.Keys)
+            if (affDays.Contains((t.Class, t.Day)))
+                affKeys.Add((t.Class, t.Subject));
+        if (ca && IsEdgeSubject(a)) affKeys.Add((a.ClassId, a.SubjectId));
+        if (cb && IsEdgeSubject(b)) affKeys.Add((b.ClassId, b.SubjectId));
+        long UnitsWith(
+            (int Day, int Slot) posA, (int Day, int Slot) posB)
+        {
+            // Локальные копии затронутых дней/ключей + виртуалы.
+            var c2 = new Dictionary<int, HashSet<int>>();
+            var k2 = new Dictionary<int, HashSet<int>>();
+            long sum = 0;
+            foreach (var k in affKeys)
+            {
+                c2.Clear(); k2.Clear();
+                for (int day = 0; day < _problem.DaysCount; day++)
+                {
+                    if (cls.TryGetValue((k.Class, day), out var s)) c2[day] = [.. s];
+                    if (key.TryGetValue((k.Class, k.Subject, day), out var ks)) k2[day] = [.. ks];
+                }
+                if (ca && a.ClassId == k.Class)
+                {
+                    if (!c2.TryGetValue(posA.Day, out var s)) c2[posA.Day] = s = [];
+                    s.Add(posA.Slot);
+                    if (a.SubjectId == k.Subject && IsEdgeSubject(a))
+                    {
+                        if (!k2.TryGetValue(posA.Day, out var t)) k2[posA.Day] = t = [];
+                        t.Add(posA.Slot);
+                    }
+                }
+                if (cb && b.ClassId == k.Class)
+                {
+                    if (!c2.TryGetValue(posB.Day, out var s)) c2[posB.Day] = s = [];
+                    s.Add(posB.Slot);
+                    if (b.SubjectId == k.Subject && IsEdgeSubject(b))
+                    {
+                        if (!k2.TryGetValue(posB.Day, out var t)) k2[posB.Day] = t = [];
+                        t.Add(posB.Slot);
+                    }
+                }
+                sum += EdgeWeekUnitsSets(c2, k2, _problem.DaysCount) * _wEdgeOnce *
+                    _problem.Flex.WeightForGrade(
+                        _problem.Classes.TryGetValue(k.Class, out var c) ? c.Grade : 0);
+            }
+            return sum;
+        }
+        // «До»: оба на старых местах; «после»: обмен.
+        long before = UnitsWith((pa.Day, pa.Slot), (pb.Day, pb.Slot));
+        // Виртуалы a/b уже добавлены выше как posA/posB — для «после»
+        // вызываем с обменянными позициями:
+        long after = UnitsWith((pb.Day, pb.Slot), (pa.Day, pa.Slot));
+        return after - before;
+    }
+
+    // НДТП-7: ядро подсчёта по множествам (день → слоты).
+    private static int EdgeWeekUnitsSets(
+        IReadOnlyDictionary<int, HashSet<int>> classDaySlots,
+        IReadOnlyDictionary<int, HashSet<int>> keyDaySlots,
+        int daysCount)
+    {
+        int count = 0;
+        for (int day = 0; day < daysCount; day++)
+        {
+            if (!keyDaySlots.TryGetValue(day, out var ks) || ks.Count == 0) continue;
+            if (!classDaySlots.TryGetValue(day, out var ss) || ss.Count == 0) continue;
+            int first = ss.Min(), last = ss.Max();
+            if (ks.Contains(first)) count++;
+            if (last != first && ks.Contains(last)) count++;
+        }
+        return SoftUnits.EdgeOnceExcess(count);
+    }
+
+    // НДТП-7: единицы pe-consecutive класса при N в atDay, индекс БЕЗ N.
+    private int PeUnits(Guid classId, int atDay)
+    {
+        var days = new HashSet<int> { atDay };
+        foreach (var ((c, d), cnt) in _peDays)
+            if (c == classId && cnt > 0) days.Add(d);
+        return SoftUnits.PeRuns(days.ToList());
+    }
+
+    // НДТП-7: точная pe-дельта свопа (оба сняты): классы a/b, виртуалы по _peDays.
+    private long PeSwapDelta(
+        LessonOccurrence a, (int Day, int Slot, Guid? Room) pa,
+        LessonOccurrence b, (int Day, int Slot, Guid? Room) pb)
+    {
+        if (_wPe == 0) return 0;
+        bool ca = IsPeCounted(a), cb = IsPeCounted(b);
+        if (!ca && !cb) return 0;
+        long delta = 0;
+        foreach (var c in new[] { a.ClassId, b.ClassId }.Distinct())
+        {
+            bool aIn = ca && a.ClassId == c, bIn = cb && b.ClassId == c;
+            if (!aIn && !bIn) continue;
+            var days = new HashSet<int>();
+            foreach (var ((cc, d), cnt) in _peDays)
+                if (cc == c && cnt > 0) days.Add(d);
+            var before = new HashSet<int>(days);
+            if (aIn) before.Add(pa.Day);
+            if (bIn) before.Add(pb.Day);
+            var after = new HashSet<int>(days);
+            if (aIn) after.Add(pb.Day);
+            if (bIn) after.Add(pa.Day);
+            int gw = _problem.Flex.WeightForGrade(
+                _problem.Classes.TryGetValue(c, out var cl) ? cl.Grade : 0);
+            delta += (SoftUnits.PeRuns(after.ToList()) -
+                      SoftUnits.PeRuns(before.ToList())) * _wPe * gw;
+        }
+        return delta;
+    }
 
     // P2/R5: шаг тесноты клетки С N минус БЕЗ N (индекс БЕЗ N).
     private int CellUnitsWithout(Room room, (Guid Room, int Day, int Slot) cell)
@@ -513,10 +791,16 @@ public sealed class SearchIndex
     {
         var node = _occById[occId];
         _pos[occId] = (day, slot, room);
+        // НДТП-7: внеурочка занимает слот (occupancy ниже), но в счётчиках
+        // нагрузки не участвует (зеркало SoftEvaluator.counted).
+        bool counted = IsCounted(node);
+        if (counted)
+        {
         SortedInsert(_classSlots.GetOrAdd((node.ClassId, day)), slot);
         SortedInsert(_teacherSlots.GetOrAdd((node.TeacherId, day)), slot);
         var sk = (node.ClassId, node.SubjectId, day);
         _subjCount[sk] = _subjCount.GetValueOrDefault(sk) + 1;
+        }
         Bump(_teacherCell, (node.TeacherId, day, slot));
         if (node.GroupId.HasValue)
         {
@@ -525,6 +809,8 @@ public sealed class SearchIndex
         }
         else Bump(_wholeCell, (node.ClassId, day, slot));
         if (room.HasValue) Bump(_roomCell, (room.Value, day, slot));
+        if (counted)
+        {
         var tk = (node.TeacherId, day);
         _teacherDay[tk] = _teacherDay.GetValueOrDefault(tk) + 1;
         // P2: тяжёлые клетки, key-aware ключи комнат, split-индекс целых.
@@ -533,13 +819,25 @@ public sealed class SearchIndex
         // D-51: eligible-слоты дубля по K (только целые несинхронные).
         if (SoftUnits.IsDoubleEligible(node))
             SortedInsert(_dblSlots.GetOrAdd((node.ClassId, node.SubjectId, day)), slot);
+        // НДТП-7: edge-структуры (только edge-предметы; класс-day-слот влияет и так).
+        if (IsEdgeSubject(node))
+        {
+            SortedInsert(_keyDaySlots.GetOrAdd((node.ClassId, node.SubjectId, day)), slot);
+            var dk = (node.ClassId, day);
+            if (!_classDayKeys.TryGetValue(dk, out var dset)) _classDayKeys[dk] = dset = [];
+            dset.Add((node.ClassId, node.SubjectId));
+        }
+        // PE-видимость: счётчик дней класса с физрой.
+        if (IsPeCounted(node))
+            _peDays[(node.ClassId, day)] = _peDays.GetValueOrDefault((node.ClassId, day)) + 1;
+        }
         if (room.HasValue && _problem.Rooms.TryGetValue(room.Value, out var rm) && !rm.CountSubgroupAsGroup)
         {
             var cell = (room.Value, day, slot);
             if (!_roomKeys.TryGetValue(cell, out var ks)) _roomKeys[cell] = ks = [];
             ks[node.ClassId] = ks.GetValueOrDefault(node.ClassId) + 1;
         }
-        if (!node.GroupId.HasValue)
+        if (counted && !node.GroupId.HasValue)
         {
             var ck = (node.ClassId, node.SubjectId);
             if (!_splitC.TryGetValue(ck, out var cd)) _splitC[ck] = cd = [];
@@ -556,10 +854,15 @@ public sealed class SearchIndex
     private void Remove(LessonOccurrence node, int day, int slot, Guid? room)
     {
         _pos.Remove(node.Id);
+        bool counted = IsCounted(node);
+        if (counted)
+        {
         SortedRemove(_classSlots[(node.ClassId, day)], slot);
         SortedRemove(_teacherSlots[(node.TeacherId, day)], slot);
         var sk = (node.ClassId, node.SubjectId, day);
         _subjCount[sk] = _subjCount[sk] - 1;
+        if (_subjCount[sk] == 0) _subjCount.Remove(sk);
+        }
         Drop(_teacherCell, (node.TeacherId, day, slot));
         if (node.GroupId.HasValue)
         {
@@ -568,6 +871,8 @@ public sealed class SearchIndex
         }
         else Drop(_wholeCell, (node.ClassId, day, slot));
         if (room.HasValue) Drop(_roomCell, (room.Value, day, slot));
+        if (counted)
+        {
         var tk = (node.TeacherId, day);
         _teacherDay[tk] = _teacherDay[tk] - 1;
         // P2: откат структур выше.
@@ -576,6 +881,31 @@ public sealed class SearchIndex
         // D-51: откат eligible-слота дубля.
         if (SoftUnits.IsDoubleEligible(node))
             SortedRemove(_dblSlots[(node.ClassId, node.SubjectId, day)], slot);
+        // НДТП-7: откат edge-структур.
+        if (IsEdgeSubject(node))
+        {
+            var kk = (node.ClassId, node.SubjectId, day);
+            SortedRemove(_keyDaySlots[kk], slot);
+            if (_keyDaySlots[kk].Count == 0)
+            {
+                _keyDaySlots.Remove(kk);
+                var dk = (node.ClassId, day);
+                if (_classDayKeys.TryGetValue(dk, out var dset))
+                {
+                    dset.Remove((node.ClassId, node.SubjectId));
+                    if (dset.Count == 0) _classDayKeys.Remove(dk);
+                }
+            }
+        }
+        // PE-видимость: откат счётчика.
+        if (IsPeCounted(node))
+        {
+            var pk = (node.ClassId, day);
+            int v = _peDays[pk] - 1;
+            if (v <= 0) _peDays.Remove(pk);
+            else _peDays[pk] = v;
+        }
+        }
         if (room.HasValue && _problem.Rooms.TryGetValue(room.Value, out var rm) && !rm.CountSubgroupAsGroup)
         {
             var cell = (room.Value, day, slot);
@@ -587,7 +917,7 @@ public sealed class SearchIndex
                 if (ks.Count == 0) _roomKeys.Remove(cell);
             }
         }
-        if (!node.GroupId.HasValue)
+        if (counted && !node.GroupId.HasValue)
         {
             var ck = (node.ClassId, node.SubjectId);
             if (_splitC.TryGetValue(ck, out var cd))
@@ -613,6 +943,20 @@ public sealed class SearchIndex
     private bool IsHeavy(LessonOccurrence node) =>
         _problem.Subjects.TryGetValue(node.SubjectId, out var s) &&
         s.Difficulty >= _problem.Flex.IsHeavyThreshold;
+
+    // НДТП-7: считается ли уроком (внеурочка — нет). Зеркало SoftEvaluator/Validator.
+    private bool IsCounted(LessonOccurrence node) =>
+        !node.IsExtra &&
+        !(_problem.Subjects.TryGetValue(node.SubjectId, out var s) && s.IsNonLesson);
+
+    private bool IsEdgeSubject(LessonOccurrence node) =>
+        _problem.Subjects.TryGetValue(node.SubjectId, out var s) &&
+        SoftUnits.IsEdgeOnceSubject(s);
+
+    // PE-видимость: физра ли (counted; внеурочка физрой не бывает, но guard дешёвый).
+    private bool IsPeCounted(LessonOccurrence node) =>
+        IsCounted(node) &&
+        _problem.Subjects.TryGetValue(node.SubjectId, out var s) && s.IsPhysicalEducation;
 
     // P2/R5: единицы клетки с двигаемым уроком (индекс БЕЗ N → +N вручную).
     private int CellUnitsWith(Domain.Room room, (Guid Room, int Day, int Slot) cell, Guid classId)

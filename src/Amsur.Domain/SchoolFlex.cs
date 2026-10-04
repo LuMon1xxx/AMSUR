@@ -68,6 +68,12 @@ public sealed class FlexSettings : Entity
     public bool AllowTeacherOverload { get; set; } = false;
     /// <summary>Потолок перегрузки, уроков/день (дефолт 9: 1-я + 2-я смены; выше сетки не поднять).</summary>
     public int TeacherOverloadCap { get; set; } = 9;
+    /// <summary>
+    /// НДТП-7: недельная норма учителя, ч/нед (ответ школы — 25).
+    /// Индикатор + контроль в SanPinChecker; Hard-гейта нет (плотные школы
+    /// и перегруз русского блока иначе станут infeasible — осознанно).
+    /// </summary>
+    public int TeacherWeeklyNorm { get; set; } = 25;
 
     public static FlexSettings Default => new();
 

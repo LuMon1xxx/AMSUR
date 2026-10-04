@@ -162,8 +162,10 @@ public sealed class FlexP2Tests
             o => p.Subjects[o.SubjectId].Name == "Классный час");
     }
 
+    // Дефолт школы (окт. 2026): классный час — четверг (день 3) первым уроком.
+    // Отключаемо: билдер соберёт и другой день (валидатор проверит честно).
     private static (ProblemInput Input, SchoolClass A, SchoolClass B) CommonInput(
-        string gradesCsv = "5,6", int day = 0, int slot = 1, bool useOwn = true)
+        string gradesCsv = "5,6", int day = 3, int slot = 1, bool useOwn = true)
     {
         var year = Guid.NewGuid();
         var a = new SchoolClass { AcademicYearId = year, Name = "5А", Grade = 5, StudentCount = 25 };
@@ -203,7 +205,7 @@ public sealed class FlexP2Tests
         var placed = GreedyPlacer.Place(p);
         Assert.Empty(placed.Unplaced);
         var cells = commons.Select(o => placed.Placed[o.Id]).ToList();
-        Assert.Equal((0, 1), (cells[0].Day, cells[0].Slot));
+        Assert.Equal((3, 1), (cells[0].Day, cells[0].Slot));
         Assert.Equal(cells[0].Day, cells[1].Day);
         Assert.Equal(cells[0].Slot, cells[1].Slot);
         // Детерминированно компактная раскладка тех же часов — validator чист.
@@ -217,19 +219,23 @@ public sealed class FlexP2Tests
         {
             lessons.Add(new PlacedLesson
             {
-                OccurrenceId = byClass[cls.Id].Id, DayIndex = 0, SlotIndex = 1
+                OccurrenceId = byClass[cls.Id].Id, DayIndex = 3, SlotIndex = 1
             });
             lessons.Add(new PlacedLesson
             {
-                OccurrenceId = mathOf[cls.Id][0].Id, DayIndex = 0, SlotIndex = 2
+                OccurrenceId = mathOf[cls.Id][0].Id, DayIndex = 3, SlotIndex = 2
             });
             lessons.Add(new PlacedLesson
             {
-                OccurrenceId = mathOf[cls.Id][1].Id, DayIndex = 0, SlotIndex = 3
+                OccurrenceId = mathOf[cls.Id][1].Id, DayIndex = 3, SlotIndex = 3
             });
         }
         Assert.True(PlacementValidator.Validate(p, lessons).IsValid);
     }
+
+    // Правило школы: не четверг / не первый урок — громкая ошибка билдера.
+    // ОТМЕНЕНО (окт. 2026, по просьбе): четверг первым — дефолт, а не закон.
+    // CommonInput ниже и так использует дефолт (день 3, урок 1).
 
     [Fact]
     public void R3_MissingClassTeacher_Error()
@@ -660,11 +666,25 @@ public sealed class FlexP2Tests
     [Fact]
     public void CatalogV4_Codes()
     {
-        Assert.Equal(7, RuleCatalog.Version);
+        Assert.Equal(9, RuleCatalog.Version);
         Assert.Contains("room-crowding", RuleCatalog.AllCodes);
         Assert.Contains("teacher-split", RuleCatalog.AllCodes);
         Assert.Contains("teacher-active-day", RuleCatalog.AllCodes);
         Assert.Contains("doubles-adjacency", RuleCatalog.AllCodes);
+        // НДТП-7 (02.10.2026): пик Вт/Ср/Пт, край 1 раз/нед, чередование.
+        Assert.Contains("peak-days", RuleCatalog.AllCodes);
+        Assert.Contains("edge-once", RuleCatalog.AllCodes);
+        Assert.Contains("alternation", RuleCatalog.AllCodes);
+        Assert.Equal(5, RuleCatalog.DefaultWeight("peak-days"));
+        Assert.Equal(10, RuleCatalog.DefaultWeight("edge-once"));
+        Assert.Equal(5, RuleCatalog.DefaultWeight("alternation"));
+        Assert.Equal((0, 50), RuleCatalog.WeightRange("peak-days"));
+        Assert.Equal((0, 100), RuleCatalog.WeightRange("edge-once"));
+        Assert.Equal((0, 100), RuleCatalog.WeightRange("alternation"));
+        // PE-видимость: зеркало Hard-гейта физры в поиске.
+        Assert.Contains("pe-consecutive", RuleCatalog.AllCodes);
+        Assert.Equal(25, RuleCatalog.DefaultWeight("pe-consecutive"));
+        Assert.Equal((0, 100), RuleCatalog.WeightRange("pe-consecutive"));
         Assert.Equal(0, RuleCatalog.DefaultWeight("teacher-active-day"));
         Assert.Equal((0, 100), RuleCatalog.WeightRange("teacher-active-day"));
         Assert.Equal(10, RuleCatalog.DefaultWeight("doubles-adjacency"));
@@ -674,7 +694,7 @@ public sealed class FlexP2Tests
         Assert.Equal((0, 50), RuleCatalog.WeightRange("room-crowding"));
         Assert.Equal((0, 100), RuleCatalog.WeightRange("teacher-split"));
         var rs = RuleResolver.Resolve("STANDARD");
-        Assert.Equal(7, rs.CatalogVersion);
+        Assert.Equal(9, rs.CatalogVersion);
         Assert.Equal(8, rs.Weight("room-crowding"));
         // D-51: профили одинаково (терм ученический) — дефолт 10 везде.
         Assert.Equal(10, RuleResolver.Resolve("STUDENT_FRIENDLY").Weight("doubles-adjacency"));

@@ -29,6 +29,14 @@ public static class SoftEvaluator
         long wCrowd = rules.Weight("room-crowding");
         long wSplit = rules.Weight("teacher-split");
         long wHeavy = rules.Weight("heavy-edge");
+        long wPeak = rules.Weight("peak-days");
+        long wEdgeOnce = rules.Weight("edge-once");
+        long wAlternation = rules.Weight("alternation");
+        long wPe = rules.Weight("pe-consecutive");
+        // НДТП-7: внеурочка не считается (но занимает слот — коллизии в валидаторе).
+        bool IsCounted(Guid occId) =>
+            occById.TryGetValue(occId, out var o) && !o.IsExtra &&
+            !(problem.Subjects.TryGetValue(o.SubjectId, out var s) && s.IsNonLesson);
         // R8: вес параллели класса (1 при выключенном приоритете / Neutral).
         int GradeW(Guid classId) =>
             problem.Flex.WeightForGrade(
@@ -39,7 +47,9 @@ public static class SoftEvaluator
 
         // Student gaps: max(0, last-first+1-cnt) по классу (whole+subgroups вместе).
         // HARD-гейт в PlacementValidator (D-28); здесь soft-градиент для LS (вес 100).
-        foreach (var g in placements.GroupBy(p => occById[p.OccurrenceId].ClassId))
+        // НДТП-7: внеурочка исключена из компактности (край дня, окном не считается).
+        var counted = placements.Where(p => IsCounted(p.OccurrenceId)).ToList();
+        foreach (var g in counted.GroupBy(p => occById[p.OccurrenceId].ClassId))
         {
             int gw = GradeW(g.Key);
             int anchor = StudentCompactness.AnchorFor(problem, g.Key);
@@ -72,7 +82,7 @@ public static class SoftEvaluator
         // D-50 teacher-active-day: цена занятого учителе-дня (bin-packing-давление:
         // сшить нагрузку в меньшее число дней). Дефолт 0 = не считается.
         int activeDays = 0;
-        foreach (var g in placements.GroupBy(p => occById[p.OccurrenceId].TeacherId))
+        foreach (var g in counted.GroupBy(p => occById[p.OccurrenceId].TeacherId))
         {
             activeDays += g.Select(p => p.DayIndex).Distinct().Count();
             foreach (var day in g.GroupBy(p => p.DayIndex))
@@ -87,8 +97,8 @@ public static class SoftEvaluator
         if (wActiveDay != 0 && activeDays > 0)
             comps["teacher-active-day"] += (long)activeDays * wActiveDay;
 
-        // Subject maxperday (× вес параллели, R8).
-        foreach (var g in placements.GroupBy(p => (occById[p.OccurrenceId].ClassId, occById[p.OccurrenceId].SubjectId, p.DayIndex)))
+        // Subject maxperday (× вес параллели, R8). НДТП-7: внеурочка не в счёт.
+        foreach (var g in counted.GroupBy(p => (occById[p.OccurrenceId].ClassId, occById[p.OccurrenceId].SubjectId, p.DayIndex)))
         {
             if (problem.Subjects.TryGetValue(occById[g.First().OccurrenceId].SubjectId, out var subj)
                 && g.Count() > subj.MaxPerDay)
@@ -98,7 +108,7 @@ public static class SoftEvaluator
         // D-51 doubles-adjacency: разбросанный дубль дня (× вес параллели, R8/INV-D8).
         // INV-D4: аддитивен с subject-maxperday без guards — оба терма считают независимо.
         if (wDoubles != 0)
-            foreach (var g in placements.GroupBy(p => (occById[p.OccurrenceId].ClassId, occById[p.OccurrenceId].SubjectId, p.DayIndex)))
+            foreach (var g in counted.GroupBy(p => (occById[p.OccurrenceId].ClassId, occById[p.OccurrenceId].SubjectId, p.DayIndex)))
             {
                 int units = SoftUnits.DoublesScattered(g.Select(p => (occById[p.OccurrenceId], p.DayIndex, p.SlotIndex)));
                 if (units > 0)
@@ -116,14 +126,70 @@ public static class SoftEvaluator
             if (over > 0) comps["room-crowding"] += over * wCrowd;
         }
 
+        // НДТП-7: пик Вт/Ср/Пт — тяжёлый урок вне пика (× вес параллели).
+        if (wPeak != 0)
+            foreach (var p in counted)
+            {
+                var occ = occById[p.OccurrenceId];
+                if (IsHeavy(occ.SubjectId))
+                    comps["peak-days"] += SoftUnits.PeakOutside(p.DayIndex, true) * wPeak * GradeW(occ.ClassId);
+            }
+
+        // НДТП-7: край 1 раз/нед — 7 предметов на краю дня (× вес параллели).
+        if (wEdgeOnce != 0)
+        {
+            var edgeSlots = new HashSet<(Guid ClassId, Guid SubjectId, int Day, int Slot)>();
+            foreach (var day in counted.GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
+            {
+                var slots = day.Select(p => p.SlotIndex).Distinct().OrderBy(s => s).ToList();
+                if (slots.Count == 0) continue;
+                int first = slots[0], last = slots[^1];
+                foreach (var p in day)
+                {
+                    if (p.SlotIndex != first && (slots.Count <= 1 || p.SlotIndex != last)) continue;
+                    var occ = occById[p.OccurrenceId];
+                    if (!problem.Subjects.TryGetValue(occ.SubjectId, out var subj)) continue;
+                    if (!SoftUnits.IsEdgeOnceSubject(subj)) continue;
+                    edgeSlots.Add((occ.ClassId, occ.SubjectId, p.DayIndex, p.SlotIndex));
+                }
+            }
+            foreach (var g in edgeSlots.GroupBy(e => (e.ClassId, e.SubjectId)))
+                comps["edge-once"] += SoftUnits.EdgeOnceExcess(g.Count()) * wEdgeOnce * GradeW(g.Key.ClassId);
+        }
+
+        // НДТП-7: чередование — соседние слоты одинаковой тяжести (× вес параллели).
+        if (wAlternation != 0)
+            foreach (var day in counted.GroupBy(p => (occById[p.OccurrenceId].ClassId, p.DayIndex)))
+            {
+                var bySlot = day.GroupBy(p => p.SlotIndex)
+                    .OrderBy(sg => sg.Key)
+                    .Select(sg => sg.Any(p => IsHeavy(occById[p.OccurrenceId].SubjectId)))
+                    .ToList();
+                if (bySlot.Count <= 1) continue;
+                comps["alternation"] += SoftUnits.AlternationBreaks(bySlot) * wAlternation * GradeW(day.Key.ClassId);
+            }
+
+        // PE-видимость: тройки физры подряд у класса (× вес параллели).
+        // Зеркало Hard-гейта валидатора (там же relaxed-код sanpin-pe-spacing),
+        // чтобы поиск чинил то, что гейт запрещает.
+        if (wPe != 0)
+        {
+            bool IsPe(Guid occId) =>
+                occById.TryGetValue(occId, out var o) &&
+                problem.Subjects.TryGetValue(o.SubjectId, out var ps) && ps.IsPhysicalEducation;
+            foreach (var g in counted.Where(p => IsPe(p.OccurrenceId))
+                         .GroupBy(p => occById[p.OccurrenceId].ClassId))
+                comps["pe-consecutive"] += SoftUnits.PeRuns(
+                    g.Select(p => p.DayIndex).ToList()) * wPe * GradeW(g.Key);
+        }
         // R7-Soft teacher-split: лишние учителя на (класс,предмет) среди целых
         // (сплит-половины GroupId!=null — штатно два учителя, исключены).
         // Report-only: учителя зафиксированы occurrence (INV-02), ходы времени состав
         // не меняют — на выбор вариантов не влияет, только строка в оценке.
-        // Режим Off = «не волнует» → 0.
+        // Режим Off = «не волнует» → 0. НДТП-7: внеурочка исключена.
         if (problem.Flex.AssignMode != Amsur.Domain.TeacherAssignMode.Off)
         {
-            foreach (var g in placements
+            foreach (var g in counted
                          .Where(p => occById[p.OccurrenceId].GroupId is null)
                          .GroupBy(p => (occById[p.OccurrenceId].ClassId, occById[p.OccurrenceId].SubjectId)))
             {

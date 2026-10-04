@@ -33,15 +33,16 @@ public sealed class LocalSearchTests
     {
         var p = Tiny();
         // Разрыв {1,3} + (1,1): soft = 100 (окно ученика) + 10 (окно учителя)
-        // + 10×1 (doubles: пара {1,3} врозь, D-51) = 120 (веса v7; 5-й класс gw=1).
+        // + 10×1 (doubles: пара {1,3} врозь, D-51) + 5×1 (alternation [Л,Л], НДТП-7)
+        // = 125 (веса v8; 5-й класс gw=1).
         var start = Place(p, (0, 1), (0, 3), (1, 1));
         long before = SoftEvaluator.Evaluate(p, start).Total;
-        Assert.Equal(120, before);
+        Assert.Equal(125, before);
         var res = LocalSearch.Improve(p, start, TimeSpan.FromSeconds(5), seed: 42);
         Assert.True(res.SoftTotal <= before);
         Assert.True(PlacementValidator.Validate(p, res.Placements).IsValid);
-        // Оптимум здесь 0 (все три подряд): LS обязан его найти.
-        Assert.Equal(0, res.SoftTotal);
+        // Оптимум здесь 5 (пол чередования одного предмета, НДТП-7).
+        Assert.Equal(5, res.SoftTotal);
     }
 
     [Fact]

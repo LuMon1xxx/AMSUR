@@ -113,4 +113,25 @@ public sealed class SanPinCheckerTests
         }).ToList();
         Assert.Empty(SanPinChecker.Check(p, placements));
     }
+
+    // --- 6. Профиль (04.10.2026, подтверждено школой): 10А 21+21=42 — норма,
+    // потолок 34+8. База при этом всё равно подсвечена предупреждением.
+    [Fact]
+    public void ProfileWeekly_Allows42()
+    {
+        var t = T("Иванова");
+        var t2 = T("Петрова");
+        var p = Build("10А", 10,
+        [
+            (new Subject { Name = "Математика", MaxPerDay = 21 }, 21, t),
+            (new Subject { Name = "Химия (проф)", MaxPerDay = 21 }, 21, t2),
+        ], days: 5, slots: 9);
+        var placements = p.Occurrences.Select((o, i) => new PlacedLesson
+        {
+            OccurrenceId = o.Id, DayIndex = i / 9, SlotIndex = i % 9 + 1
+        }).ToList();
+        var findings = SanPinChecker.Check(p, placements);
+        Assert.DoesNotContain(findings, f => f.IsError && f.Text.Contains("потолка"));
+        Assert.Contains(findings, f => !f.IsError && f.Text.Contains("базовой нормы"));
+    }
 }

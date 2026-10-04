@@ -58,11 +58,12 @@ public sealed class EditorTests
         var problem = Problem(out var placements);
         var occ = problem.Occurrences[2];
         // Переезд (1,1) -> (0,3): день 0 станет {1,2,3} (compact), но предмет ×3 за день
-        // при норме 2: delta +15 и severity Warning (без окон — D-28).
+        // при норме 2: +15 subject-maxperday −10 edge-once (край 2→1/нед, НДТП-7)
+        // +5 alternation (день [Л,Л,Л], НДТП-7) = +10; severity Warning (без окон — D-28).
         var eval = IncrementalEvaluator.Evaluate(problem, placements,
             new CandidateMove(occ.Id, DayIndex: 0, SlotIndex: 3, RoomId: null));
         Assert.Equal(EvaluationSeverity.Warning, eval.Severity);
-        Assert.Equal(15, eval.DeltaTotal);
+        Assert.Equal(10, eval.DeltaTotal);
         // Паритет: delta == full recompute.
         var hypo = placements.Where(p => p.OccurrenceId != occ.Id)
             .Concat([new PlacedLesson { OccurrenceId = occ.Id, DayIndex = 0, SlotIndex = 3 }]).ToList();

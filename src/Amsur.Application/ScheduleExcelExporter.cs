@@ -164,6 +164,8 @@ public static class ScheduleExcelExporter
     /// всё остальное (коллизии учителей/классов/кабинетов, смены, кэпы, sync) —
     /// отказ как обычно. Неназначенные уроки — отдельным листом «Неназначенные».
     /// Файл помечен баннером ЧЕРНОВИК. UI-проводка — backlog.
+    /// rules (опц.): ослабленные строгие через B2-механику уходят в предупреждения
+    /// и выгрузку не блокируют (отмечаются в файле как предупреждения).
     /// </summary>
     public static void ExportDraftGrid(
         SchedulingProblem problem,
@@ -171,9 +173,10 @@ public static class ScheduleExcelExporter
         IReadOnlyList<Guid> unplacedOccurrenceIds,
         Stream destination,
         bool includeTeacherSheet = true,
-        bool includeRoomSheet = true)
+        bool includeRoomSheet = true,
+        EffectiveRuleSet? rules = null)
     {
-        var validation = PlacementValidator.Validate(problem, placements);
+        var validation = PlacementValidator.Validate(problem, placements, rules);
         var blocking = validation.HardViolations
             .Where(v => v.Code is not ("placement-count" or "student-gap" or "student-late-start"))
             .ToList();

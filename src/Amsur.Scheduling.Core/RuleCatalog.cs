@@ -1,6 +1,9 @@
 namespace Amsur.Scheduling.Core;
 
-// Каталог правил: веса версии 7 (D-51 / decision-teacher-gaps §1:
+// Каталог правил: веса версии 9 ( PE-видимость / 04.10.2026:
+// +pe-consecutive (дефолт 25) — тройки физры подряд: было только Hard-гейтом
+// валидатора (поиск его не видел и не чинил); стало soft + Hard.
+// Порядок: student-gap 100 >> teacher-split 25 ≈ pe-consecutive 25 > heavy-edge 20;
 // +doubles-adjacency — разбросанный сдвоенный урок дня, дефолт 10 — порядок
 // heavy-edge 20 / subject-maxperday 15, слабее student-gap 100;
 // D-50: +teacher-active-day — цена открытого учителе-дня;
@@ -14,7 +17,7 @@ namespace Amsur.Scheduling.Core;
 // как D-50). Изменения только через A/B + bump Version (политика сохранена).
 public static class RuleCatalog
 {
-    public const int Version = 7;
+    public const int Version = 9;
 
     // DEFAULTS v3 (v2 без изменений, кроме двух новых кодов):
     // student-компактность доминирует: 1 окно ученика (100) не разменивается
@@ -33,6 +36,10 @@ public static class RuleCatalog
     public const long ClassMaxPerDay = 0;   // B2: аналогично (включая норму 1-х классов)
     public const long TeacherActiveDay = 0; // D-50: цена занятого учителе-дня; 0 = выкл (дефолт-поведение не меняется)
     public const long DoublesAdjacency = 10; // D-51: разбросанный дубль дня; порядок heavy-edge 20 / subject-maxperday 15
+    public const long PeakDays = 5; // НДТП-7: тяжёлый урок вне пиковых дней (Вт/Ср/Пт)
+    public const long EdgeOnce = 10; // НДТП-7: крайняя постановка сверх 1/нед (7 предметов)
+    public const long Alternation = 5; // НДТП-7: соседние слоты одинаковой тяжести
+    public const long PeConsecutive = 25; // PE-видимость: тройка физры подряд у класса
     public const long SubjectMaxPerDay = 15;
     public const long RelationViolation = 15;
     public const long StrictStudentGap = 50;
@@ -47,7 +54,7 @@ public static class RuleCatalog
         "student-gap", "student-late-start", "teacher-gap", "teacher-cross-shift-gap", "primary-early-start",
         "heavy-edge", "room-preference", "room-crowding", "teacher-split",
         "teacher-maxperday", "class-maxperday", "teacher-active-day",
-        "doubles-adjacency",
+        "doubles-adjacency", "peak-days", "edge-once", "alternation", "pe-consecutive",
         "subject-maxperday", "relation-violation",
         "sanpin-peak-days", "sanpin-heavy-edge-limit", "sanpin-pe-spacing",
         "sanpin-doubles", "sanpin-primary-early"
@@ -69,6 +76,10 @@ public static class RuleCatalog
         "class-maxperday" => ClassMaxPerDay,
         "teacher-active-day" => TeacherActiveDay,
         "doubles-adjacency" => DoublesAdjacency,
+        "peak-days" => PeakDays,
+        "edge-once" => EdgeOnce,
+        "alternation" => Alternation,
+        "pe-consecutive" => PeConsecutive,
         "subject-maxperday" => SubjectMaxPerDay,
         "relation-violation" => RelationViolation,
         "strict-student-gap" => StrictStudentGap,
@@ -82,6 +93,10 @@ public static class RuleCatalog
         "teacher-gap" => (0, 100),
         "teacher-active-day" => (0, 100),
         "doubles-adjacency" => (0, 100),
+        "peak-days" => (0, 50),
+        "edge-once" => (0, 100),
+        "alternation" => (0, 100),
+        "pe-consecutive" => (0, 100),
         "teacher-cross-shift-gap" => (0, 50),
         "primary-early-start" => (0, 100),
         "subject-maxperday" => (0, 100),

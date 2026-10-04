@@ -8,6 +8,12 @@ public sealed class Subject : Entity
     public bool IsPhysicalEducation { get; set; } // явный флаг, не name-matching
     public bool IsForeignLanguage { get; set; } // явный флаг (D-52): ин.яз идёт сразу после физры
     public int MaxPerDay { get; set; } = 1;
+    /// <summary>
+    /// НДТП-7 (02.10.2026): внеурочка — классный час, ВОВ, факультативы.
+    /// В расписании есть (занимает слот, Hard-коллизии действуют), но уроком
+    /// НЕ считается: исключается из часов/окон/краёв/дневных капов.
+    /// </summary>
+    public bool IsNonLesson { get; set; }
 }
 
 public sealed class CurriculumItem : Entity
@@ -33,6 +39,11 @@ public sealed class LessonOccurrence : Entity
     public Guid? GroupId { get; set; }    // null = весь класс; иначе подгруппа A/B
     public Guid? SyncGroupId { get; set; } // per hour-instance: A/B-пара делит start
     public int DurationSlots { get; set; } = 1;
+    /// <summary>
+    /// НДТП-7: внеурочный час (классный час/ВОВ/факультатив). Дублирует флаг
+    /// предмета на уровне occurrence (синтезированные CommonLesson/ВОВ).
+    /// </summary>
+    public bool IsExtra { get; set; }
     /// <summary>
     /// Стабильный логический ключ (E3): Class|Subject|Teacher|Group|#hour.
     /// Детерминирован между сборками одинакового входа; persistence identity (Id) не трогает.

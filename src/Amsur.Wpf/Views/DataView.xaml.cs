@@ -263,7 +263,10 @@ public partial class DataView : UserControl
 
         var common = flex.CommonLesson;
         CommonEnabledBox.IsChecked = common?.Enabled == true;
+        // Дефолт школы (окт. 2026): четверг. Меняется свободно (не закон).
         CommonDayBox.SelectedIndex = common is null ? 3 : Math.Clamp(common.DayIndex, 0, 4);
+        CommonDayBox.IsEnabled = true;
+        CommonDayBox.ToolTip = "Обычно — четверг первым уроком смены (можно изменить).";
         CommonSlotBox.Text = (common?.SlotIndex ?? 1).ToString();
         CommonSlot2Box.Text = (common?.SlotIndexShift2 ?? 0).ToString();
         CommonGradesBox.Text = common?.GradesCsv ?? "5,6,7,8,9,10,11";

@@ -12,7 +12,11 @@ public sealed record SolverOptions(
     // E12/D-24: presolve-probing съедает весь бюджет Phase A на большой школе
     // (branches: 0 за 7.5с) — для фазы feasibility его можно отключить: поиск идёт
     // по hints сразу. Phase B (оптимизация) presolve оставляет.
-    bool PresolveInPhaseA = true);
+    bool PresolveInPhaseA = true,
+    // Grind-lite (окт. 2026): solver флаг НЕ исполняет (его фазы не меняются);
+    // его читает композиция (GenerateHost): при true результат запуска перед
+    // архивом проходит GrindLite.Polish (~60с). Режим ТОП выставляет через mode.
+    bool EnableGrindLite = false);
 
 public sealed record SolverResult(
     SolverStatus Status,

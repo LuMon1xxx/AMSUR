@@ -110,8 +110,35 @@ public static class SchoolDataImporter
             ["Обществознание"] = "Обществоведение",
         };
 
-    public static void ExportTemplate(Stream destination) =>
-        ExcelLoadExchange.ExportLoad(destination, []);
+    public static void ExportTemplate(Stream destination)
+    {
+        using var ms = new MemoryStream();
+        ExcelLoadExchange.ExportLoad(ms, []);
+        ms.Position = 0;
+        using var wb = new ClosedXML.Excel.XLWorkbook(ms);
+        var ws = wb.AddWorksheet("Пример");
+        string[] header = ["Class", "Subject", "HoursPerWeek", "Teacher", "Split",
+            "TeacherB", "Room", "UnavailDays", "UnavailSlots", "Pair", "Shift"];
+        for (int c = 0; c < header.Length; c++)
+            ws.Cell(1, c + 1).Value = header[c];
+        int r = 2;
+        foreach (var row in SchoolPresets.TemplateExamples)
+        {
+            ws.Cell(r, 1).Value = row.ClassName;
+            ws.Cell(r, 2).Value = row.SubjectName;
+            ws.Cell(r, 3).Value = row.HoursPerWeek;
+            ws.Cell(r, 4).Value = row.TeacherName;
+            ws.Cell(r, 5).Value = row.SplitSubgroups ? "A/B" : "";
+            ws.Cell(r, 6).Value = row.SplitTeacherBName ?? "";
+            ws.Cell(r, 7).Value = row.RoomName ?? "";
+            ws.Cell(r, 11).Value = row.Shift?.ToString() ?? "";
+            r++;
+        }
+        using var outMs = new MemoryStream();
+        wb.SaveAs(outMs);
+        outMs.Position = 0;
+        outMs.CopyTo(destination);
+    }
 
     public static SchoolData Import(
         Guid academicYearId,
@@ -209,6 +236,10 @@ public static class SchoolDataImporter
                 // D-52: ин.яз идёт сразу после физры (тир — SubjectTiers).
                 if (SubjectTiers.IsForeignLanguageName(key))
                     s.IsForeignLanguage = true;
+                // НДТП-7: внеурочка (классный час, ВОВ, факультативы) — в расписании
+                // есть, но уроком не считается (край дня, вне часов/окон).
+                if (SubjectTiers.IsNonLessonName(key))
+                    s.IsNonLesson = true;
                 // R6: явная сложность предмета (1..10) бьёт дефолт 5.
                 var diff = flex.SubjectDifficulty.FirstOrDefault(x =>
                     string.Equals(x.SubjectName, key, StringComparison.OrdinalIgnoreCase));
@@ -219,6 +250,10 @@ public static class SchoolDataImporter
                             $"Предмет '{key}': сложность — 1..10 (задано {diff.Difficulty}).");
                     s.Difficulty = diff.Difficulty;
                 }
+                // Школьный пресет (окт. 2026, NEEDS-CHECK): трудности официальных
+                // предметов РБ из коробки; явная настройка выше всегда бьёт пресет.
+                else if (SchoolPresets.SubjectDifficulties.TryGetValue(key, out int preset))
+                    s.Difficulty = preset;
                 subjects[key] = s;
             }
             return s;
@@ -251,8 +286,11 @@ public static class SchoolDataImporter
                 {
                     room = new Room { Name = key, PhysicalCapacity = 30, MaxSimultaneousGroups = 1 };
                     // R1/R5: конфигурация кабинета (режим + вместимость).
+                    // Явный flex бьёт школьный пресет спецкабинетов.
                     var rcfg = flex.Rooms.FirstOrDefault(x =>
-                        string.Equals(x.RoomName, key, StringComparison.OrdinalIgnoreCase));
+                            string.Equals(x.RoomName, key, StringComparison.OrdinalIgnoreCase))
+                        ?? SchoolPresets.RoomOnlyPresets.FirstOrDefault(x =>
+                            string.Equals(x.RoomName, key, StringComparison.OrdinalIgnoreCase));
                     if (rcfg is not null)
                     {
                         if (rcfg.MaxGroups < 1)
