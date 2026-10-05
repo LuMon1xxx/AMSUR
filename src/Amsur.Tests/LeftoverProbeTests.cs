@@ -3,12 +3,14 @@ using Amsur.Scheduling.Core;
 
 namespace Amsur.Tests;
 
-// Добивка остатков (04.10.2026): ни один из ~20 невмещённых не влезает
+// Добивка остатков (04.10.2026): ни один из невмещённых не влезает
 // ни в одну клетку без нарушения валидности (проверено полным перебором
 // клеток за секунды). Остатки — структурные (профильные пары без синхрона,
 // сплиты, капы), лечатся только перестановкой placed (подборщик/LNS) или
 // ослаблением капов. Тест фиксирует факт; если движок начнёт впихивать сам —
 // упадёт, и это будет хорошая новость (обновить число осознанно).
+// 05.10.2026: было 20, стало 21 — фикс капа классного часа (час кап не тратит)
+// поменял порядок упаковки жадника; fitted=0 держится (структурность intact).
 public sealed class LeftoverProbeTests(Xunit.Abstractions.ITestOutputHelper output)
 {
     [Fact]
@@ -60,6 +62,6 @@ public sealed class LeftoverProbeTests(Xunit.Abstractions.ITestOutputHelper outp
             output.WriteLine("LEFTOVER stuck: " + s);
         // Структурный факт: простой добивкой не лечится (см. шапку).
         Assert.Equal(0, fitted);
-        Assert.Equal(20, still.Count);
+        Assert.Equal(21, still.Count);
     }
 }

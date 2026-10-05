@@ -11,6 +11,12 @@ public sealed record GreedyPlacement(
 
 public static class GreedyPlacer
 {
+    // НДТП-7/фикс часа: классный час (внеурочка) дневной кап класса
+    // не тратит — ни сам не блокируется капом, ни слот его не занимает
+    // в счётчике. Учительских лимитов не касается (там час не в счёт
+    // не идёт — у классного руководителя 1 занятие, лимит не жмёт).
+    private static bool IsCounted(SchedulingProblem problem, LessonOccurrence o) =>
+        !(problem.Subjects.TryGetValue(o.SubjectId, out var s) && s.IsNonLesson);
     /// <summary>D-50 шаг ②: компакт-подсказка для пересева — упаковать день
     /// учителя (день первым + слоты вплотную к его занятиям). null = как раньше.</summary>
     public sealed record CompactHint(Guid Teacher, int Day);
@@ -59,9 +65,12 @@ public static class GreedyPlacer
                 roomUsers[(kv.Value.RoomId.Value, kv.Value.Day, kv.Value.Slot)] =
                     roomUsers.GetValueOrDefault((kv.Value.RoomId.Value, kv.Value.Day, kv.Value.Slot)) + 1;
             teacherDay[(o.TeacherId, kv.Value.Day)] = teacherDay.GetValueOrDefault((o.TeacherId, kv.Value.Day)) + 1;
-            if (!classDay.TryGetValue((o.ClassId, kv.Value.Day), out var set))
-                classDay[(o.ClassId, kv.Value.Day)] = set = [];
-            set.Add(kv.Value.Slot);
+            if (IsCounted(problem, o))
+            {
+                if (!classDay.TryGetValue((o.ClassId, kv.Value.Day), out var set))
+                    classDay[(o.ClassId, kv.Value.Day)] = set = [];
+                set.Add(kv.Value.Slot);
+            }
         }
 
         Guid OccKey(LessonOccurrence o) => o.GroupId ?? o.ClassId;
@@ -308,9 +317,12 @@ public static class GreedyPlacer
                     if (!o.GroupId.HasValue) wholeBusy.Add((o.ClassId, day, slot));
                     else subBusy.Add((o.ClassId, day, slot));
                     teacherDay[(o.TeacherId, day)] = teacherDay.GetValueOrDefault((o.TeacherId, day)) + 1;
-                    if (!classDay.TryGetValue((o.ClassId, day), out var set))
-                        classDay[(o.ClassId, day)] = set = [];
-                    set.Add(slot);
+                    if (IsCounted(problem, o))
+                    {
+                        if (!classDay.TryGetValue((o.ClassId, day), out var set))
+                            classDay[(o.ClassId, day)] = set = [];
+                        set.Add(slot);
+                    }
                 }
                 foreach (var kv in unitUse)
                     roomUsers[kv.Key] = roomUsers.GetValueOrDefault(kv.Key) + kv.Value;
@@ -349,7 +361,8 @@ public static class GreedyPlacer
                 teacherDay.GetValueOrDefault((o.TeacherId, day)) + 1 > t.MaxLessonsPerDay)
                 return false;
             // СанПиН-кэп класса (D-28): distinct-слоты дня; юнит — 1 слот.
-            if (problem.Classes.TryGetValue(o.ClassId, out var cls))
+            // НДТП-7/фикс часа: сам час капом не режется и слотов не занимает.
+            if (IsCounted(problem, o) && problem.Classes.TryGetValue(o.ClassId, out var cls))
             {
                 classDay.TryGetValue((o.ClassId, day), out var used);
                 int after = (used is not null && used.Contains(slot)) ? used.Count : (used?.Count ?? 0) + 1;

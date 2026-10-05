@@ -134,11 +134,18 @@ public static class SwapLns
                 if (o.GroupId.HasValue) _subAt.Add((o.ClassId, p.DayIndex, p.SlotIndex));
                 _teacherDay[(o.TeacherId, p.DayIndex)] =
                     _teacherDay.GetValueOrDefault((o.TeacherId, p.DayIndex)) + 1;
-                if (!_classDay.TryGetValue((o.ClassId, p.DayIndex), out var set))
-                    _classDay[(o.ClassId, p.DayIndex)] = set = [];
-                set.Add(p.SlotIndex);
+                // НДТП-7/фикс часа: час кап класса не тратит.
+                if (IsCounted(o))
+                {
+                    if (!_classDay.TryGetValue((o.ClassId, p.DayIndex), out var set))
+                        _classDay[(o.ClassId, p.DayIndex)] = set = [];
+                    set.Add(p.SlotIndex);
+                }
             }
         }
+
+        private bool IsCounted(LessonOccurrence o) =>
+            !(_problem.Subjects.TryGetValue(o.SubjectId, out var s) && s.IsNonLesson);
 
         public bool LocalFits(Guid aId, Guid bId)
         {
@@ -193,11 +200,12 @@ public static class SwapLns
         {
             if (!_problem.Classes.TryGetValue(cls, out var c)) return true;
             // Слоты класса в целевом дне без участников обмена + целевой слот.
+            // НДТП-7/фикс часа: час не в счёт.
             var after = new HashSet<int>();
             foreach (var kv in _pos)
             {
                 if (kv.Key == selfId || kv.Key == partnerId) continue;
-                if (_occ[kv.Key].ClassId == cls && kv.Value.Day == toDay)
+                if (_occ[kv.Key].ClassId == cls && kv.Value.Day == toDay && IsCounted(_occ[kv.Key]))
                     after.Add(kv.Value.Slot);
             }
             after.Add(toSlot);

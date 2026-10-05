@@ -226,7 +226,8 @@ public static class IncrementalEvaluator
             {
                 var daySlots = hypo
                     .Where(p => occById.TryGetValue(p.OccurrenceId, out var o) &&
-                                o.ClassId == node.ClassId && p.DayIndex == day)
+                                o.ClassId == node.ClassId && p.DayIndex == day &&
+                                !(problem.Subjects.TryGetValue(o.SubjectId, out var nls) && nls.IsNonLesson))
                     .Select(p => p.SlotIndex).OrderBy(s => s).ToList();
                 if (daySlots.Count == 0) continue;
                 int gap = StudentCompactness.GapOf(daySlots);
