@@ -154,6 +154,49 @@ public sealed class ExportScheduleTests
         Assert.Contains("Иванов", unflat);
     }
 
+    // --- 6b. Черновик с ослабленным строгим (B2): нарушение попадает в файл,
+    // выгрузка не отклоняется (16.10.2026) ---
+    [Fact]
+    public void ExportDraft_RelaxedRule_IsListedInFile()
+    {
+        var cls = new SchoolClass
+        {
+            AcademicYearId = Guid.NewGuid(), Name = "5А", Grade = 5,
+            StudentCount = 25, MaxLessonsPerDay = 1,
+        };
+        var teacher = new Teacher { Name = "Иванов", MaxLessonsPerDay = 6 };
+        var math = new Subject { Name = "Мат", MaxPerDay = 2 };
+        var item = new CurriculumItem
+        {
+            ClassId = cls.Id, SubjectId = math.Id, TeacherId = teacher.Id, HoursPerWeek = 2,
+        };
+        var input = new ProblemInput([cls], [teacher], [math], [item],
+            [], [], [], DaysCount: 2, SlotsPerDay: 3);
+        var (p, e) = ProblemBuilder.Build(input,
+            new SolverOptions(MaxTimeSeconds: 5, NumSearchWorkers: 1, RandomSeed: 1));
+        Assert.Empty(e);
+        // Оба урока в один день — класс превышает свою дневную норму (1 урок).
+        var placements = p!.Occurrences.Select((o, i) => new PlacedLesson
+        {
+            OccurrenceId = o.Id, DayIndex = 0, SlotIndex = i + 1,
+        }).ToList();
+        var rules = EffectiveRuleSet.Default with
+        {
+            RelaxedStrict = new HashSet<string>(StringComparer.Ordinal)
+            {
+                DraftPlanner.ClassMaxPerDay,
+            },
+        };
+
+        using var ms = new MemoryStream();
+        ScheduleExcelExporter.ExportDraftGrid(p, placements, [], ms, rules: rules);
+
+        var flat = string.Join("\n", new XLWorkbook(new MemoryStream(ms.ToArray()))
+            .Worksheet("Расписание").RangeUsed().CellsUsed().Select(c => c.GetString()));
+        Assert.Contains("ЧЕРНОВИК", flat, StringComparison.Ordinal);
+        Assert.Contains("Разрешено школой (class-maxperday)", flat, StringComparison.Ordinal);
+    }
+
     // --- 6. Черновик с коллизией: отказ ---
     [Fact]
     public void ExportDraft_CollisionRefused()

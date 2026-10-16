@@ -215,10 +215,34 @@ public sealed class FlexP1Tests : IAsyncDisposable
         Assert.Equal(TeacherAssignMode.HardClass, got.Settings.AssignMode);
     }
 
+    // Черновик-фолбэк (16.10.2026): настройки переживают roundtrip.
+    [Fact]
+    public async Task FlexStore_DraftFallback_Roundtrip()
+    {
+        Directory.CreateDirectory(_dir);
+        var store = new SqliteFlexStore($"Data Source={Path.Combine(_dir, "draft.db")}");
+        await store.InitializeAsync();
+        var settings = FlexSettingsRow.Default with
+        {
+            DraftFallbackEnabled = false,
+            DraftExtraLessonsPerDay = 2,
+            DraftPolishSeconds = 25,
+            DraftRelaxCodes = "class-maxperday",
+        };
+        await store.SaveAsync(FlexDataset.Empty with { Settings = settings });
+
+        var got = await store.LoadAsync();
+
+        Assert.Equal(settings, got.Settings);
+        Assert.False(got.Settings.ToSettings().DraftFallbackEnabled);
+        Assert.Equal(2, got.Settings.ToSettings().DraftExtraLessonsPerDay);
+        Assert.Equal(25, got.Settings.ToSettings().DraftPolishSeconds);
+        Assert.True(got.Settings.DraftRelaxCodeSet.SetEquals(["class-maxperday"]));
+    }
+
     // Store: старая/пустая БД → дефолты, без исключений (обратная совместимость).
     [Fact]
-    public async Task FlexStore_OldDb_ReadsDefaults()
-    {
+    public async Task FlexStore_OldDb_ReadsDefaults()    {
         Directory.CreateDirectory(_dir);
         var db = Path.Combine(_dir, "old.db");
         var school = new SqliteSchoolDataStore($"Data Source={db}");

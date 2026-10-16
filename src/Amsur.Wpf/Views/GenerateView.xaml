@@ -194,6 +194,9 @@
       </ItemsControl.ItemTemplate>
     </ItemsControl>
 
+    <!-- Черновик-фолбэк (16.10.2026): карточка строится в code-behind по VM.HasDraft -->
+    <StackPanel x:Name="DraftPanel" Margin="0,12,0,0"/>
+
     <!-- Итог приёмки + активная версия -->
     <TextBlock Text="{Binding AcceptResultText}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
     <TextBlock Text="{Binding ActiveVersionText}" FontSize="13" Foreground="{DynamicResource BTextSoft}"/>

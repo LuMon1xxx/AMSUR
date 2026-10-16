@@ -34,6 +34,38 @@ public sealed class WpfShellTests : IAsyncDisposable
         });
     }
 
+    // --- 1b2. Черновик-фолбэк (16.10.2026): карточка черновика рендерится, когда
+    // генерация не дала ни одного варианта, и не занимает места, когда черновика нет. ---
+    [Fact]
+    public void GenerateWindow_RendersDraftCard()
+    {
+        UiTestHost.Run(() =>
+        {
+            EnsureApp();
+            var empty = new GenerateView(new GenerateViewModel());
+            Assert.Empty(((System.Windows.Controls.StackPanel)empty.FindName("DraftPanel")!).Children);
+
+            var vm = new GenerateViewModel
+            {
+                HasDraft = true,
+                DraftText = "Черновик: размещено 2 из 3 уроков (оценка качества 0)." +
+                    Environment.NewLine + "Не поставлено: 1 — у3.",
+                DraftExportable = true,
+            };
+            var view = new GenerateView(vm);
+            var host = new Window { Content = view };
+            host.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
+            host.Left = -10000; host.Top = -10000;
+            host.Width = 1100; host.Height = 780;
+            host.Show();
+            host.UpdateLayout();
+            var panel = (System.Windows.Controls.StackPanel)view.FindName("DraftPanel")!;
+            Assert.Single(panel.Children);
+            host.Close();
+            return Task.CompletedTask;
+        });
+    }
+
     // --- 1b. Top-5 с 1 карточкой рендерится без XamlParseException (repro 13.09.2026:
     // GenerateWindow.xaml:182 BasedOn="{DynamicResource ...}" падал при первом кандидате,
     // пустой VM тест 1 его не ловил — шаблон инстанцируется только при Cards.Count > 0). ---

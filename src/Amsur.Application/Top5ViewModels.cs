@@ -172,6 +172,20 @@ public sealed class GenerateViewModel : INotifyPropertyChanged
     private string _acceptResultText = "";
     public string AcceptResultText { get => _acceptResultText; set => Set(ref _acceptResultText, value); }
 
+    // --- Черновик-фолбэк (16.10.2026) ---
+    private bool _hasDraft;
+    public bool HasDraft { get => _hasDraft; set => Set(ref _hasDraft, value); }
+
+    private string _draftText = "";
+    public string DraftText { get => _draftText; set => Set(ref _draftText, value); }
+
+    /// <summary>false — в черновике есть нарушения, которые школа не разрешала: выгружать нельзя.</summary>
+    private bool _draftExportable;
+    public bool DraftExportable { get => _draftExportable; set => Set(ref _draftExportable, value); }
+
+    public event Action? ExportDraftRequested;
+    public void RequestExportDraft() => ExportDraftRequested?.Invoke();
+
     private string _activeVersionText = "Активной версии нет";
     public string ActiveVersionText { get => _activeVersionText; set => Set(ref _activeVersionText, value); }
 

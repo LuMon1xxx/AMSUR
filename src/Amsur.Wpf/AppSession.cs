@@ -365,6 +365,36 @@ public sealed class AppSession
         return (g.Placed.Count, problem.Occurrences.Count);
     }
 
+    // --- Черновик-фолбэк (16.10.2026) ---
+
+    /// <summary>Включён ли автосбор черновика, когда идеал не найден (гибкие настройки).</summary>
+    public bool DraftFallbackEnabled => Flex.Settings.DraftFallbackEnabled;
+
+    /// <summary>Настройки черновика из гибких настроек школы (послабления, превышение, доводка).</summary>
+    public DraftOptions BuildDraftOptions(int seed)
+    {
+        var st = Flex.Settings;
+        int polish = Math.Clamp(st.DraftPolishSeconds, 0, 60);
+        return new DraftOptions(
+            st.DraftRelaxCodeSet,
+            Math.Clamp(st.DraftExtraLessonsPerDay, 0, 2),
+            seed,
+            polish > 0 ? TimeSpan.FromSeconds(polish) : TimeSpan.Zero);
+    }
+
+    /// <summary>
+    /// Выгрузка черновика генерации: баннер ЧЕРНОВИК, лист «Неназначенные»,
+    /// послабления школы уходят в предупреждения, а не в отказ (D-42 + B2).
+    /// </summary>
+    public async Task ExportDraftAsync(string path, SchedulingProblem problem, DraftResult draft,
+        CancellationToken ct = default)
+    {
+        var rules = QualityRules with { RelaxedStrict = Flex.Settings.DraftRelaxCodeSet };
+        await using var fs = File.Create(path);
+        ScheduleExcelExporter.ExportDraftGrid(problem, draft.Placements, draft.Unplaced, fs,
+            rules: rules);
+    }
+
     /// <summary>A2: персональное расписание учителя из активного.</summary>
     public async Task ExportTeacherAsync(string path, Guid teacherId, CancellationToken ct = default)
     {

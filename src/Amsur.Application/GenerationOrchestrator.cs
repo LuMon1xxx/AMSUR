@@ -54,6 +54,35 @@ public sealed class GenerationOrchestrator
     public ScheduleCandidateArchive Archive => _archive;
     public TrajectoryHistory History => _history;
 
+    /// <summary>Последняя построенная задача (черновик и выгрузка работают по ней).</summary>
+    public SchedulingProblem? LastProblem => _lastProblem;
+
+    /// <summary>Последний собранный черновик (null — не собирался).</summary>
+    public DraftResult? LastDraft { get; private set; }
+
+    /// <summary>
+    /// Черновик-фолбэк (16.10.2026): строгий поиск не дал полного расписания —
+    /// собрать лучшее доступное (жадный старт + разрешённые школой послабления).
+    /// В базу черновик не идёт (INV-01), живёт в UI и выгрузке.
+    /// </summary>
+    public DraftResult? BuildDraft(DraftOptions options)
+    {
+        if (_lastProblem is null)
+        {
+            LastDraft = null;
+            _vm.HasDraft = false;
+            _vm.DraftText = "Черновик не собран: нет данных генерации.";
+            _vm.DraftExportable = false;
+            return null;
+        }
+        var draft = DraftPlanner.Build(_lastProblem, options, Rules);
+        LastDraft = draft;
+        _vm.DraftText = string.Join(Environment.NewLine, draft.Summary);
+        _vm.DraftExportable = draft.IsUsable;
+        _vm.HasDraft = true;
+        return draft;
+    }
+
     /// <summary>Активный набор весов (S5): задаётся до RunAsync; по умолчанию STANDARD.</summary>
     public EffectiveRuleSet Rules { get; set; } = EffectiveRuleSet.Default;
 

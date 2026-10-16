@@ -177,8 +177,10 @@ public static class ScheduleExcelExporter
         EffectiveRuleSet? rules = null)
     {
         var validation = PlacementValidator.Validate(problem, placements, rules);
+        // Набор неблокирующих кодов — общий с DraftPlanner (один источник истины,
+        // иначе гейт черновика в окне и гейт выгрузки разъедутся).
         var blocking = validation.HardViolations
-            .Where(v => v.Code is not ("placement-count" or "student-gap" or "student-late-start"))
+            .Where(v => !DraftPlanner.IsNonBlockingForDraft(v.Code))
             .ToList();
         if (blocking.Count > 0)
             throw new InvalidOperationException(
@@ -205,6 +207,25 @@ public static class ScheduleExcelExporter
             $"ЧЕРНОВИК: размещено {placements.Count} из {problem.Occurrences.Count} уроков " +
             $"({unplaced.Count} не назначено — см. лист «Неназначенные»).";
         ws.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+        // Нарушения — прямо в файле (16.10.2026): файл читают люди, которые окна
+        // программы не видели. «Разрешено школой» = ослабленные строгие (B2);
+        // «Проверь глазами» = окна/поздний старт, которые выгрузку не блокируют (D-42).
+        foreach (var g in validation.Warnings
+            .GroupBy(w => w.Code).OrderBy(g => g.Key, StringComparer.Ordinal))
+        {
+            ws.Cell(row, 1).Value =
+                $"Разрешено школой ({g.Key}): {g.Count()} — например: {g.First().Message}";
+            row++;
+        }
+        foreach (var g in validation.HardViolations
+            .Where(v => DraftPlanner.IsNonBlockingForDraft(v.Code) && v.Code != "placement-count")
+            .GroupBy(w => w.Code).OrderBy(g => g.Key, StringComparer.Ordinal))
+        {
+            ws.Cell(row, 1).Value =
+                $"Проверь глазами ({g.Key}): {g.Count()} — например: {g.First().Message}";
+            row++;
+        }
         row += 2;
         foreach (var g in byClass)
         {

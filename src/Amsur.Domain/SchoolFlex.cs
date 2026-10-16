@@ -75,6 +75,29 @@ public sealed class FlexSettings : Entity
     /// </summary>
     public int TeacherWeeklyNorm { get; set; } = 25;
 
+    // --- Черновик-фолбэк (16.10.2026) ---
+    /// <summary>
+    /// Если строгий поиск не дал полного расписания, собрать черновик: лучшее,
+    /// что нашлось, плюс добивка с послаблениями. В базу черновик не идёт.
+    /// </summary>
+    public bool DraftFallbackEnabled { get; set; } = true;
+    /// <summary>Насколько можно превысить дневной лимит класса/учителя в черновике (0..2).</summary>
+    public int DraftExtraLessonsPerDay { get; set; } = 1;
+    /// <summary>Сколько секунд отдать на доводку черновика (0..60).</summary>
+    public int DraftPolishSeconds { get; set; } = 10;
+    /// <summary>
+    /// Какие правила разрешено нарушить в черновике (csv кодов, напр.
+    /// "class-maxperday,teacher-maxperday,student-late-start"). Пусто = только
+    /// частичное размещение без послаблений.
+    /// </summary>
+    public string DraftRelaxCodes { get; set; } =
+        "class-maxperday,teacher-maxperday,student-late-start";
+
+    /// <summary>Коды послаблений черновика в виде набора (пустые отброшены).</summary>
+    public IReadOnlySet<string> DraftRelaxCodeSet =>
+        DraftRelaxCodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.Ordinal);
+
     public static FlexSettings Default => new();
 
     /// <summary>
@@ -154,9 +177,18 @@ public sealed record FlexSettingsRow(
     int IsHeavyThreshold,
     TeacherAssignMode AssignMode,
     bool AllowTeacherOverload = false,
-    int TeacherOverloadCap = 9)
+    int TeacherOverloadCap = 9,
+    bool DraftFallbackEnabled = true,
+    int DraftExtraLessonsPerDay = 1,
+    int DraftPolishSeconds = 10,
+    string DraftRelaxCodes = "class-maxperday,teacher-maxperday,student-late-start")
 {
     public static FlexSettingsRow Default => new(true, 3, 2, 1, 7, TeacherAssignMode.HardClass);
+
+    /// <summary>Коды послаблений черновика в виде набора (пустые отброшены).</summary>
+    public IReadOnlySet<string> DraftRelaxCodeSet =>
+        DraftRelaxCodes.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.Ordinal);
 
     public FlexSettings ToSettings() => new()
     {
@@ -168,6 +200,10 @@ public sealed record FlexSettingsRow(
         AssignMode = AssignMode,
         AllowTeacherOverload = AllowTeacherOverload,
         TeacherOverloadCap = TeacherOverloadCap,
+        DraftFallbackEnabled = DraftFallbackEnabled,
+        DraftExtraLessonsPerDay = DraftExtraLessonsPerDay,
+        DraftPolishSeconds = DraftPolishSeconds,
+        DraftRelaxCodes = DraftRelaxCodes,
     };
 }
 

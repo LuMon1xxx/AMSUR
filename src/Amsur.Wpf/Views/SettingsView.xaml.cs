@@ -81,8 +81,7 @@ public partial class SettingsView : UserControl
     {
         QualityPanel.Children.Clear();
         QualityPanel.Children.Add(BuildGradePriorityCard());
-        foreach (var o in _editor.Options)
-        {
+        foreach (var o in _editor.Options)        {
             var card = new Border { Style = (Style)FindResource("Card"), Margin = new Thickness(0, 0, 0, 8) };
             var sp = new StackPanel();
             var head = new StackPanel { Orientation = Orientation.Horizontal };
@@ -186,6 +185,158 @@ public partial class SettingsView : UserControl
             }
             card.Child = sp;
             QualityPanel.Children.Add(card);
+        }
+        QualityPanel.Children.Add(BuildDraftFallbackCard());
+    }
+
+    // --- Черновик-фолбэк (16.10.2026): что делать, когда идеал не найден ---
+    private CheckBox? _draftFallbackBox;
+    private TextBox? _draftExtraBox, _draftPolishBox;
+    private readonly Dictionary<string, CheckBox> _draftRelaxBoxes = new(StringComparer.Ordinal);
+
+    private static readonly (string Code, string Title)[] DraftRelaxOptions =
+    [
+        ("class-maxperday", "Перегруз класса: больше уроков в день, чем норма"),
+        ("teacher-maxperday", "Перегруз учителя: больше уроков в день, чем лимит"),
+        ("student-late-start", "Позднее начало дня у класса"),
+        ("student-gap", "Окна у класса посреди дня"),
+    ];
+
+    private Border BuildDraftFallbackCard()
+    {
+        var st = _session.Flex.Settings;
+        var set = st.DraftRelaxCodeSet;
+        var card = new Border { Style = (Style)FindResource("Card"), Margin = new Thickness(0, 0, 0, 8) };
+        var sp = new StackPanel();
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Если идеал не найден", FontSize = 15, FontWeight = FontWeights.SemiBold,
+        });
+        sp.Children.Add(new TextBlock
+        {
+            Text = "Строгий поиск может не уложиться в лимит времени. Тогда программа покажет черновик: " +
+                "лучшее, что удалось собрать, и добьёт остаток с послаблениями, отмеченными ниже. " +
+                "Черновик нельзя принять в базу, его можно только выгрузить и доделать руками.",
+            FontSize = 12, Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
+        });
+        _draftFallbackBox = new CheckBox
+        {
+            Content = "Собирать черновик автоматически",
+            IsChecked = st.DraftFallbackEnabled, Margin = new Thickness(0, 8, 0, 0), FontSize = 13,
+        };
+        _draftFallbackBox.Checked += (_, _) => MarkDirty();
+        _draftFallbackBox.Unchecked += (_, _) => MarkDirty();
+        sp.Children.Add(_draftFallbackBox);
+
+        sp.Children.Add(SectionHint("Ради полноты в черновике можно нарушить (только отмеченное):"));
+        _draftRelaxBoxes.Clear();
+        foreach (var (code, title) in DraftRelaxOptions)
+        {
+            var box = new CheckBox
+            {
+                Content = title, IsChecked = set.Contains(code), FontSize = 13,
+                Margin = new Thickness(0, 4, 0, 0), Tag = code,
+            };
+            box.Checked += (_, _) => MarkDirty();
+            box.Unchecked += (_, _) => MarkDirty();
+            _draftRelaxBoxes[code] = box;
+            sp.Children.Add(box);
+        }
+
+        var grid = new Grid { Margin = new Thickness(0, 8, 0, 0) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(320) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(60) });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        var l1 = new TextBlock
+        {
+            Text = "Можно превысить дневной лимит (0..2 урока):", FontSize = 13,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        Grid.SetRow(l1, 0); Grid.SetColumn(l1, 0);
+        grid.Children.Add(l1);
+        _draftExtraBox = new TextBox
+        {
+            Text = Math.Clamp(st.DraftExtraLessonsPerDay, 0, 2).ToString(),
+            Margin = new Thickness(0, 3, 0, 3),
+        };
+        _draftExtraBox.TextChanged += (_, _) => MarkDirty();
+        Grid.SetRow(_draftExtraBox, 0); Grid.SetColumn(_draftExtraBox, 1);
+        grid.Children.Add(_draftExtraBox);
+        var l2 = new TextBlock
+        {
+            Text = "Секунд на доводку черновика (0..60):", FontSize = 13,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        Grid.SetRow(l2, 1); Grid.SetColumn(l2, 0);
+        grid.Children.Add(l2);
+        _draftPolishBox = new TextBox
+        {
+            Text = Math.Clamp(st.DraftPolishSeconds, 0, 60).ToString(),
+            Margin = new Thickness(0, 3, 0, 3),
+        };
+        _draftPolishBox.TextChanged += (_, _) => MarkDirty();
+        Grid.SetRow(_draftPolishBox, 1); Grid.SetColumn(_draftPolishBox, 1);
+        grid.Children.Add(_draftPolishBox);
+        sp.Children.Add(grid);
+
+        var apply = new Button
+        {
+            Content = "Применить черновик-фолбэк", Style = (Style)FindResource("BtnSecondary"),
+            HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0),
+        };
+        apply.Click += OnDraftApplyClick;
+        sp.Children.Add(apply);
+        card.Child = sp;
+        return card;
+    }
+
+    private async void OnDraftApplyClick(object sender, RoutedEventArgs e)
+    {
+        if (_draftExtraBox is null || _draftPolishBox is null) return;
+        if (!int.TryParse(_draftExtraBox.Text, out int extra) || extra < 0 || extra > 2 ||
+            !int.TryParse(_draftPolishBox.Text, out int polish) || polish < 0 || polish > 60)
+        {
+            Say("Превышение лимита — 0..2 урока, доводка — 0..60 секунд.", true);
+            return;
+        }
+        var codes = _draftRelaxBoxes.Where(kv => kv.Value.IsChecked == true)
+            .Select(kv => kv.Key).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        var cur = _session.Flex.Settings;
+        bool want = _draftFallbackBox?.IsChecked == true;
+        // B2: новое опасное послабление — через подтверждение (как в «Качестве»).
+        var added = codes.Where(c => !cur.DraftRelaxCodeSet.Contains(c) && RuleCatalog.IsDangerous(c))
+            .ToList();
+        if (want && added.Count > 0)
+        {
+            bool ok = await _session.ConfirmDangerousAsync(System.Windows.Window.GetWindow(this),
+                added[0], "Черновик с послаблениями",
+                string.Join(" ", added.Select(DangerousConsequence)) +
+                " Послабления действуют только на черновик: принять такое расписание в базу нельзя.");
+            if (!ok) { Say("Не применено — настройки черновика не изменены.", true); return; }
+        }
+        try
+        {
+            var st = cur with
+            {
+                DraftFallbackEnabled = want,
+                DraftExtraLessonsPerDay = extra,
+                DraftPolishSeconds = polish,
+                DraftRelaxCodes = string.Join(",", codes),
+            };
+            await _session.ApplyFlexAsync(_session.Flex with { Settings = st });
+            MarkClean();
+            Say(want
+                ? $"Черновик-фолбэк применён: послаблений {codes.Count}, превышение до {extra}, доводка {polish} с. " +
+                  "Действует на следующие генерации."
+                : "Черновик-фолбэк выключен — при неудаче будет только частичное размещение.",
+                false);
+        }
+        catch (Exception ex)
+        {
+            var errs = _session.LastImportErrors;
+            Say(errs.Count > 0 ? string.Join("; ", errs.Take(3)) : ex.Message, true);
         }
     }
 
