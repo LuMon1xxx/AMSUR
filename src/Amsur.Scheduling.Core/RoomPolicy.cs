@@ -7,17 +7,13 @@ using Amsur.Domain;
 // риском расхождения; теперь все идут сюда. Поведение без конфигов — как раньше.
 public static class RoomPolicy
 {
-    /// <summary>Сколько мест нужно occurrence: весь класс или половина (подгруппа).</summary>
-    public static int NeedSeats(SchedulingProblem problem, LessonOccurrence occ)
-    {
-        int students = problem.Classes.TryGetValue(occ.ClassId, out var cls) ? cls.StudentCount : 0;
-        return occ.GroupId.HasValue ? (students + 1) / 2 : students;
-    }
-
     /// <summary>
     /// Может ли solver сам ставить occurrence в кабинет (кандидат).
     /// Ручное назначение (ManualEdit/Preview) идёт мимо — IsManualOnly его не блокирует,
     /// ONLY-чужой блокируется и вручную (валидатор, hard).
+    /// Вместимость по местам НЕ проверяется (решение пользователя 16.10.2026, D-68):
+    /// класс может идти в любой кабинет, разрешённый предмету; поле «учеников в классе»
+    /// остаётся справочным (выгрузки/интерфейс) и на выбор кабинета не влияет.
     /// </summary>
     public static bool IsCandidate(SchedulingProblem problem, Room room, LessonOccurrence occ)
     {
@@ -26,7 +22,6 @@ public static class RoomPolicy
         if (problem.RoomCaps.TryGetValue((room.Id, occ.SubjectId), out var cap) &&
             cap == RoomCapabilityKind.Forbidden)
             return false;
-        if (room.PhysicalCapacity < NeedSeats(problem, occ)) return false;
         return true;
     }
 

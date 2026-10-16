@@ -21,9 +21,8 @@ public sealed class OrToolsSolver : IScheduleSolver
     private sealed record SlotPick(int Day, int Slot, Guid? RoomId);
 
     /// <summary>
-    /// Кандидаты-кабинеты occurrence (P0.5 + P2/R1): исключены Forbidden + Seats &lt; need
-    /// + IsManualOnly + ONLY-чужой. need = StudentCount класса (whole) или половина
-    /// (подгруппа). Пусто → ModelInvalid.
+    /// Кандидаты-кабинеты occurrence (P0.5 + P2/R1): исключены Forbidden
+    /// + IsManualOnly + ONLY-чужой. Места не проверяются (D-68). Пусто → ModelInvalid.
     /// </summary>
     private static List<int> RoomCandidates(
         SchedulingProblem problem, IList<Room> roomList,
@@ -80,7 +79,7 @@ public sealed class OrToolsSolver : IScheduleSolver
                 {
                     return new SolverResult(SolverStatus.ModelInvalid, [], 0, 0,
                         sw.ElapsedMilliseconds, 0, 0, new Dictionary<string, long>(),
-                        [$"Occurrence {occ.Id}: no room fits (Forbidden or seats)."], phaseMs);
+                        [$"Occurrence {occ.Id}: no room fits (Forbidden or room rules)."], phaseMs);
                 }
             }
         }
@@ -546,7 +545,7 @@ public sealed class OrToolsSolver : IScheduleSolver
         // линии — один BoolVar на (occurrence, линия); NoOverlap на линию.
         // Сложность O(n·L) вместо O(n·R·T) реификации (было OOM на 1200×40×42).
         // Эквивалентность: unit-интервалы размера 1 на целочисленном времени +
-        // C линий ⟺ не более C одновременных на комнату; Forbidden/seats — в кандидатах.
+        // C линий ⟺ не более C одновременных на комнату; Forbidden/ONLY/ManualOnly — в кандидатах.
         IntVar?[] rVar = new IntVar?[n];
         IntVar?[] rIdxVar = new IntVar?[n];
         List<int>[] roomCands = new List<int>[n]; // ИНДЕКСЫ ЛИНИЙ-кандидатов

@@ -56,8 +56,8 @@ public sealed class Room : Entity
     public string Name { get; set; } = "";
     public string Building { get; set; } = "";
     public int Floor { get; set; }
-    public int PhysicalCapacity { get; set; } = 30;     // Hard: MaxSimultaneousGroups-sweep
-    public int ComfortableCapacity { get; set; } = 28;  // Soft
+    public int PhysicalCapacity { get; set; } = 30;     // Справочно (D-68): на выбор кабинета не влияет
+    public int ComfortableCapacity { get; set; } = 28;  // Справочно: в движке не используется
     public int MaxSimultaneousGroups { get; set; } = 1; // Hard (R5 MaxGroups)
     /// <summary>R1: только ручное назначение — solver сам сюда не ставит, ручная правка разрешена.</summary>
     public bool IsManualOnly { get; set; }
