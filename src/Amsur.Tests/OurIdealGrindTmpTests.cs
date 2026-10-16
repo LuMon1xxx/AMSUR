@@ -91,7 +91,7 @@ public sealed class OurIdealGrindTmpTests(Xunit.Abstractions.ITestOutputHelper o
         Assert.Equal(0, best.Hard);
         Assert.Equal(0, best.Pupil);
         var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "Samples_Export");
+            "..", "..", "..", "..", "..", "samples");
         Directory.CreateDirectory(dir);
         var unplaced = p.Occurrences.Select(o => o.Id)
             .Except(best.Pl.Select(x => x.OccurrenceId)).ToList();

@@ -8,7 +8,7 @@ namespace Amsur.Tests;
 // цель — побить оригинал (140 окон тем же аудитом: дырки между крайними).
 // Раунды (LS90 + Thin20 + TeacherDay30 + CrossShift15 + Swap15 + repair + PeRepair)
 // до первого раунда без улучшений или бюджета 25 мин. Лучшее пишется в
-// Samples_Export/RealSchool_GRIND.xlsx. Временный файл итерации (потом снести
+// samples/RealSchool_GRIND.xlsx. Временный файл итерации (потом снести
 // в постоянный QualityDocs при победе).
 // ВРЕМЕННЫЙ файл кампании (окт. 2026): длинные прогоны выведены из сьюта
 // (каждый — 10–30 мин). Итог зафиксирован: 285 → 162 (допы посменно,
@@ -111,7 +111,7 @@ public sealed class GrindExperimentTests(Xunit.Abstractions.ITestOutputHelper ou
         output.WriteLine($"GRIND final: hard={best.Hard} pupil={best.Pupil} tw={best.Win} " +
             $"soft={best.Soft} rounds={round} t={sw.Elapsed.TotalMinutes:F1}min");
         var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "Samples_Export");
+            "..", "..", "..", "..", "..", "samples");
         Directory.CreateDirectory(dir);
         var unplaced = p.Occurrences.Select(o => o.Id)
             .Except(best.Pl.Select(x => x.OccurrenceId)).ToList();

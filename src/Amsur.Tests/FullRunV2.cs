@@ -70,7 +70,7 @@ public sealed class FullRunV2(Xunit.Abstractions.ITestOutputHelper output)
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var cand = Path.Combine(dir.FullName, "данные", "тест_реал", name);
+            var cand = Path.Combine(dir.FullName, "data", "real", name);
             if (File.Exists(cand)) return cand;
             dir = dir.Parent;
         }

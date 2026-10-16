@@ -16,7 +16,7 @@ public sealed class ScratchGen(Xunit.Abstractions.ITestOutputHelper output)
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var cand = Path.Combine(dir.FullName, "данные", "тест_реал", "РеальнаяНагрузка_5-11.xlsx");
+            var cand = Path.Combine(dir.FullName, "data", "real", "РеальнаяНагрузка_5-11.xlsx");
             if (File.Exists(cand)) return cand;
             dir = dir.Parent;
         }
@@ -174,7 +174,7 @@ public sealed class ScratchGen(Xunit.Abstractions.ITestOutputHelper output)
     // ThinDay микро-стадия (never-worsens) → DayClose×1 → Sync×3 →
     // TeacherDay-полировка → pupil-дожим (RuinRecreate×10) → TeacherDay×2 +
     // DayClose×1 → pupil-single sync-aware чинка (кап +6 gaps/ход) → экспорт
-    // в данные/тест_реал/<outFileName>. rules threadyтся во все фазы.
+    // в data/real/<outFileName>. rules threadyтся во все фазы.
     internal static FullMetrics RunFullPipeline(
         Xunit.Abstractions.ITestOutputHelper output,
         string outFileName,
@@ -316,7 +316,7 @@ public sealed class ScratchGen(Xunit.Abstractions.ITestOutputHelper output)
         string? root = null;
         while (dir is not null)
         {
-            var c = Path.Combine(dir.FullName, "данные", "тест_реал");
+            var c = Path.Combine(dir.FullName, "data", "real");
             if (Directory.Exists(c)) { root = c; break; }
             dir = dir.Parent;
         }
@@ -884,7 +884,7 @@ public sealed class ScratchGen(Xunit.Abstractions.ITestOutputHelper output)
         string? root = null;
         while (dir is not null)
         {
-            var c = Path.Combine(dir.FullName, "данные", "тест_реал");
+            var c = Path.Combine(dir.FullName, "data", "real");
             if (Directory.Exists(c)) { root = c; break; }
             dir = dir.Parent;
         }

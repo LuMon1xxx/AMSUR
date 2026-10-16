@@ -19,7 +19,7 @@ public sealed class FinalSchoolRunTests(Xunit.Abstractions.ITestOutputHelper out
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var cand = Path.Combine(dir.FullName, "данные", "тест_реал", "РеальнаяНагрузка_5-11.xlsx");
+            var cand = Path.Combine(dir.FullName, "data", "real", "РеальнаяНагрузка_5-11.xlsx");
             if (File.Exists(cand)) return cand;
             dir = dir.Parent;
         }
@@ -217,7 +217,7 @@ public sealed class FinalSchoolRunTests(Xunit.Abstractions.ITestOutputHelper out
         Assert.Equal(24, p.Classes.Count);
         Assert.True(greedyCount(p, final.Placements) > 700);
         var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "Samples_Export");
+            "..", "..", "..", "..", "..", "samples");
         Directory.CreateDirectory(dir);
         var unplaced = p.Occurrences.Select(o => o.Id)
             .Except(final.Placements.Select(x => x.OccurrenceId)).ToList();

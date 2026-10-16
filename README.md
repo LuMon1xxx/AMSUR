@@ -4,7 +4,7 @@
 ввод нагрузки → «Сгенерировать» → Top-5 вариантов с объяснением →
 ручная правка → выгрузка в Excel.
 
-![Главное окно (референс композиции)](primer.png)
+![Главное окно (референс композиции)](assets/primer.png)
 
 Стек: .NET 10, WPF, SQLite (raw Microsoft.Data.Sqlite, без EF),
 OR-Tools CP-SAT + собственный локальный поиск (Greedy + CompactRepair + VND + LNS).
@@ -18,7 +18,7 @@ dotnet test src/Amsur.Tests   # ~3 мин
 ```
 
 Шаблон нагрузки скачивается из самой программы (главный экран → шаблон Excel).
-Демо-данные: `DemoSchool.xlsx` (56 строк). Эталон типовой школы: `RealSchool_Schedule_EPICJ.xlsx`.
+Демо-данные: `data/samples/DemoSchool.xlsx` (56 строк). Эталон типовой школы: `data/samples/RealSchool_Schedule_EPICJ.xlsx`.
 
 ## Честные ограничения
 
@@ -33,7 +33,8 @@ dotnet test src/Amsur.Tests   # ~3 мин
 - `docs/PROJECT_STATUS.md` — статус, тесты, настройка (единый файл состояния).
 - `docs/MASTER_PLAN.md`, `docs/DECISIONS.md`, `docs/BENCHMARKS.md` — план, журнал решений, замеры.
 - `docs/SANPIN_RB.md`, `docs/SUBJECTS_RB.md` — нормы и предметы РБ (рабочие выборки, NEEDS-CHECK).
-- `docs/WORK_LOG.md` — журнал работ. `Docs_Contest/` — материалы к конкурсам.
+- `docs/WORK_LOG.md` — журнал работ. `contest/` — материалы к конкурсам.
+- `data/` — данные школ (входы) и материалы СанПиН. `samples/` — примеры выгрузок.
 - `docs/КАК_ЗАПУСТИТЬ_НА_ЧУЖОМ_ПК.md` — запуск вне dev-машины.
 - `docs/ПРОСТАЯ_ИНСТРУКЦИЯ_ЗАВУЧУ.md` — 1 страница для завуча.
 - `docs/АМСУР_ПРОСТЫМИ_СЛОВАМИ.md` — как работает, дефолты, что можно/нельзя,

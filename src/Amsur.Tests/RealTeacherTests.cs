@@ -5,7 +5,7 @@ using Amsur.Scheduling.Core;
 namespace Amsur.Tests;
 
 // Реальный пилот СШ №8 (5–11): нагрузка из фото + НАСТОЯЩИЕ учителя из
-// сверки (кросс-чек клеток, см. данные/тест_реал/). Непокрытые уроки —
+// сверки (кросс-чек клеток, см. data/real/). Непокрытые уроки —
 // ВАКАНСИЯ (честные дыры школы: физика 10-х, астрономия 11-х и др.).
 // Смены: 5,8,9,10,11 — 1-я (слоты 1–7); 6,7 — 2-я (слоты 6–12).
 // Классный час — Чт слот 1 / слот 7 через CommonLesson (первым уроком).
@@ -18,7 +18,7 @@ public sealed class RealTeacherTests(Xunit.Abstractions.ITestOutputHelper output
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var cand = Path.Combine(dir.FullName, "данные", "тест_реал", "РеальнаяНагрузка_5-11.xlsx");
+            var cand = Path.Combine(dir.FullName, "data", "real", "РеальнаяНагрузка_5-11.xlsx");
             if (File.Exists(cand)) return cand;
             dir = dir.Parent;
         }

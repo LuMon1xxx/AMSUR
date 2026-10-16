@@ -4,14 +4,14 @@ using Amsur.Scheduling.Core;
 
 namespace Amsur.Tests;
 
-// Реальная школа СШ №8 по фото висящего расписания 5–11 (данные/, 20.09.2026):
+// Реальная школа СШ №8 по фото висящего расписания 5–11 (data/, 20.09.2026):
 // 24 класса (5–9 по 4, 10–11 по 2), 408 строк нагрузки, 769 ч/нед.
 // Учителя на фото отсутствуют — плейсхолдеры "<Предмет>·<параллель>" (сверить с завучем).
 // Профильные пары 10А/11А — колонка Pair (Pairs-v1); 6–7-е — 2-я смена (колонка Shift, G1-mini).
 // Корректирует ASSUME фикстуры OurSchoolTests: там 27 классов (5–7 по 5),
 // смены "6,7 + 8Г/9Г во 2-й"; по фото: 24 класса, 2-я смена только 6–7-е
 // (нумерация №6–12), 5-е и 8–11-е — 1-я. Сплит ин.яза есть и в 5-х.
-// Файл: данные/НашаШкола_5-11_нагрузка.xlsx (генератор — данные/build_load_5-11.py).
+// Файл: data/school/НашаШкола_5-11_нагрузка.xlsx (генератор — data/school/build_load_5-11.py).
 public sealed class PhotoSchoolTests(Xunit.Abstractions.ITestOutputHelper output)
 {
     private static string FindWorkbook()
@@ -19,7 +19,7 @@ public sealed class PhotoSchoolTests(Xunit.Abstractions.ITestOutputHelper output
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var cand = Path.Combine(dir.FullName, "данные", "НашаШкола_5-11_нагрузка.xlsx");
+            var cand = Path.Combine(dir.FullName, "data", "school", "НашаШкола_5-11_нагрузка.xlsx");
             if (File.Exists(cand)) return cand;
             dir = dir.Parent;
         }

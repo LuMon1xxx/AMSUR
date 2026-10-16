@@ -17,7 +17,7 @@ public sealed class QualityDocsTests(Xunit.Abstractions.ITestOutputHelper output
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir is not null)
         {
-            var cand = Path.Combine(dir.FullName, "данные", "НашаШкола_5-11_нагрузка.xlsx");
+            var cand = Path.Combine(dir.FullName, "data", "school", "НашаШкола_5-11_нагрузка.xlsx");
             if (File.Exists(cand)) return cand;
             dir = dir.Parent;
         }
@@ -242,7 +242,7 @@ public sealed class QualityDocsTests(Xunit.Abstractions.ITestOutputHelper output
     private static string ExportPath(string name)
     {
         var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "Samples_Export");
+            "..", "..", "..", "..", "..", "samples");
         Directory.CreateDirectory(dir);
         return Path.Combine(dir, name);
     }

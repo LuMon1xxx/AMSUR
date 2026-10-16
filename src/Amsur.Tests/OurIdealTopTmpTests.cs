@@ -266,7 +266,7 @@ public sealed class OurIdealTopTmpTests(Xunit.Abstractions.ITestOutputHelper out
         Assert.Equal(0, final.Hard);
         Assert.Equal(0, PupilCount(p, final.Placements));
         var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "Samples_Export");
+            "..", "..", "..", "..", "..", "samples");
         Directory.CreateDirectory(dir);
         var unplaced = p.Occurrences.Select(o => o.Id)
             .Except(final.Placements.Select(x => x.OccurrenceId)).ToList();

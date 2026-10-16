@@ -5,7 +5,7 @@ using Amsur.Scheduling.Core;
 namespace Amsur.Tests;
 
 // Временная витрина: расписание идеальной 5–11 в Excel + статистика окон.
-// Удалить после показа (артефакт остаётся в Samples_Export).
+// Удалить после показа (артефакт остаётся в samples).
 public sealed class OurIdealShowcaseTests(Xunit.Abstractions.ITestOutputHelper output)
 {
     [Fact]
@@ -78,7 +78,7 @@ public sealed class OurIdealShowcaseTests(Xunit.Abstractions.ITestOutputHelper o
                      .OrderByDescending(g => g.Count()).Take(5))
             output.WriteLine($"SHOWCASE: {TName(g.Key)}: {g.Count()} ч/нед, дней {g.Select(x => x.DayIndex).Distinct().Count()}");
 
-        var dir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "Samples_Export");
+        var dir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "samples");
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, "OurIdeal_5-11.xlsx");
         using (var fs = new FileStream(path, FileMode.Create))
