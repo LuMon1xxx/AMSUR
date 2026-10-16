@@ -43,7 +43,8 @@
   sequence-файла (виновника) нет, потому что падения не было. Вывод: флейк, воспроизвести не удалось.
 - Точечные после последних правок (список нарушений в файле + сброс карточки при новом запуске):
   31/31 зелёных (`ExportScheduleTests`, `WpfShellTests`, `DraftPlannerTests`, `DraftFallbackOrchestratorTests`).
-- Полный прогон №3 (после последних правок) — ворота приёмки, результат ниже.
+- Полный прогон №3 (после последних правок) — ворота приёмки: **457 passed / 0 failed /
+  11 skipped / 468, 10м07с** — зелёный. Ворота пройдены, коммит `999eaf9`.
 
 Прирост тестов: было 452 (441 passed + 11 skipped), стало 467 (456 passed + 11 skipped):
 +9 `DraftPlannerTests`, +4 `DraftFallbackOrchestratorTests`, +1 `WpfShellTests`
