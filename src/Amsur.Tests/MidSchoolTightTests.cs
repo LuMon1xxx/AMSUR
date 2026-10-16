@@ -38,6 +38,12 @@ public sealed class MidSchoolTightTests(Xunit.Abstractions.ITestOutputHelper out
 
     private static string Letter(int i) => Letters[i];
 
+    // Смены: стресс-фикстур намеренно держит историческую раскладку (5–8 во второй),
+    // чтобы мерить плотность при двух нагруженных сменах. Модель смен школы
+    // (6-е + 8Г/9Г во второй, D-67) живёт в RealSchoolStressTests: здесь 22 класса
+    // в первой смене не влезли бы в 7 слотов (≈778 уроков против 770 слотов).
+    private static bool IsSecondShiftTight(int grade) => grade is >= 5 and <= 8;
+
     // Сплиты ТОЛЬКО 10–11 (остальные параллели — целиком).
     private static bool IsSplit(int grade, string subj) => grade >= 10 &&
         (subj is "Иностранный язык" or "Информатика" or "Физическая культура и здоровье");
@@ -54,7 +60,7 @@ public sealed class MidSchoolTightTests(Xunit.Abstractions.ITestOutputHelper out
         foreach (var grade in Enumerable.Range(5, 7))
             for (int li = 0; li < LettersCount(grade); li++)
             {
-                bool second = grade is >= 5 and <= 8;
+                bool second = IsSecondShiftTight(grade);
                 classes.Add(new SchoolClass
                 {
                     AcademicYearId = year, Name = $"{grade}{Letter(li)}",
@@ -66,7 +72,7 @@ public sealed class MidSchoolTightTests(Xunit.Abstractions.ITestOutputHelper out
 
         var classSlots = classes.ToDictionary(
             c => c.Id,
-            c => (IReadOnlyList<int>)(RealSchoolStressTests.IsSecondShift(c.Grade)
+            c => (IReadOnlyList<int>)(IsSecondShiftTight(c.Grade)
                 ? Enumerable.Range(8, 7).ToList()
                 : Enumerable.Range(1, 7).ToList()));
 
@@ -195,7 +201,7 @@ public sealed class MidSchoolTightTests(Xunit.Abstractions.ITestOutputHelper out
         var usedShift2 = new HashSet<Guid>();
         foreach (var cls in classes.OrderBy(c => c.Name, StringComparer.Ordinal))
         {
-            var used = RealSchoolStressTests.IsSecondShift(cls.Grade) ? usedShift2 : usedShift1;
+            var used = IsSecondShiftTight(cls.Grade) ? usedShift2 : usedShift1;
             var pick = classSubjectTeachers[cls.Id].FirstOrDefault(id => !used.Contains(id));
             if (pick == Guid.Empty)
                 pick = allPool.Select(t => t.Id).FirstOrDefault(id => !used.Contains(id));
@@ -289,7 +295,7 @@ public sealed class MidSchoolTightTests(Xunit.Abstractions.ITestOutputHelper out
         foreach (var h in hours)
         {
             var cls = problem.Classes[h.ClassId];
-            int expectSlot = RealSchoolStressTests.IsSecondShift(cls.Grade) ? 8 : 1;
+            int expectSlot = IsSecondShiftTight(cls.Grade) ? 8 : 1;
             Assert.Equal(3, problem.AllowedDays[h.Id].Single());
             Assert.Equal(expectSlot, problem.AllowedSlots[h.Id].Single());
             Assert.Equal(cls.ClassTeacherId, h.TeacherId);

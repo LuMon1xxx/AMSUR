@@ -8,8 +8,12 @@ namespace Amsur.Tests;
 // Учебный план — аппроксимация типовых планов РБ (пост. МО №47/2024, №75/2025, №104/2026),
 // суммы часов/нед = нормам 5-дневки 21/23/29/30/32/33/34 (см. SUBJECTS_RB.md §2).
 // Точные официальные раскладки — в приложениях постановлений; отклонения — в SUBJECTS_RB.md §3.
-// Сетка 5 дней (Пн–Пт) × 14 слотов: 1–7 первая смена, 8–14 вторая смена (SANPIN_RB.md §6).
-// 1–4, 9–11 — первая смена; 5–8 — вторая. Сплит A/B — иностранный язык 5–11.
+// Сетка 5 дней (Пн–Пт) × 14 слотов: 1–7 первая смена, 8–14 вторая смена.
+// Смены (решение пользователя 16.10.2026, D-67): вторая смена — 6-е классы целиком
+// и по одному классу из параллелей 8 и 9 (буква Г); остальные — первая смена.
+// Норма п.92 №525 запрещает вторую смену для I, II, V, IX–XI — 9Г формально против
+// нормы, это осознанное решение школы (емкость), см. docs/SANPIN_RB.md §10.
+// Сплит A/B — иностранный язык 5–11.
 public sealed class RealSchoolStressTests(Xunit.Abstractions.ITestOutputHelper output)
 {
     private sealed record SubjHours(string Name, int Hours, bool Split = false);
@@ -39,8 +43,11 @@ public sealed class RealSchoolStressTests(Xunit.Abstractions.ITestOutputHelper o
     // Дневной максимум по СанПиН (SANPIN_RB.md §3): 1→5 (4+1×5), 2–4→5, 5–6→6, 7–11→7.
     public static int ClassDayCap(int grade) => grade <= 4 ? 5 : grade <= 6 ? 6 : 7;
 
-    // Смены (SANPIN_RB.md §6): 1–4, 9–11 — первая; 5–8 — вторая.
-    public static bool IsSecondShift(int grade) => grade is >= 5 and <= 8;
+    // Смены (D-67): вторая — 6-е целиком и 8Г/9Г; первая — все остальные.
+    public static bool IsSecondShift(int grade, string letter) =>
+        grade == 6 || (grade is 8 or 9 && letter == "Г");
+
+    private static string LetterOf(string className) => className[^1].ToString();
 
     private static string[] Letters(int grade) =>
         grade <= 9 ? ["А", "Б", "В", "Г"] : ["А", "Б"];
@@ -60,14 +67,14 @@ public sealed class RealSchoolStressTests(Xunit.Abstractions.ITestOutputHelper o
                 {
                     AcademicYearId = year, Name = $"{grade}{letter}",
                     Grade = grade, StudentCount = 25,
-                    ShiftId = IsSecondShift(grade) ? shift2 : shift1,
+                    ShiftId = IsSecondShift(grade, letter) ? shift2 : shift1,
                     MaxLessonsPerDay = ClassDayCap(grade),
                 });
 
         // Посменные слоты (D-28): 1-я смена 1..7, 2-я смена 8..14.
         var classSlots = classes.ToDictionary(
             c => c.Id,
-            c => (IReadOnlyList<int>)(IsSecondShift(c.Grade)
+            c => (IReadOnlyList<int>)(IsSecondShift(c.Grade, LetterOf(c.Name))
                 ? Enumerable.Range(8, 7).ToList()
                 : Enumerable.Range(1, 7).ToList()));
 

@@ -223,7 +223,8 @@ public static class PlacementValidator
                 });
         }
 
-        // Дневной максимум класса по СанПиН (SANPIN_RB.md §3): HARD — или Warning (B2).
+        // Дневной максимум класса — правило школы (в СанПиН РБ нормы уроков в день нет,
+        // SANPIN_RB.md §10): HARD — или Warning (B2).
         // Считаем ЗАНЯТЫЕ СЛОТЫ (distinct), а не placements: сплит-час — 2 placements в 1 слоте.
         // НДТП-7: внеурочка не в счёт.
         var countedKnown = known.Where(p => IsCounted(occById[p.OccurrenceId])).ToList();
