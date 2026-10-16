@@ -154,7 +154,8 @@ public sealed class ExportScheduleTests
         Assert.Contains("Иванов", unflat);
     }
 
-    // --- 6. Черновик с коллизией: отказ ---    [Fact]
+    // --- 6. Черновик с коллизией: отказ ---
+    [Fact]
     public void ExportDraft_CollisionRefused()
     {
         var (p, placements) = Tiny();

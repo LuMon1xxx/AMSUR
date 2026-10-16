@@ -44,7 +44,7 @@ public sealed class GenerationOrchestrator
             _vm.RefreshTrajectory(_history.Snapshot());
         };
         _vm.StopRequested += () => _stopCts?.Cancel();
-        _vm.AcceptRequested += card => _ = AcceptAsync(card);
+        _vm.AcceptRequested += card => _ = AcceptSafeAsync(card);
     }
 
     private CancellationTokenSource? _stopCts;
@@ -202,6 +202,20 @@ public sealed class GenerationOrchestrator
     }
 
     public sealed record AcceptOutcome(bool Succeeded, string Message, AcceptedVersion? Accepted);
+
+    // Fire-and-forget из UI-события: исключение не должно теряться молча
+    // (UnobservedTaskException при "исчезнувшем" await) — показываем текст в статусе.
+    private async Task AcceptSafeAsync(CandidateCardModel? card)
+    {
+        try
+        {
+            await AcceptAsync(card);
+        }
+        catch (Exception ex)
+        {
+            _vm.AcceptResultText = $"Приёмка не удалась: {ex.Message}";
+        }
+    }
 
     private void RefreshTop5() => _vm.Top5 = Top5PanelModel.FromArchive(_archive, _lastProblem);
 

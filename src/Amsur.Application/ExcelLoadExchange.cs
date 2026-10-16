@@ -66,11 +66,15 @@ public static class ExcelLoadExchange
             ?? throw new InvalidOperationException("Workbook has no worksheets.");
         var rows = new List<LoadRow>();
         int r = 2;
-        while (true)
+        // Пустая строка ВНУТРИ листа — пропуск, не конец данных: иначе все строки ниже
+        // терялись молча. Идём до последней использованной строки (без границы был бы
+        // бесконечный цикл: за пределами диапазона ClosedXML возвращает пустые ячейки).
+        int lastRow = ws.LastRowUsed()?.RowNumber() ?? 1;
+        while (r <= lastRow)
         {
             string cls = ws.Cell(r, 1).GetString().Trim();
             string subj = ws.Cell(r, 2).GetString().Trim();
-            if (string.IsNullOrEmpty(cls) && string.IsNullOrEmpty(subj)) break; // конец данных
+            if (string.IsNullOrEmpty(cls) && string.IsNullOrEmpty(subj)) { r++; continue; } // пустая строка
             if (string.IsNullOrEmpty(cls) || string.IsNullOrEmpty(subj))
                 throw new InvalidOperationException($"Row {r}: Class and Subject are required.");
             if (!int.TryParse(ws.Cell(r, 3).GetString().Trim(), out int hours) || hours <= 0)

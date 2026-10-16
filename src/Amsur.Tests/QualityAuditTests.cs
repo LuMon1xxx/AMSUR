@@ -5,18 +5,12 @@ namespace Amsur.Tests;
 
 // EPIC-H QUALITY OPTIMIZATION — измерительный харнес (H1–H4).
 // Запуск: AMSUR_EPICH=1 dotnet test --filter QualityAuditTests
-// Без флага тесты молча пропускаются (долгие LS-прогоны не для CI-гейта).
+// Без флага тесты помечаются Skipped на discovery (EpicHFactAttribute), а не
+// молча «проходят»: долгие LS-прогоны не для CI-гейта, но факт пропуска виден.
 // Методология: Greedy baseline + LocalSearch напрямую (без CP-SAT), т.к. на
 // масштабе ≥388 occ CP-SAT B даёт 0 инкумбентов (D-24) — LS и есть движок качества.
 public sealed class QualityAuditTests(Xunit.Abstractions.ITestOutputHelper output)
 {
-    private bool Enabled()
-    {
-        if (Environment.GetEnvironmentVariable("AMSUR_EPICH") == "1") return true;
-        output.WriteLine("SKIPPED: set AMSUR_EPICH=1 to run EPIC-H measurements.");
-        return false;
-    }
-
     private static List<PlacedLesson> GreedyStart(SchedulingProblem problem, int seed = 11)
     {
         var greedy = GreedyPlacer.Place(problem, seed);
@@ -99,10 +93,9 @@ public sealed class QualityAuditTests(Xunit.Abstractions.ITestOutputHelper outpu
     }
 
     // H1: breakdown greedy vs greedy+LS на RealSchool.
-    [Fact]
+    [EpicHFact]
     public void H1_QualityBreakdown()
     {
-        if (!Enabled()) return;
         var problem = RealSchoolStressTests.BuildRealSchool(budget: 60);
         output.WriteLine($"H1: occ={problem.Occurrences.Count} classes={problem.Classes.Count} " +
             $"teachers={problem.Teachers.Count} grid={problem.DaysCount}x{problem.SlotsPerDay}");
@@ -115,10 +108,9 @@ public sealed class QualityAuditTests(Xunit.Abstractions.ITestOutputHelper outpu
     }
 
     // H2: аудит механики LS (попытки/отказы/тайминги/плато).
-    [Fact]
+    [EpicHFact]
     public void H2_MoveAudit()
     {
-        if (!Enabled()) return;
         var problem = RealSchoolStressTests.BuildRealSchool(budget: 60);
         var greedy = GreedyStart(problem);
         var audit = new LocalSearch.Audit();
@@ -128,10 +120,9 @@ public sealed class QualityAuditTests(Xunit.Abstractions.ITestOutputHelper outpu
     }
 
     // H3: кривая качества от бюджета (одна fixture, один seed).
-    [Fact]
+    [EpicHFact]
     public void H3_TimeBudgetCurve()
     {
-        if (!Enabled()) return;
         var problem = RealSchoolStressTests.BuildRealSchool(budget: 300);
         output.WriteLine($"H3: occ={problem.Occurrences.Count}");
         var greedy = GreedyStart(problem);
@@ -153,10 +144,9 @@ public sealed class QualityAuditTests(Xunit.Abstractions.ITestOutputHelper outpu
     }
 
     // H5: плато VND на длинном бюджете (сходимость — ранний выход).
-    [Fact]
+    [EpicHFact]
     public void H5_Plateau300s()
     {
-        if (!Enabled()) return;
         var problem = RealSchoolStressTests.BuildRealSchool(budget: 300);
         var greedy = GreedyStart(problem);
         var audit = new LocalSearch.Audit();
@@ -170,10 +160,9 @@ public sealed class QualityAuditTests(Xunit.Abstractions.ITestOutputHelper outpu
     }
 
     // H5b: влияет ли seed жадного старта на финал VND (тот же LS-seed)?
-    [Fact]
+    [EpicHFact]
     public void H5_GreedySeeds()
     {
-        if (!Enabled()) return;
         var problem = RealSchoolStressTests.BuildRealSchool(budget: 60);
         foreach (int gseed in new[] { 11, 22, 33 })
         {
@@ -187,10 +176,9 @@ public sealed class QualityAuditTests(Xunit.Abstractions.ITestOutputHelper outpu
     }
 
     // H4: стабильность от seed (одна fixture, один бюджет, workers=1 — LS однопоточен).
-    [Fact]
+    [EpicHFact]
     public void H4_SeedStability()
     {
-        if (!Enabled()) return;
         var problem = RealSchoolStressTests.BuildRealSchool(budget: 60);
         var greedy = GreedyStart(problem);
         var softs = new List<(int Seed, long Soft, int Accepted)>();

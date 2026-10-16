@@ -105,7 +105,8 @@ public sealed class FlexP34Tests : IAsyncDisposable
         Assert.True(new FileInfo(path).Length > 0);
     }
 
-    // Битый flex не роняет данные (fail-loud, старое живо).    [Fact]
+    // Битый flex не роняет данные (fail-loud, старое живо).
+    [Fact]
     public async Task Session_Flex_BadKeepsOldData()
     {
         Directory.CreateDirectory(_dir);

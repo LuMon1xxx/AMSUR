@@ -16,6 +16,7 @@ public static class GreedyPlacer
     // в счётчике. Учительских лимитов не касается (там час не в счёт
     // не идёт — у классного руководителя 1 занятие, лимит не жмёт).
     private static bool IsCounted(SchedulingProblem problem, LessonOccurrence o) =>
+        !o.IsExtra &&
         !(problem.Subjects.TryGetValue(o.SubjectId, out var s) && s.IsNonLesson);
     /// <summary>D-50 шаг ②: компакт-подсказка для пересева — упаковать день
     /// учителя (день первым + слоты вплотную к его занятиям). null = как раньше.</summary>

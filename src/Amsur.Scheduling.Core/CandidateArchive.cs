@@ -114,10 +114,11 @@ public sealed class ScheduleCandidateArchive(int maxSize = 5, long diversityThre
             AcceptedCount++;
             return true;
         }
+        // Сюда доходим только когда candidate.SoftTotal >= worst.SoftTotal (строго лучше
+        // отсечено выше), поэтому принимаем ровно при недостатке сходства с архивом.
         long minDist = _members.Min(m => Distance(candidate, m));
-        bool worse = candidate.SoftTotal >= worst.SoftTotal;
         bool similar = minDist < diversityThreshold;
-        if (!worse || !similar)
+        if (!similar)
         {
             // Лучше худшего (quality) или достаточно отличается (diversity) — принять.
             _members.Remove(worst);

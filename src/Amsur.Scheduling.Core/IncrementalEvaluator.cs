@@ -35,6 +35,11 @@ public static class IncrementalEvaluator
         EffectiveRuleSet? rules)
     {
         var occById = problem.Occurrences.ToDictionary(o => o.Id);
+        // НДТП-7: зеркало PlacementValidator/SearchIndex — внеурочка (IsExtra или
+        // предмет-не-урок) лимиты и компактность не тратит.
+        bool IsCounted(LessonOccurrence o) =>
+            !o.IsExtra &&
+            !(problem.Subjects.TryGetValue(o.SubjectId, out var s) && s.IsNonLesson);
         var hard = new List<ValidationIssue>();
         var reasons = new List<string>();
 
@@ -203,11 +208,12 @@ public static class IncrementalEvaluator
                 });
         }
 
-        // Teacher MaxPerDay (Hard FROZEN D-04): скоупово.
+        // Teacher MaxPerDay (Hard FROZEN D-04): скоупово и только по «зачётным»
+        // занятиям — как PlacementValidator:176 и SearchIndex (внеурочка лимит не тратит).
         if (problem.Teachers.TryGetValue(node.TeacherId, out var teacher))
         {
             int count = hypo.Count(p => occById.TryGetValue(p.OccurrenceId, out var o) &&
-                o.TeacherId == node.TeacherId && p.DayIndex == move.DayIndex);
+                o.TeacherId == node.TeacherId && p.DayIndex == move.DayIndex && IsCounted(o));
             if (count > teacher.MaxLessonsPerDay)
                 hard.Add(new ValidationIssue
                 {
@@ -221,13 +227,15 @@ public static class IncrementalEvaluator
         // Forbidden в ручной правке (solver обходит через soft-градиент + CompactRepair).
         {
             int anchor = StudentCompactness.AnchorFor(problem, node.ClassId);
+            // Distinct: при переносе внутри дня массив давал один и тот же день дважды
+            // и дублировал issues.
             foreach (int day in new[] { hypo.First(p => p.OccurrenceId == move.OccurrenceId).DayIndex,
-                                        current.First(p => p.OccurrenceId == move.OccurrenceId).DayIndex })
+                                        current.First(p => p.OccurrenceId == move.OccurrenceId).DayIndex }
+                         .Distinct())
             {
                 var daySlots = hypo
                     .Where(p => occById.TryGetValue(p.OccurrenceId, out var o) &&
-                                o.ClassId == node.ClassId && p.DayIndex == day &&
-                                !(problem.Subjects.TryGetValue(o.SubjectId, out var nls) && nls.IsNonLesson))
+                                o.ClassId == node.ClassId && p.DayIndex == day && IsCounted(o))
                     .Select(p => p.SlotIndex).OrderBy(s => s).ToList();
                 if (daySlots.Count == 0) continue;
                 int gap = StudentCompactness.GapOf(daySlots);

@@ -206,7 +206,11 @@ public partial class ScheduleView : UserControl
                 Height = r == 0 ? GridLength.Auto : new GridLength(76),
             });
 
-        var byCell = rows.ToDictionary(r => (r.DayIndex, r.Slot), r => r);
+        // Сплит-урок (A/B) и вид «кабинет» штатно дают несколько записей на одну клетку —
+        // ToDictionary падал бы с ArgumentException на дубле ключа. Храним список:
+        // рисуем первую запись, к ней бейдж «+ ещё N» и tooltip со всеми.
+        var byCell = rows.GroupBy(r => (r.DayIndex, r.Slot))
+            .ToDictionary(g => g.Key, g => g.ToList());
         var accent = Br("BAccent", Brushes.Indigo);
         var accentSoft = Br("BAccentSoft", Brushes.Lavender);
         var card = Br("BCard", Brushes.White);
@@ -269,7 +273,8 @@ public partial class ScheduleView : UserControl
 
             for (int d = 0; d < days; d++)
             {
-                byCell.TryGetValue((d, s), out var row);
+                byCell.TryGetValue((d, s), out var cellRows);
+                var row = cellRows is null || cellRows.Count == 0 ? null : cellRows[0];
                 bool isSelected = row is not null && _selectedRow is not null &&
                     row.OccurrenceId == _selectedRow.OccurrenceId;
                 Border cell;
@@ -312,6 +317,15 @@ public partial class ScheduleView : UserControl
                             chip,
                         },
                     };
+                    // Клетка занята более чем одним занятием (сплит/совмещённый кабинет):
+                    // честно показываем, что показаны не все.
+                    if (cellRows!.Count > 1)
+                        inner.Children.Add(new TextBlock
+                        {
+                            Text = $"+ ещё {cellRows.Count - 1}", FontSize = 11,
+                            FontWeight = FontWeights.SemiBold, Foreground = accent,
+                            Margin = new Thickness(0, 2, 0, 0),
+                        });
                     var stripe = new Border
                     {
                         Background = area, Width = 3, CornerRadius = new CornerRadius(2),
@@ -331,7 +345,8 @@ public partial class ScheduleView : UserControl
                     };
                     cell.Child = dock;
                     cell.MouseLeftButtonUp += OnMatrixCellClick;
-                    cell.ToolTip = $"{row.ClassName} · {row.SubjectName} · {row.TeacherName} · каб. {row.RoomName}";
+                    cell.ToolTip = string.Join("\n", cellRows!.Select(r =>
+                        $"{r.ClassName} · {r.SubjectName} · {r.TeacherName} · каб. {r.RoomName}"));
                 }
                 System.Windows.Controls.Grid.SetRow(cell, s + 1); System.Windows.Controls.Grid.SetColumn(cell, d + 1);
                 MatrixGrid.Children.Add(cell);

@@ -145,6 +145,7 @@ public static class SwapLns
         }
 
         private bool IsCounted(LessonOccurrence o) =>
+            !o.IsExtra &&
             !(_problem.Subjects.TryGetValue(o.SubjectId, out var s) && s.IsNonLesson);
 
         public bool LocalFits(Guid aId, Guid bId)

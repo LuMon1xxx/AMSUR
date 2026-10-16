@@ -39,7 +39,19 @@ public static class PlacementValidator
         var byGroup = new Dictionary<(Guid, int, int), List<Guid>>(); // group-or-class key
         var byRoom = new Dictionary<(Guid, int, int), int>();
         var byRoomClasses = new Dictionary<(Guid, int, int), HashSet<Guid>>(); // P2/R5 key-aware
-        var placedByOcc = placements.ToDictionary(p => p.OccurrenceId);
+        // Дубль OccurrenceId (битая ручная правка/импорт) — issue, а не throw:
+        // validator обязан вернуть результат, а не падать.
+        var placedByOcc = new Dictionary<Guid, PlacedLesson>();
+        foreach (var p in placements)
+        {
+            if (!placedByOcc.TryAdd(p.OccurrenceId, p))
+                result.HardViolations.Add(new ValidationIssue
+                {
+                    Code = "duplicate-placement",
+                    Message = $"Occurrence {p.OccurrenceId} placed more than once.",
+                    OccurrenceId = p.OccurrenceId
+                });
+        }
         // A4: дальше — только известные (чужие уже получили not-placed выше).
         var known = placements.Where(p => occById.ContainsKey(p.OccurrenceId)).ToList();
 

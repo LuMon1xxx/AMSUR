@@ -120,7 +120,8 @@ public sealed class WpfShellTests : IAsyncDisposable
         });
     }
 
-    // --- 2b. SettingsWindow: карточка перегрузки строится (выкл. и вкл.) ---    [Fact]
+    // --- 2b. SettingsWindow: карточка перегрузки строится (выкл. и вкл.) ---
+    [Fact]
     public void SettingsWindow_OverloadCard_Constructs()
     {
         UiTestHost.Run(async () =>
@@ -164,7 +165,8 @@ public sealed class WpfShellTests : IAsyncDisposable
         });
     }
 
-    // --- 4. LoadRowWindow: диалог ручного ввода собирается и без ресурсов App ---    [Fact]
+    // --- 4. LoadRowWindow: диалог ручного ввода собирается и без ресурсов App ---
+    [Fact]
     public void LoadRowWindow_Constructs()
     {
         UiTestHost.Run(() =>

@@ -271,8 +271,9 @@ public static class ScheduleExcelExporter
                 foreach (int s in slots)
                     if (s > max) max = s;
         }
-        // Не больше 7 строк (смена), минимум 1.
-        return Math.Clamp(max - anchor + 1, 1, 7);
+        // Верхняя граница — реальная длина сетки (жёсткие 7 обрезали уроки 8-го слота),
+        // минимум 1.
+        return Math.Clamp(max - anchor + 1, 1, Math.Max(1, problem.SlotsPerDay));
     }
 
     private static string CellText(SchedulingProblem problem, LessonOccurrence occ)
