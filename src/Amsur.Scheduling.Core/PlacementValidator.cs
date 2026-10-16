@@ -234,7 +234,7 @@ public static class PlacementValidator
                 AddHardOrWarn(result, relaxed, "class-maxperday", new ValidationIssue
                 {
                     Code = "class-maxperday",
-                    Message = $"Класс {cls.Name}: {slotCount} уроков в день {g.Key.DayIndex + 1} (норма {cls.MaxLessonsPerDay}).",
+                    Message = $"Класс {cls.Name}: {slotCount} уроков в день {g.Key.DayIndex + 1} (лимит школы {cls.MaxLessonsPerDay}).",
                     ClassId = g.Key.ClassId
                 });
             // 1-е классы: дней с 5 уроками — не более 1 в неделю (норма «4 + 1×5»).

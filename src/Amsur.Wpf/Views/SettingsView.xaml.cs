@@ -196,7 +196,7 @@ public partial class SettingsView : UserControl
 
     private static readonly (string Code, string Title)[] DraftRelaxOptions =
     [
-        ("class-maxperday", "Перегруз класса: больше уроков в день, чем норма"),
+        ("class-maxperday", "Перегруз класса: больше уроков в день, чем лимит школы"),
         ("teacher-maxperday", "Перегруз учителя: больше уроков в день, чем лимит"),
         ("student-late-start", "Позднее начало дня у класса"),
         ("student-gap", "Окна у класса посреди дня"),
@@ -357,11 +357,12 @@ public partial class SettingsView : UserControl
             "Дни «со второго урока» станут допустимыми (со штрафом в оценке).",
         "teacher-maxperday" => "Учителя смогут вести больше уроков в день, чем их лимит. " +
             "Перегрузка станет допустимой (с предупреждением).",
-        "class-maxperday" => "У классов сможет быть больше уроков в день, чем норма " +
-            "(включая норму 1-х классов). Перегруз станет допустимым (с предупреждением).",
+        "class-maxperday" => "У классов сможет быть больше уроков в день, чем дневной лимит школы " +
+            "(включая лимит 1-х классов). Перегруз станет допустимым (с предупреждением). " +
+            "В СанПиН РБ нормы «не более N уроков в день» нет — это правило школы (сверка 16.10.2026).",
         "teacher-overload" => "Дневной лимит поднимется ТОЛЬКО у тех учителей, чья недельная " +
             "нагрузка не влезает в норму. Это признание нехватки штата — будет видно в отчётах.",
-        "cap-raise" => "Дневные лимиты сверх СанПиН-норм: нагрузка сверх нормы. " +
+        "cap-raise" => "Дневные лимиты выше школьного правила: нагрузка сверх лимита школы. " +
             "Снижение лимитов — без предупреждения.",
         _ when code.StartsWith("sanpin-", StringComparison.Ordinal) =>
             "Норма СанПиН будет ослаблена. Веса не проверены по НПА — сверьте с завучем и нормами.",
@@ -586,7 +587,7 @@ public partial class SettingsView : UserControl
         foreach (var s in data.Subjects.OrderBy(x => x.Name))
             AddEntityRow(SubjectsPanel, s.Name, $"предмет «{s.Name}»", s.Id,
                 s.MaxPerDay, 1, 7, v => s.MaxPerDay = v);
-        ClassesPanel.Children.Add(SectionHint("Дневная норма класса. Начало дня: позже 2-го урока начинать нельзя (строгое по шаблону — ослабляется в «Качестве» через подтверждение)."));
+        ClassesPanel.Children.Add(SectionHint("Дневной лимит класса (правило школы: в СанПиН РБ нормы уроков в день нет). Начало дня: позже 2-го урока начинать нельзя (строгое по шаблону — ослабляется в «Качестве» через подтверждение)."));
         foreach (var c in data.Classes.OrderBy(x => x.Name))
             AddEntityRow(ClassesPanel, $"{c.Name} (параллель {c.Grade})", $"класс {c.Name}", c.Id,
                 c.MaxLessonsPerDay, 1, 10, v => c.MaxLessonsPerDay = v);
@@ -678,7 +679,7 @@ public partial class SettingsView : UserControl
         var st = _session.Flex.Settings;
         return st.AllowTeacherOverload
             ? $"Сейчас: перегрузка разрешена, потолок {st.TeacherOverloadCap}/день."
-            : "Сейчас: перегрузка запрещена (норма 6/день для всех).";
+            : "Сейчас: перегрузка запрещена (лимит 6/день для всех).";
     }
 
     private async void OnOverloadApplyClick(object sender, RoutedEventArgs e)
@@ -708,7 +709,7 @@ public partial class SettingsView : UserControl
             MarkClean();
             Say(want
                 ? $"Перегрузка применена (потолок {cap}/день) — действует на следующие генерации."
-                : "Перегрузка выключена — все по норме 6/день.", false);
+                : "Перегрузка выключена — все по лимиту 6/день.", false);
         }
         catch (Exception ex)
         {
@@ -912,8 +913,8 @@ public partial class SettingsView : UserControl
         }
     }
 
-    // B3: повышение дневных лимитов сверх СанПиН-норм — через подтверждение.
-    // Снижение и движение в пределах нормы — молча. Один попап на все строки.
+    // B3: повышение дневных лимитов выше школьного правила — через подтверждение.
+    // Снижение и движение в пределах правила — молча. Один попап на все строки.
     private async Task<bool> ConfirmCapRaisesAsync()
     {
         var data = _session.Data;
@@ -932,14 +933,14 @@ public partial class SettingsView : UserControl
             {
                 var c = data.Classes.FirstOrDefault(x => x.Id == id);
                 if (c is null) continue;
-                int norm = c.Grade <= 4 ? 5 : c.Grade <= 6 ? 6 : 7;
-                if (v > norm && v > c.MaxLessonsPerDay)
-                    raises.Add($"{c.Name}: {c.MaxLessonsPerDay}→{v}/день (норма {norm})");
+                int schoolCap = c.Grade <= 4 ? 5 : c.Grade <= 6 ? 6 : 7;
+                if (v > schoolCap && v > c.MaxLessonsPerDay)
+                    raises.Add($"{c.Name}: {c.MaxLessonsPerDay}→{v}/день (лимит школы {schoolCap})");
             }
         }
         if (raises.Count == 0) return true;
         return await _session.ConfirmDangerousAsync(System.Windows.Window.GetWindow(this), "cap-raise", "Повышение дневных лимитов",
-            DangerousConsequence("cap-raise") + " Сверх нормы: " +
+            DangerousConsequence("cap-raise") + " Сверх школьного лимита: " +
             string.Join("; ", raises.Take(5)) +
             (raises.Count > 5 ? $" и ещё {raises.Count - 5}." : "."));
     }

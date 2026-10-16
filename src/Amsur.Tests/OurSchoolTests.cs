@@ -78,8 +78,9 @@ public sealed class OurSchoolTests(Xunit.Abstractions.ITestOutputHelper output)
                     AcademicYearId = year, Name = nm,
                     Grade = grade, StudentCount = 25,
                     ShiftId = (grade is 6 or 7 || nm is "8Г" or "9Г") ? shift2 : shift1,
-                    // Cap8 (D-42): дневная норма классов 8. Школа подтверждает:
-                    // 8-урочные дни бывают (пиковые), хоть СанПиН-норма 6/7.
+                    // Cap8 (D-42): школьный дневной лимит классов 8 (в СанПиН РБ нормы
+                    // уроков в день нет — сверка 16.10.2026, docs/SANPIN_RB.md §10).
+                    // Школа подтверждает: 8-урочные дни бывают (пиковые).
                     MaxLessonsPerDay = classDayCap8 ? 8 : (grade <= 6 ? 6 : 7),
                 });
             }

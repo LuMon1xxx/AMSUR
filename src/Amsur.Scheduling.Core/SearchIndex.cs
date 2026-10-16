@@ -359,7 +359,7 @@ public sealed class SearchIndex
                 hard.Add(new ValidationIssue
                 {
                     Code = "class-maxperday",
-                    Message = $"Превышена дневная норма класса ({count} > {cls.MaxLessonsPerDay}).",
+                    Message = $"Превышен дневной лимит класса ({count} > {cls.MaxLessonsPerDay}).",
                     ClassId = node.ClassId
                 });
         }

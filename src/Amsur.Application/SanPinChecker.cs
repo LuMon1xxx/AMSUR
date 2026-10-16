@@ -111,7 +111,8 @@ public static class SanPinChecker
             if (set.Count > cap)
                 out_.Add(new SanPinFinding(true,
                     $"Класс {cls.Name}, {ScheduleExcelExporter.DayName(day)}: " +
-                    $"{set.Count} уроков — больше нормы {cap}/день (СанПиН: требует сверки с НПА).",
+                    $"{set.Count} уроков — больше школьного лимита {cap}/день " +
+                    "(в СанПиН РБ нормы уроков в день нет — это правило школы, сверка 16.10.2026).",
                     NeedsCheck: true));
         }
 
@@ -122,8 +123,8 @@ public static class SanPinChecker
             int fiveDays = g.Count(kv => kv.Value.Count >= 5);
             if (fiveDays > limits.Grade1FiveLessonDaysMax)
                 out_.Add(new SanPinFinding(true,
-                    $"Класс {cls.Name}: дней с 5 уроками — {fiveDays}, норма — не более " +
-                    $"{limits.Grade1FiveLessonDaysMax} в неделю (СанПиН: требует сверки с НПА).",
+                    $"Класс {cls.Name}: дней с 5 уроками — {fiveDays}, школьный предел — не более " +
+                    $"{limits.Grade1FiveLessonDaysMax} в неделю (правило школы: в СанПиН РБ нормы нет).",
                     NeedsCheck: true));
         }
 

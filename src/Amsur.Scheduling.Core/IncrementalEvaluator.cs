@@ -262,7 +262,7 @@ public static class IncrementalEvaluator
                         hard.Add(new ValidationIssue
                         {
                             Code = "class-maxperday",
-                            Message = $"Превышена дневная норма класса ({dayCount} > {cls.MaxLessonsPerDay}).",
+                            Message = $"Превышен дневной лимит класса ({dayCount} > {cls.MaxLessonsPerDay}).",
                             ClassId = node.ClassId, OccurrenceId = node.Id
                         });
                 }
