@@ -1,11 +1,12 @@
-# АМСУР — статус проекта, тесты и настройка (единый файл, 13.09.2026)
+# АМСУР — статус проекта, тесты и настройка (единый файл, обновлён 16.10.2026)
 
-> Статус: **EPIC-K готов** (FULL UI — продукт: dashboard, режимы, настройки, рейтинг).
-> Полный сьют (04.10.2026): **437 пройдено + 5 skipped, 0 failed за ~11 мин**
+> Статус: **продукт готов** (FULL UI: dashboard, режимы, настройки, рейтинг).
+> Полный сьют (16.10.2026, перепроверено после чистки репо):
+> **440 пройдено + 5 skipped, 0 failed за ~11 мин**
 > (скипы: карантин D-35, FullRunV2, ScratchGen + 2 долгие grind-кампании;
-> итог grind: 285 → 162 (−43%), оригинал 140, рекорд v4 134;
-> PDF contest/NDTP_proekt_AMSUR.pdf (5 стр.) — цифры свежие).
-> Технические детали — `MASTER_PLAN.md`, `DECISIONS.md`, `BENCHMARKS.md`.
+> оригинал школы 140 окон, рекорд движка v4 — 132).
+> Финальные материалы конкурса — `contest/NDTP_AMSUR_v8.pdf`.
+> Технические детали — `archive/MASTER_PLAN.md`, `DECISIONS.md`, `archive/BENCHMARKS.md`.
 
 ---
 
@@ -81,7 +82,7 @@
 
 ## 3. Последние тесты и замеры
 
-### Сьют: 184/184 → **188/188**
+### История роста сьюта (актуальный полный прогон — в шапке файла: 440/0/5)
 - 163 базовых (валидатор, solver, subgroups, паритет, персистентность, обмен, UI-shell, E2E-цикл).
 - +15 split/parity/profiles (`TeacherGapSplitTests`: таблица ordinary/cross,
   backward-совместимость, паритет индекс==full на 3 наборах весов, профили, шкала).
@@ -188,5 +189,5 @@
   `RuleCatalog.cs` (v5), `SoftEvaluator.cs`, `SearchIndex.cs` (`LocalSearch.cs`
   targeted-старт), `QualityExplainer.cs` + `QualityHints.cs`, `QualityProfiles`
   (`SqliteQualityProfileStore.cs`), `RealSchoolStressTests.cs` (fixture, классные 1–4).
-- Команды: `dotnet build src/Amsur.slnx`, `dotnet test src/Amsur.Tests` (~2 мин).
+- Команды: `dotnet build src/Amsur.slnx`, `dotnet test src/Amsur.Tests` (~11 мин, 440 тестов).
 - Артефакты Compose+: `.opencode/compose-plus/` (baseline, critique, decision, plan, risks).
