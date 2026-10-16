@@ -90,12 +90,9 @@ public sealed class OurIdealGrindTmpTests(Xunit.Abstractions.ITestOutputHelper o
         Assert.Equal(p.Occurrences.Count, best.Pl.Count);
         Assert.Equal(0, best.Hard);
         Assert.Equal(0, best.Pupil);
-        var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "samples");
-        Directory.CreateDirectory(dir);
         var unplaced = p.Occurrences.Select(o => o.Id)
             .Except(best.Pl.Select(x => x.OccurrenceId)).ToList();
-        using (var fs = new FileStream(Path.Combine(dir, "OurIdeal_GRIND_2026.xlsx"), FileMode.Create))
+        using (var fs = SampleArtifacts.OpenWrite("OurIdeal_GRIND_2026.xlsx"))
             ScheduleExcelExporter.ExportDraftGrid(p, best.Pl, unplaced, fs);
         output.WriteLine("GRIND-IDEAL xlsx written.");
     }

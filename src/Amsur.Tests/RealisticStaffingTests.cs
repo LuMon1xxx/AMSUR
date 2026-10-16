@@ -152,14 +152,6 @@ public sealed class RealisticStaffingTests(Xunit.Abstractions.ITestOutputHelper 
             $"topLoads=[{string.Join(",", loads)}]");
     }
 
-    private static string ExportPath(string name)
-    {
-        var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "samples");
-        Directory.CreateDirectory(dir);
-        return Path.Combine(dir, name);
-    }
-
     [Fact]
     public void Staffing_ShapesDifficulty()
     {
@@ -186,7 +178,7 @@ public sealed class RealisticStaffingTests(Xunit.Abstractions.ITestOutputHelper 
 
         var un1 = v1.Occurrences.Select(o => o.Id).Except(g1.Placed.Keys).ToList();
         var un2 = v2.Occurrences.Select(o => o.Id).Except(g2.Placed.Keys).ToList();
-        using (var fs = new FileStream(ExportPath("RealSchool_v1_ideal.xlsx"), FileMode.Create))
+        using (var fs = SampleArtifacts.OpenWrite("RealSchool_v1_ideal.xlsx"))
             ScheduleExcelExporter.ExportDraftGrid(v1, pl1, un1, fs);
         // v2: кадровый голод местами не даёт разнести физру — черновик идёт
         // с ЧЕСТНО ослабленным контролем физкультуры (B2-механика, в файле
@@ -194,7 +186,7 @@ public sealed class RealisticStaffingTests(Xunit.Abstractions.ITestOutputHelper 
         var relaxedPe = RuleResolver.Resolve("STANDARD",
             new Dictionary<string, long> { ["sanpin-pe-spacing"] = 10 },
             new HashSet<string> { "sanpin-pe-spacing" });
-        using (var fs = new FileStream(ExportPath("RealSchool_v2_hard.xlsx"), FileMode.Create))
+        using (var fs = SampleArtifacts.OpenWrite("RealSchool_v2_hard.xlsx"))
             ScheduleExcelExporter.ExportDraftGrid(v2, pl2, un2, fs,
                 includeTeacherSheet: true, includeRoomSheet: true, rules: relaxedPe);
         output.WriteLine("V2 exported with pe-spacing relaxed (warnings in file).");

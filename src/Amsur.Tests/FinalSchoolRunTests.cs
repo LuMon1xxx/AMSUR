@@ -216,9 +216,6 @@ public sealed class FinalSchoolRunTests(Xunit.Abstractions.ITestOutputHelper out
         // Структурные ворота (метрики — в отчёт выше, решает пользователь):
         Assert.Equal(24, p.Classes.Count);
         Assert.True(greedyCount(p, final.Placements) > 700);
-        var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "samples");
-        Directory.CreateDirectory(dir);
         var unplaced = p.Occurrences.Select(o => o.Id)
             .Except(final.Placements.Select(x => x.OccurrenceId)).ToList();
         // Флейки-устойчивость: time-boxed поиск под нагрузкой сьюта иногда
@@ -228,14 +225,14 @@ public sealed class FinalSchoolRunTests(Xunit.Abstractions.ITestOutputHelper out
             new HashSet<string> { "sanpin-pe-spacing" });
         try
         {
-            using (var fs = new FileStream(Path.Combine(dir, "RealSchool_FINAL_2026.xlsx"), FileMode.Create))
+            using (var fs = SampleArtifacts.OpenWrite("RealSchool_FINAL_2026.xlsx"))
                 ScheduleExcelExporter.ExportDraftGrid(p, final.Placements, unplaced, fs);
             output.WriteLine("FINAL xlsx written (strict).");
         }
         catch (InvalidOperationException ex)
         {
             output.WriteLine("FINAL strict refused (" + ex.Message + ") — relaxed draft.");
-            using (var fs = new FileStream(Path.Combine(dir, "RealSchool_FINAL_2026.xlsx"), FileMode.Create))
+            using (var fs = SampleArtifacts.OpenWrite("RealSchool_FINAL_2026.xlsx"))
                 ScheduleExcelExporter.ExportDraftGrid(p, final.Placements, unplaced, fs,
                     includeTeacherSheet: true, includeRoomSheet: true, rules: relaxedPe);
             output.WriteLine("FINAL xlsx written (pe relaxed).");

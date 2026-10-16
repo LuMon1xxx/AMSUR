@@ -265,12 +265,9 @@ public sealed class OurIdealTopTmpTests(Xunit.Abstractions.ITestOutputHelper out
         Assert.Equal(p.Occurrences.Count, final.Placements.Count);
         Assert.Equal(0, final.Hard);
         Assert.Equal(0, PupilCount(p, final.Placements));
-        var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "samples");
-        Directory.CreateDirectory(dir);
         var unplaced = p.Occurrences.Select(o => o.Id)
             .Except(final.Placements.Select(x => x.OccurrenceId)).ToList();
-        using (var fs = new FileStream(Path.Combine(dir, "OurIdeal_TOP_2026.xlsx"), FileMode.Create))
+        using (var fs = SampleArtifacts.OpenWrite("OurIdeal_TOP_2026.xlsx"))
             ScheduleExcelExporter.ExportDraftGrid(p, final.Placements, unplaced, fs);
         output.WriteLine("TOP-FULL xlsx written.");
     }

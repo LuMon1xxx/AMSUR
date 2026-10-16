@@ -239,14 +239,6 @@ public sealed class QualityDocsTests(Xunit.Abstractions.ITestOutputHelper output
             hourOk, hours.Count, baseWarn, maxErr, over, unplaced, tWin, tDays);
     }
 
-    private static string ExportPath(string name)
-    {
-        var dir = Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "..", "samples");
-        Directory.CreateDirectory(dir);
-        return Path.Combine(dir, name);
-    }
-
     private void Report(string tag, SchedulingProblem p, Compliance c, long soft, int placed)
     {
         output.WriteLine($"{tag}: teachers={p.Teachers.Count} placed={placed}/{p.Occurrences.Count} " +
@@ -272,7 +264,7 @@ public sealed class QualityDocsTests(Xunit.Abstractions.ITestOutputHelper output
         Assert.Equal(0, c.DayCaps);
         Assert.Equal(24, c.ClassHourOk);
         Assert.Equal(0, c.TeachersOver25);
-        using (var fs = new FileStream(ExportPath("RealSchool_2026_v1.xlsx"), FileMode.Create))
+        using (var fs = SampleArtifacts.OpenWrite("RealSchool_2026_v1.xlsx"))
             ScheduleExcelExporter.ExportGrid(p, pl, fs);
     }
 
@@ -289,7 +281,7 @@ public sealed class QualityDocsTests(Xunit.Abstractions.ITestOutputHelper output
         var relaxedPe = RuleResolver.Resolve("STANDARD",
             new Dictionary<string, long> { ["sanpin-pe-spacing"] = 10 },
             new HashSet<string> { "sanpin-pe-spacing" });
-        using (var fs = new FileStream(ExportPath("RealSchool_2026_v2.xlsx"), FileMode.Create))
+        using (var fs = SampleArtifacts.OpenWrite("RealSchool_2026_v2.xlsx"))
             ScheduleExcelExporter.ExportDraftGrid(p, pl, unplaced, fs,
                 includeTeacherSheet: true, includeRoomSheet: true, rules: relaxedPe);
         output.WriteLine("V2 draft: pe-spacing relaxed (warnings in file).");

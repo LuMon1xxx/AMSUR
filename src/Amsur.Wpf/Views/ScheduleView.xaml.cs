@@ -209,8 +209,7 @@ public partial class ScheduleView : UserControl
         // Сплит-урок (A/B) и вид «кабинет» штатно дают несколько записей на одну клетку —
         // ToDictionary падал бы с ArgumentException на дубле ключа. Храним список:
         // рисуем первую запись, к ней бейдж «+ ещё N» и tooltip со всеми.
-        var byCell = rows.GroupBy(r => (r.DayIndex, r.Slot))
-            .ToDictionary(g => g.Key, g => g.ToList());
+        var byCell = ScheduleMatrixCells.Group(rows);
         var accent = Br("BAccent", Brushes.Indigo);
         var accentSoft = Br("BAccentSoft", Brushes.Lavender);
         var card = Br("BCard", Brushes.White);

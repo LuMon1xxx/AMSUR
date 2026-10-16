@@ -78,10 +78,8 @@ public sealed class OurIdealShowcaseTests(Xunit.Abstractions.ITestOutputHelper o
                      .OrderByDescending(g => g.Count()).Take(5))
             output.WriteLine($"SHOWCASE: {TName(g.Key)}: {g.Count()} ч/нед, дней {g.Select(x => x.DayIndex).Distinct().Count()}");
 
-        var dir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "samples");
-        Directory.CreateDirectory(dir);
-        var path = Path.Combine(dir, "OurIdeal_5-11.xlsx");
-        using (var fs = new FileStream(path, FileMode.Create))
+        var path = SampleArtifacts.Path("OurIdeal_5-11.xlsx");
+        using (var fs = SampleArtifacts.OpenWrite("OurIdeal_5-11.xlsx"))
             ScheduleExcelExporter.ExportGrid(problem, placements, fs);
         output.WriteLine($"SHOWCASE: xlsx={path}");
     }
