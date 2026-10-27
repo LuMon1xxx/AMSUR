@@ -10,7 +10,7 @@
         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
           <TextBlock Style="{StaticResource TH1}" FontSize="20" Text="Настройки качества"/>
           <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
-                     Text="Обычному завучу ничего настраивать не нужно. Изменения вступают в силу после кнопки «Применить» и действуют на следующие генерации."/>
+                     Text="Обычному завучу ничего настраивать не нужно. Нижняя кнопка «Применить» (и «Сохранить „Моя школа“») сохраняет всё сразу: веса, приоритет выпускных, черновик, перегрузку и дневные лимиты. Действует на следующие генерации."/>
         </StackPanel>
         <Border DockPanel.Dock="Right" Style="{StaticResource Badge}" Background="{DynamicResource BGoodBg}"
                 VerticalAlignment="Center" Margin="12,0,0,0">

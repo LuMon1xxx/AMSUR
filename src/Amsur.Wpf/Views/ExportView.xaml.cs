@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,6 +12,8 @@ namespace Amsur.Wpf.Views;
 public partial class ExportView : UserControl
 {
     private readonly AppSession _session;
+    /// <summary>Последний успешно выгруженный файл (кнопки «Открыть»/«Показать в папке»).</summary>
+    private string? _lastFile;
 
     public ExportView(AppSession session)
     {
@@ -32,6 +35,7 @@ public partial class ExportView : UserControl
             if (TeacherBox.Items.Count > 0) TeacherBox.SelectedIndex = 0;
             if (active is null)
             {
+                ClearReveal();
                 ResultText.Text = "Нет активного расписания — сгенерируйте варианты и нажмите «Принять расписание».";
                 ResultText.Foreground = (Brush)FindResource("BBad");
                 ExportBtn.IsEnabled = false;
@@ -93,9 +97,11 @@ public partial class ExportView : UserControl
                 await _session.ExportActiveAsync(path, TeacherSheetBox.IsChecked == true, RoomSheetBox.IsChecked == true);
             ResultText.Text = "Выгружено: " + path;
             ResultText.Foreground = (Brush)FindResource("BGood");
+            ShowReveal(path);
         }
         catch (Exception ex)
         {
+            ClearReveal();
             ResultText.Text = "Не выгружено: " + ex.Message;
             ResultText.Foreground = (Brush)FindResource("BBad");
         }
@@ -111,9 +117,11 @@ public partial class ExportView : UserControl
             ResultText.Text = $"Черновик собран: размещено {placed} из {total} " +
                 $"(неназначенные — листом «Неназначенные»). Это прикидка, не финал.";
             ResultText.Foreground = (Brush)FindResource("BGood");
+            ShowReveal(dlg.FileName);
         }
         catch (Exception ex)
         {
+            ClearReveal();
             ResultText.Text = "Черновик не собран: " + ex.Message;
             ResultText.Foreground = (Brush)FindResource("BBad");
         }
@@ -134,10 +142,62 @@ public partial class ExportView : UserControl
             await _session.ExportTeacherAsync(dlg.FileName, teacher.Id);
             ResultText.Text = "Выгружено расписание: " + name;
             ResultText.Foreground = (Brush)FindResource("BGood");
+            ShowReveal(dlg.FileName);
         }
         catch (Exception ex)
         {
+            ClearReveal();
             ResultText.Text = "Не выгружено: " + ex.Message;
+            ResultText.Foreground = (Brush)FindResource("BBad");
+        }
+    }
+
+    // --- Пакет 6: после выгрузки — быстрые действия с файлом ---
+    private void ShowReveal(string path)
+    {
+        _lastFile = path;
+        RevealPanel.Visibility = File.Exists(path) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void ClearReveal()
+    {
+        _lastFile = null;
+        RevealPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private bool RequireFile()
+    {
+        if (_lastFile is not null && File.Exists(_lastFile)) return true;
+        ClearReveal();
+        ResultText.Text = "Файла больше нет — выгрузите заново.";
+        ResultText.Foreground = (Brush)FindResource("BBad");
+        return false;
+    }
+
+    private void OnOpenFileClick(object sender, RoutedEventArgs e)
+    {
+        if (!RequireFile()) return;
+        try
+        {
+            Process.Start(new ProcessStartInfo(_lastFile!) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            ResultText.Text = "Не удалось открыть файл: " + ex.Message;
+            ResultText.Foreground = (Brush)FindResource("BBad");
+        }
+    }
+
+    private void OnShowInFolderClick(object sender, RoutedEventArgs e)
+    {
+        if (!RequireFile()) return;
+        try
+        {
+            Process.Start("explorer.exe", $"/select,\"{_lastFile}\"");
+        }
+        catch (Exception ex)
+        {
+            ResultText.Text = "Не удалось показать в папке: " + ex.Message;
             ResultText.Foreground = (Brush)FindResource("BBad");
         }
     }

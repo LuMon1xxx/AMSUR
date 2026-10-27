@@ -39,11 +39,6 @@
       </Border>
     </StackPanel>
 
-    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-      <TextBlock x:Name="CountText" Style="{StaticResource THCaption}" VerticalAlignment="Center" Margin="0,0,12,0" Text=""/>
-      <Button Content="← На главную" Style="{StaticResource BtnSecondary}" Click="OnCloseClick"/>
-    </StackPanel>
-
     <Grid Margin="0,12,0,0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="200"/>
@@ -72,8 +67,12 @@
       <DockPanel Grid.Column="1">
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8" x:Name="LoadToolbar" LastChildFill="False">
           <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-            <TextBox x:Name="SearchBox" Width="280" Margin="0,0,8,0" TextChanged="OnFilterChanged"/>
-            <ComboBox x:Name="ClassFilterBox" Width="160" SelectionChanged="OnFilterChanged"/>
+            <TextBlock Text="Поиск:" VerticalAlignment="Center" Margin="0,0,6,0"
+                       ToolTip="Фильтр по классу, предмету или учителю"/>
+            <TextBox x:Name="SearchBox" Width="280" Margin="0,0,8,0" TextChanged="OnFilterChanged"
+                     ToolTip="Поиск по классу, предмету или учителю"/>
+            <ComboBox x:Name="ClassFilterBox" Width="160" SelectionChanged="OnFilterChanged"
+                      ToolTip="Показать только один класс"/>
           </StackPanel>
           <!-- P3: ручной ввод строк нагрузки -->
           <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
@@ -82,207 +81,268 @@
             <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnDeleteClick"/>
           </StackPanel>
         </DockPanel>
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-          <StackPanel>
-            <DataGrid x:Name="LoadGrid" x:FieldModifier="public" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="420"
-                      SelectionMode="Extended" CanUserDeleteRows="False"
-                      wpf:DataGridRowNumbers.ShowRowNumbers="True"
-                      MouseDoubleClick="OnLoadGridDoubleClick" PreviewKeyDown="OnLoadGridKeyDown">
-              <DataGrid.Columns>
-                <DataGridTextColumn Header="Класс" Binding="{Binding ClassName}" Width="70"/>
-                <DataGridTextColumn Header="Предмет" Binding="{Binding SubjectName}" Width="*"/>
-                <DataGridTextColumn Header="Ч/нед" Binding="{Binding Hours}" Width="60"/>
-                <DataGridTextColumn Header="Учитель" Binding="{Binding TeacherName}" Width="*"/>
-                <DataGridTextColumn Header="Кабинет" Binding="{Binding RoomName}" Width="90"/>
-                <DataGridTextColumn Header="Группа" Binding="{Binding GroupText}" Width="90"/>
-                <DataGridTextColumn Header="Пара" Binding="{Binding PairText}" Width="70"/>
-                <DataGridTextColumn Header="Смена" Binding="{Binding ShiftText}" Width="60"/>
-              </DataGrid.Columns>
-            </DataGrid>
-            <!-- Часы: нормы параллелей + переопределения классов -->
-            <StackPanel x:Name="HoursPanel" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                         Text="Приоритет: класс > параллель > дефолт предмета. Параллель 0 = дефолт предмета на все классы. Пример: математика 0→4ч, 9→5ч, а 9Б — 7ч через переопределение."/>
-              <TextBlock Text="Нормы часов" FontWeight="SemiBold" FontSize="14"/>
-              <DataGrid x:Name="NormsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False" MaxHeight="180" Margin="0,6,0,0"
-                        wpf:DataGridRowNumbers.ShowRowNumbers="True">
-                <DataGrid.Columns>
-                  <DataGridComboBoxColumn x:Name="NormSubjectCol" Header="Предмет" SelectedItemBinding="{Binding Subject}" Width="*"/>
-                  <DataGridTextColumn Header="Параллель (0=дефолт)" Binding="{Binding Grade}" Width="130"/>
-                  <DataGridTextColumn Header="Часов" Binding="{Binding Hours}" Width="70"/>
-                </DataGrid.Columns>
-              </DataGrid>
-              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <Button Content="Добавить норму" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnNormAddClick"/>
-                <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnNormDelClick"/>
-              </StackPanel>
-              <TextBlock Text="Переопределения на класс" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/>
-              <DataGrid x:Name="OverridesGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False" MaxHeight="180" Margin="0,6,0,0"
-                        wpf:DataGridRowNumbers.ShowRowNumbers="True">
-                <DataGrid.Columns>
-                  <DataGridComboBoxColumn x:Name="OvClassCol" Header="Класс" SelectedItemBinding="{Binding Class}" Width="100"/>
-                  <DataGridComboBoxColumn x:Name="OvSubjectCol" Header="Предмет" SelectedItemBinding="{Binding Subject}" Width="*"/>
-                  <DataGridTextColumn Header="Часов" Binding="{Binding Hours}" Width="70"/>
-                </DataGrid.Columns>
-              </DataGrid>
-              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnOverrideAddClick"/>
-                <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnOverrideDelClick"/>
-                <Button Content="Применить часы" Style="{StaticResource BtnPrimary}" Padding="10,4" Margin="8,0,0,0" x:Name="ApplyHoursBtn" Click="OnHoursApplyClick"/>
-              </StackPanel>
-            </StackPanel>
-            <!-- Классы: параллель, численность, классный руководитель -->
-            <StackPanel x:Name="ClassesPanel" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                         Text="Классный руководитель ведёт общий урок (классный час) и показан в расписании."/>
-              <DataGrid x:Name="ClassesGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False" MaxHeight="380"
-                        wpf:DataGridRowNumbers.ShowRowNumbers="True">
-                <DataGrid.Columns>
-                  <DataGridTextColumn Header="Класс" Binding="{Binding Name}" Width="80" IsReadOnly="True"/>
-                  <DataGridTextColumn Header="Параллель" Binding="{Binding Grade}" Width="90"/>
-                  <DataGridTextColumn Header="Учеников" Binding="{Binding StudentCount}" Width="90"/>
-                  <DataGridComboBoxColumn x:Name="ClassTeacherCol" Header="Классный руководитель" SelectedItemBinding="{Binding ClassTeacher}" Width="*"/>
-                </DataGrid.Columns>
-              </DataGrid>
-              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <Button Content="Применить классы" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplyClassesBtn" Click="OnClassesApplyClick"/>
-              </StackPanel>
-            </StackPanel>
-            <!-- Учителя: режим закрепления + явные назначения -->
-            <StackPanel x:Name="TeachersPanel" Visibility="Collapsed">
-              <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-                <TextBlock Text="Режим закрепления:" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
-                <ComboBox x:Name="AssignModeBox" Width="220" Margin="8,0,0,0" VerticalAlignment="Center"/>
-              </StackPanel>
-              <TextBlock Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                         Text="Строго на класс: один учитель ведёт предмет в классе всю неделю (нарушение — ошибка импорта). Явные назначения ниже — исключения и параллели. Таблица только для чтения: учителя приходят из Excel, правка — через строки нагрузки или новый Excel."/>
-              <!-- FlexP34Tests читает TeachersList: оставлен скрытым ради совместимости. -->
-              <ItemsControl x:Name="TeachersList" x:FieldModifier="public" Visibility="Collapsed">
+
+        <!-- Замечания — компактный блок внизу, не отбирает высоту у таблицы. -->
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+          <TextBlock x:Name="CountText" Style="{StaticResource THCaption}" HorizontalAlignment="Right"
+                     Margin="0,0,0,4" Text=""/>
+          <Expander x:Name="NotesExpander" Header="Замечания" IsExpanded="False"
+                    ToolTip="Предупреждения импорта и подсказки по данным">
+            <ScrollViewer MaxHeight="140" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+              <ItemsControl x:Name="NotesList" Margin="0,0,12,0">
                 <ItemsControl.ItemTemplate>
-                  <DataTemplate><TextBlock Text="{Binding}" FontSize="13" Margin="0,2,0,0"/></DataTemplate>
+                  <DataTemplate><TextBlock Text="{Binding}" FontSize="13" Margin="0,2,0,0" TextWrapping="Wrap"/></DataTemplate>
                 </ItemsControl.ItemTemplate>
               </ItemsControl>
-              <DataGrid x:Name="TeachersGrid" x:FieldModifier="public" AutoGenerateColumns="False" IsReadOnly="True"
-                        CanUserAddRows="False" MaxHeight="220" Margin="0,0,0,0"
-                        wpf:DataGridRowNumbers.ShowRowNumbers="True">
-                <DataGrid.Columns>
-                  <DataGridTextColumn Header="ФИО" Binding="{Binding Name}" Width="*"/>
-                  <DataGridTextColumn Header="Часов/нед" Binding="{Binding HoursPerWeek}" Width="90"/>
-                  <DataGridTextColumn Header="Предметов" Binding="{Binding SubjectCount}" Width="90"/>
-                  <DataGridTextColumn Header="Классов" Binding="{Binding ClassCount}" Width="80"/>
-                </DataGrid.Columns>
-              </DataGrid>
-              <TextBlock Text="Явные назначения" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/>
-              <DataGrid x:Name="AssignGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False" MaxHeight="200" Margin="0,6,0,0"
-                        wpf:DataGridRowNumbers.ShowRowNumbers="True">
-                <DataGrid.Columns>
-                  <DataGridComboBoxColumn x:Name="AsTeacherCol" Header="Учитель" SelectedItemBinding="{Binding Teacher}" Width="*"/>
-                  <DataGridComboBoxColumn x:Name="AsSubjectCol" Header="Предмет" SelectedItemBinding="{Binding Subject}" Width="*"/>
-                  <DataGridComboBoxColumn x:Name="AsScopeCol" Header="Область" SelectedItemBinding="{Binding Scope}" Width="110"/>
-                  <DataGridComboBoxColumn x:Name="AsClassCol" Header="Класс" SelectedItemBinding="{Binding Class}" Width="90"/>
-                  <DataGridTextColumn Header="Параллель" Binding="{Binding Grade}" Width="90"/>
-                </DataGrid.Columns>
-              </DataGrid>
-              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnAssignAddClick"/>
-                <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnAssignDelClick"/>
-                <Button Content="Применить учителей" Style="{StaticResource BtnPrimary}" Padding="10,4" Margin="8,0,0,0" x:Name="ApplyTeachersBtn" Click="OnTeachersApplyClick"/>
-              </StackPanel>
+            </ScrollViewer>
+          </Expander>
+        </StackPanel>
+
+        <!-- Активная таблица занимает всю оставшуюся высоту: без MaxHeight и без внешнего ScrollViewer. -->
+        <Grid>
+          <DataGrid x:Name="LoadGrid" x:FieldModifier="public" AutoGenerateColumns="False" IsReadOnly="True"
+                    SelectionMode="Extended" CanUserDeleteRows="False"
+                    wpf:DataGridRowNumbers.ShowRowNumbers="True"
+                    VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                    MouseDoubleClick="OnLoadGridDoubleClick" PreviewKeyDown="OnLoadGridKeyDown">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Класс" Binding="{Binding ClassName}" Width="70"/>
+              <DataGridTextColumn Header="Предмет" Binding="{Binding SubjectName}" Width="*"/>
+              <DataGridTextColumn Header="Ч/нед" Binding="{Binding Hours}" Width="60"/>
+              <DataGridTextColumn Header="Учитель" Binding="{Binding TeacherName}" Width="*"/>
+              <DataGridTextColumn Header="Кабинет" Binding="{Binding RoomName}" Width="90"/>
+              <DataGridTextColumn Header="Группа" Binding="{Binding GroupText}" Width="90"/>
+              <DataGridTextColumn Header="Пара" Binding="{Binding PairText}" Width="70"/>
+              <DataGridTextColumn Header="Смена" Binding="{Binding ShiftText}" Width="60"/>
+            </DataGrid.Columns>
+          </DataGrid>
+
+          <!-- Часы: нормы параллелей + переопределения классов -->
+          <Grid x:Name="HoursPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="Приоритет: класс > параллель > дефолт предмета. Параллель 0 = дефолт предмета на все классы. Пример: математика 0→4ч, 9→5ч, а 9Б — 7ч через переопределение."/>
+            <TextBlock Grid.Row="1" Text="Нормы часов" FontWeight="SemiBold" FontSize="14"/>
+            <DataGrid Grid.Row="2" x:Name="NormsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
+                      Margin="0,6,0,0" VerticalScrollBarVisibility="Auto"
+                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
+              <DataGrid.Columns>
+                <DataGridComboBoxColumn x:Name="NormSubjectCol" Header="Предмет" SelectedItemBinding="{Binding Subject}" Width="*"/>
+                <DataGridTextColumn Header="Параллель (0=дефолт)" Binding="{Binding Grade}" Width="130"/>
+                <DataGridTextColumn Header="Часов" Binding="{Binding Hours}" Width="70"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,6,0,0">
+              <Button Content="Добавить норму" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnNormAddClick"/>
+              <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnNormDelClick"/>
             </StackPanel>
-            <!-- Предметы: сложность + макс/день -->
-            <StackPanel x:Name="SubjectsPanel" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                         Text="Сложность 1..10 сохраняется и переживает перезапуск. Макс/день — только просмотр (правка в «Настройках качества», на сессию)."/>
-              <DataGrid x:Name="SubjectsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False" MaxHeight="380"
-                        wpf:DataGridRowNumbers.ShowRowNumbers="True">
-                <DataGrid.Columns>
-                  <DataGridTextColumn Header="Предмет" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
-                  <DataGridTextColumn Header="Сложность (1..10)" Binding="{Binding Difficulty}" Width="140"/>
-                  <DataGridTextColumn Header="Макс/день" Binding="{Binding MaxPerDay}" Width="100" IsReadOnly="True"/>
-                </DataGrid.Columns>
-              </DataGrid>
-              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <Button Content="Применить предметы" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplySubjectsBtn" Click="OnSubjectsApplyClick"/>
-              </StackPanel>
+            <TextBlock Grid.Row="4" Text="Переопределения на класс" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/>
+            <DataGrid Grid.Row="5" x:Name="OverridesGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
+                      Margin="0,6,0,0" VerticalScrollBarVisibility="Auto"
+                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
+              <DataGrid.Columns>
+                <DataGridComboBoxColumn x:Name="OvClassCol" Header="Класс" SelectedItemBinding="{Binding Class}" Width="100"/>
+                <DataGridComboBoxColumn x:Name="OvSubjectCol" Header="Предмет" SelectedItemBinding="{Binding Subject}" Width="*"/>
+                <DataGridTextColumn Header="Часов" Binding="{Binding Hours}" Width="70"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,6,0,0">
+              <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnOverrideAddClick"/>
+              <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnOverrideDelClick"/>
+              <Button Content="Применить часы" Style="{StaticResource BtnPrimary}" Padding="10,4" Margin="8,0,0,0" x:Name="ApplyHoursBtn" Click="OnHoursApplyClick"/>
             </StackPanel>
-            <!-- Кабинеты: режим + вместимость -->
-            <StackPanel x:Name="RoomsPanel" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                         Text="Только вручную: программа сама туда ничего не ставит (назначить можно вручную). Только предмет: чужой урок — жёсткая ошибка. Желательно 0 = без претензий."/>
-              <DataGrid x:Name="RoomsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False" MaxHeight="380"
-                        wpf:DataGridRowNumbers.ShowRowNumbers="True">
-                <DataGrid.Columns>
-                  <DataGridTextColumn Header="Кабинет" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
-                  <DataGridComboBoxColumn x:Name="RoomModeCol" Header="Режим" SelectedItemBinding="{Binding Mode}" Width="150"/>
-                  <DataGridComboBoxColumn x:Name="RoomSubjectCol" Header="Предмет" SelectedItemBinding="{Binding OnlySubject}" Width="130"/>
-                  <DataGridTextColumn Header="Макс" Binding="{Binding MaxGroups}" Width="60"/>
-                  <DataGridTextColumn Header="Желат." Binding="{Binding DesiredGroups}" Width="70"/>
-                  <DataGridCheckBoxColumn Header="Подгр.=класс" Binding="{Binding CountSubgroupAsGroup}" Width="100"/>
-                </DataGrid.Columns>
-              </DataGrid>
-              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <Button Content="Применить кабинеты" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplyRoomsBtn" Click="OnRoomsApplyClick"/>
-              </StackPanel>
+          </Grid>
+
+          <!-- Классы: параллель, численность, классный руководитель -->
+          <Grid x:Name="ClassesPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="Классный руководитель ведёт общий урок (классный час) и показан в расписании."/>
+            <DataGrid Grid.Row="1" x:Name="ClassesGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
+                      VerticalScrollBarVisibility="Auto"
+                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Класс" Binding="{Binding Name}" Width="80" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Параллель" Binding="{Binding Grade}" Width="90"/>
+                <DataGridTextColumn Header="Учеников" Binding="{Binding StudentCount}" Width="90"/>
+                <DataGridComboBoxColumn x:Name="ClassTeacherCol" Header="Классный руководитель" SelectedItemBinding="{Binding ClassTeacher}" Width="*"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,6,0,0">
+              <Button Content="Применить классы" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplyClassesBtn" Click="OnClassesApplyClick"/>
             </StackPanel>
-            <!-- Подгруппы: только чтение (задаются колонкой «Группа» в Excel/диалоге строки).
-                 Правок здесь нет сознательно: строки нагрузки ссылаются на подгруппы. -->
-            <StackPanel x:Name="GroupsPanel" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                         Text="Подгруппы задаются колонкой «Группа» в Excel или диалогом строки нагрузки. Таблица только для чтения."/>
-              <DataGrid x:Name="GroupsGrid" x:FieldModifier="public" AutoGenerateColumns="False" IsReadOnly="True"
-                        CanUserAddRows="False" MaxHeight="380"
-                        wpf:DataGridRowNumbers.ShowRowNumbers="True">
-                <DataGrid.Columns>
-                  <DataGridTextColumn Header="Класс" Binding="{Binding ClassName}" Width="90"/>
-                  <DataGridTextColumn Header="Подгруппа" Binding="{Binding GroupName}" Width="100"/>
-                  <DataGridTextColumn Header="Строк нагрузки" Binding="{Binding LoadRowCount}" Width="120"/>
-                  <DataGridTextColumn Header="Часов" Binding="{Binding Hours}" Width="80"/>
-                </DataGrid.Columns>
-              </DataGrid>
+          </Grid>
+
+          <!-- Учителя: режим закрепления + явные назначения -->
+          <Grid x:Name="TeachersPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="2*"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+              <TextBlock Text="Режим закрепления:" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+              <ComboBox x:Name="AssignModeBox" Width="220" Margin="8,0,0,0" VerticalAlignment="Center"/>
             </StackPanel>
-            <!-- Общие уроки: классный час -->
-            <StackPanel x:Name="CommonPanel" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                         Text="По умолчанию выключено. Включение ставит один урок всем выбранным параллелям в одну клетку; ведёт классный руководитель. Учитель — из таба «Классы»."/>
-              <CheckBox x:Name="CommonEnabledBox" Content="Включить общий урок (классный час)" FontSize="13" FontWeight="SemiBold"/>
-              <Grid Margin="0,10,0,0">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="150"/>
-                  <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="Auto"/>
-                  <RowDefinition Height="Auto"/>
-                  <RowDefinition Height="Auto"/>
-                  <RowDefinition Height="Auto"/>
-                  <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="День:" VerticalAlignment="Center" FontSize="13"/>
-                <ComboBox x:Name="CommonDayBox" Grid.Row="0" Grid.Column="1" Width="160" HorizontalAlignment="Left" Margin="0,3,0,3"/>
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Урок (номер):" VerticalAlignment="Center" FontSize="13"/>
-                <TextBox x:Name="CommonSlotBox" Grid.Row="1" Grid.Column="1" Width="60" HorizontalAlignment="Left" Margin="0,3,0,3"/>
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Урок 2-й смены:" VerticalAlignment="Center" FontSize="13"
-                           ToolTip="Первый урок второй смены (0 = нет второй группы)"/>
-                <TextBox x:Name="CommonSlot2Box" Grid.Row="2" Grid.Column="1" Width="60" HorizontalAlignment="Left" Margin="0,3,0,3"
-                         ToolTip="0 = общий урок только в одну смену"/>
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Параллели:" VerticalAlignment="Center" FontSize="13"/>
-                <TextBox x:Name="CommonGradesBox" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" Margin="0,3,0,3"
-                         ToolTip="Через запятую, например 5,6,7,8,9,10,11"/>
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="Кабинеты:" VerticalAlignment="Center" FontSize="13"/>
-                <CheckBox x:Name="CommonOwnRoomsBox" Grid.Row="4" Grid.Column="1" Content="Свои кабинеты у каждого класса" Margin="0,3,0,3" VerticalAlignment="Center"/>
-              </Grid>
-              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                <Button Content="Применить общий урок" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplyCommonBtn" Click="OnCommonApplyClick"/>
-              </StackPanel>
-            </StackPanel>
-            <TextBlock Text="Замечания" Style="{StaticResource TH2}" Margin="0,16,0,4"/>
-            <ItemsControl x:Name="NotesList">
+            <TextBlock Grid.Row="1" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="Строго на класс: один учитель ведёт предмет в классе всю неделю (нарушение — ошибка импорта). Явные назначения ниже — исключения и параллели. Таблица только для чтения: учителя приходят из Excel, правка — через строки нагрузки или новый Excel."/>
+            <!-- FlexP34Tests читает TeachersList: оставлен скрытым ради совместимости. -->
+            <ItemsControl Grid.Row="2" x:Name="TeachersList" x:FieldModifier="public" Visibility="Collapsed">
               <ItemsControl.ItemTemplate>
-                <DataTemplate><TextBlock Text="{Binding}" FontSize="13" Margin="0,2,0,0" TextWrapping="Wrap"/></DataTemplate>
+                <DataTemplate><TextBlock Text="{Binding}" FontSize="13" Margin="0,2,0,0"/></DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
+            <DataGrid Grid.Row="3" x:Name="TeachersGrid" x:FieldModifier="public" AutoGenerateColumns="False" IsReadOnly="True"
+                      CanUserAddRows="False" VerticalScrollBarVisibility="Auto"
+                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="ФИО" Binding="{Binding Name}" Width="*"/>
+                <DataGridTextColumn Header="Часов/нед" Binding="{Binding HoursPerWeek}" Width="90"/>
+                <DataGridTextColumn Header="Предметов" Binding="{Binding SubjectCount}" Width="90"/>
+                <DataGridTextColumn Header="Классов" Binding="{Binding ClassCount}" Width="80"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Grid.Row="4" Text="Явные назначения" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/>
+            <DataGrid Grid.Row="5" x:Name="AssignGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
+                      Margin="0,6,0,0" VerticalScrollBarVisibility="Auto"
+                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
+              <DataGrid.Columns>
+                <DataGridComboBoxColumn x:Name="AsTeacherCol" Header="Учитель" SelectedItemBinding="{Binding Teacher}" Width="*"/>
+                <DataGridComboBoxColumn x:Name="AsSubjectCol" Header="Предмет" SelectedItemBinding="{Binding Subject}" Width="*"/>
+                <DataGridComboBoxColumn x:Name="AsScopeCol" Header="Область" SelectedItemBinding="{Binding Scope}" Width="110"/>
+                <DataGridComboBoxColumn x:Name="AsClassCol" Header="Класс" SelectedItemBinding="{Binding Class}" Width="90"/>
+                <DataGridTextColumn Header="Параллель" Binding="{Binding Grade}" Width="90"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,6,0,0">
+              <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnAssignAddClick"/>
+              <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnAssignDelClick"/>
+              <Button Content="Применить учителей" Style="{StaticResource BtnPrimary}" Padding="10,4" Margin="8,0,0,0" x:Name="ApplyTeachersBtn" Click="OnTeachersApplyClick"/>
+            </StackPanel>
+          </Grid>
+
+          <!-- Предметы: сложность + макс/день -->
+          <Grid x:Name="SubjectsPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="Сложность 1..10 сохраняется и переживает перезапуск. Макс/день — только просмотр (правка в «Настройках качества», на сессию)."/>
+            <DataGrid Grid.Row="1" x:Name="SubjectsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
+                      VerticalScrollBarVisibility="Auto"
+                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Предмет" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Сложность (1..10)" Binding="{Binding Difficulty}" Width="140"/>
+                <DataGridTextColumn Header="Макс/день" Binding="{Binding MaxPerDay}" Width="100" IsReadOnly="True"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,6,0,0">
+              <Button Content="Применить предметы" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplySubjectsBtn" Click="OnSubjectsApplyClick"/>
+            </StackPanel>
+          </Grid>
+
+          <!-- Кабинеты: режим + вместимость -->
+          <Grid x:Name="RoomsPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="Только вручную: программа сама туда ничего не ставит (назначить можно вручную). Только предмет: чужой урок — жёсткая ошибка. Желательно 0 = без претензий."/>
+            <DataGrid Grid.Row="1" x:Name="RoomsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
+                      VerticalScrollBarVisibility="Auto"
+                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Кабинет" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
+                <DataGridComboBoxColumn x:Name="RoomModeCol" Header="Режим" SelectedItemBinding="{Binding Mode}" Width="150"/>
+                <DataGridComboBoxColumn x:Name="RoomSubjectCol" Header="Предмет" SelectedItemBinding="{Binding OnlySubject}" Width="130"/>
+                <DataGridTextColumn Header="Макс" Binding="{Binding MaxGroups}" Width="60"/>
+                <DataGridTextColumn Header="Желат." Binding="{Binding DesiredGroups}" Width="70"/>
+                <DataGridCheckBoxColumn Header="Подгр.=класс" Binding="{Binding CountSubgroupAsGroup}" Width="100"/>
+              </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,6,0,0">
+              <Button Content="Применить кабинеты" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplyRoomsBtn" Click="OnRoomsApplyClick"/>
+            </StackPanel>
+          </Grid>
+
+          <!-- Подгруппы: только чтение (задаются колонкой «Группа» в Excel/диалоге строки).
+               Правок здесь нет сознательно: строки нагрузки ссылаются на подгруппы. -->
+          <Grid x:Name="GroupsPanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="Подгруппы задаются колонкой «Группа» в Excel или диалогом строки нагрузки. Таблица только для чтения."/>
+            <DataGrid Grid.Row="1" x:Name="GroupsGrid" x:FieldModifier="public" AutoGenerateColumns="False" IsReadOnly="True"
+                      CanUserAddRows="False" VerticalScrollBarVisibility="Auto"
+                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Класс" Binding="{Binding ClassName}" Width="90"/>
+                <DataGridTextColumn Header="Подгруппа" Binding="{Binding GroupName}" Width="100"/>
+                <DataGridTextColumn Header="Строк нагрузки" Binding="{Binding LoadRowCount}" Width="120"/>
+                <DataGridTextColumn Header="Часов" Binding="{Binding Hours}" Width="80"/>
+              </DataGrid.Columns>
+            </DataGrid>
+          </Grid>
+
+          <!-- Общие уроки: классный час -->
+          <StackPanel x:Name="CommonPanel" Visibility="Collapsed" VerticalAlignment="Top">
+            <TextBlock Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="По умолчанию выключено. Включение ставит один урок всем выбранным параллелям в одну клетку; ведёт классный руководитель. Учитель — из таба «Классы»."/>
+            <CheckBox x:Name="CommonEnabledBox" Content="Включить общий урок (классный час)" FontSize="13" FontWeight="SemiBold"/>
+            <Grid Margin="0,10,0,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="День:" VerticalAlignment="Center" FontSize="13"/>
+              <ComboBox x:Name="CommonDayBox" Grid.Row="0" Grid.Column="1" Width="160" HorizontalAlignment="Left" Margin="0,3,0,3"/>
+              <TextBlock Grid.Row="1" Grid.Column="0" Text="Урок (номер):" VerticalAlignment="Center" FontSize="13"/>
+              <TextBox x:Name="CommonSlotBox" Grid.Row="1" Grid.Column="1" Width="60" HorizontalAlignment="Left" Margin="0,3,0,3"/>
+              <TextBlock Grid.Row="2" Grid.Column="0" Text="Урок 2-й смены:" VerticalAlignment="Center" FontSize="13"
+                         ToolTip="Первый урок второй смены (0 = нет второй группы)"/>
+              <TextBox x:Name="CommonSlot2Box" Grid.Row="2" Grid.Column="1" Width="60" HorizontalAlignment="Left" Margin="0,3,0,3"
+                       ToolTip="0 = общий урок только в одну смену"/>
+              <TextBlock Grid.Row="3" Grid.Column="0" Text="Параллели:" VerticalAlignment="Center" FontSize="13"/>
+              <TextBox x:Name="CommonGradesBox" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" Margin="0,3,0,3"
+                       ToolTip="Через запятую, например 5,6,7,8,9,10,11"/>
+              <TextBlock Grid.Row="4" Grid.Column="0" Text="Кабинеты:" VerticalAlignment="Center" FontSize="13"/>
+              <CheckBox x:Name="CommonOwnRoomsBox" Grid.Row="4" Grid.Column="1" Content="Свои кабинеты у каждого класса" Margin="0,3,0,3" VerticalAlignment="Center"/>
+            </Grid>
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+              <Button Content="Применить общий урок" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplyCommonBtn" Click="OnCommonApplyClick"/>
+            </StackPanel>
           </StackPanel>
-        </ScrollViewer>
+        </Grid>
       </DockPanel>
     </Grid>
   </DockPanel>

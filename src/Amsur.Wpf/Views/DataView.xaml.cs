@@ -111,7 +111,6 @@ public partial class DataView : UserControl
     {
         _session = session;
         InitializeComponent();
-        SearchBox.ToolTip = "Поиск по классу, предмету или учителю";
         AssignModeBox.ItemsSource = AssignModes;
         CommonDayBox.ItemsSource = WeekDays;
         LoadAll();
@@ -196,6 +195,9 @@ public partial class DataView : UserControl
         NotesList.ItemsSource = d.Notes.Count == 0
             ? new[] { "Замечаний нет." }
             : d.Notes.Take(20).ToList();
+        NotesExpander.Header = d.Notes.Count == 0
+            ? "Замечания"
+            : $"Замечания ({d.Notes.Count})";
 
         // P3: гибкие настройки → гриды.
         var flex = _session.Flex;
@@ -712,6 +714,4 @@ public partial class DataView : UserControl
             CommonOwnRoomsBox.IsChecked == true, slot2);
         await ApplyFlexSlice(f => f with { CommonLesson = row });
     }
-
-    private void OnCloseClick(object sender, RoutedEventArgs e) => Navigator?.NavigateTo("Dashboard");
 }
