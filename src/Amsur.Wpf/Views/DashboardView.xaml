@@ -281,14 +281,8 @@
     <!-- Правая колонка 340px -->
     <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel Margin="0,24,16,24">
-        <Grid Margin="0,0,0,8">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-          </Grid.ColumnDefinitions>
-          <TextBlock Grid.Column="0" Text="ВЫБОР РЕЖИМА ГЕНЕРАЦИИ" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
-          <!-- Кнопка «Параметры» убрана: настройки открываются из карточки профиля слева. -->
-        </Grid>
+        <!-- «Параметры» убрана: настройки открываются из карточки профиля слева. -->
+        <TextBlock Text="ВЫБОР РЕЖИМА ГЕНЕРАЦИИ" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,8"/>
         <StackPanel x:Name="ModeCards"/>
         <TextBlock Text="КАЧЕСТВО РАСПИСАНИЯ" FontWeight="SemiBold" FontSize="13" Margin="0,16,0,8"/>
         <Border Style="{StaticResource Card}">
