@@ -92,7 +92,18 @@
                     Margin="8,0,0,0" Click="OnTeacherClick"/>
             <ComboBox x:Name="TeacherBox" x:FieldModifier="public" VerticalAlignment="Center"/>
           </DockPanel>
-          <TextBlock x:Name="ResultText" FontSize="13" Margin="0,8,0,0" TextWrapping="Wrap"/>
+          <DockPanel Margin="0,8,0,0">
+            <StackPanel x:Name="RevealPanel" DockPanel.Dock="Right" Orientation="Horizontal"
+                        VerticalAlignment="Center" Margin="8,0,0,0" Visibility="Collapsed">
+              <Button x:Name="OpenFileBtn" Content="Открыть файл" Style="{StaticResource BtnSecondary}"
+                      Padding="10,4" Click="OnOpenFileClick"
+                      ToolTip="Открыть выгруженный файл в программе по умолчанию"/>
+              <Button x:Name="ShowInFolderBtn" Content="Показать в папке" Style="{StaticResource BtnSecondary}"
+                      Padding="10,4" Margin="8,0,0,0" Click="OnShowInFolderClick"
+                      ToolTip="Открыть папку и выделить файл"/>
+            </StackPanel>
+            <TextBlock x:Name="ResultText" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center"/>
+          </DockPanel>
         </StackPanel>
       </Border>
 

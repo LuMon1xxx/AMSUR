@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Amsur.Application;
+using Amsur.Domain;
 using Amsur.Scheduling.Core;
 using Microsoft.Win32;
 
@@ -49,10 +50,21 @@ public partial class SettingsView : UserControl
     private void CheckPresetRadio()
     {
         var cur = _session.QualityRules.ProfileName;
-        PresetStandard.IsChecked = cur == "STANDARD";
-        PresetStudent.IsChecked = cur == "STUDENT_FRIENDLY";
-        PresetTeacher.IsChecked = cur == "TEACHER_FRIENDLY";
-        PresetCustom.IsChecked = cur == "CUSTOM";
+        SetPresetRadio(PresetStandard, cur == "STANDARD");
+        SetPresetRadio(PresetStudent, cur == "STUDENT_FRIENDLY");
+        SetPresetRadio(PresetTeacher, cur == "TEACHER_FRIENDLY");
+        SetPresetRadio(PresetCustom, cur == "CUSTOM");
+    }
+
+    // Программная установка радиокнопки не должна считаться выбором пресета
+    // (иначе после «Применить» UI сбрасывал правки и писал «Выбран пресет»).
+    private bool _suppressPreset;
+
+    private void SetPresetRadio(RadioButton radio, bool value = true)
+    {
+        _suppressPreset = true;
+        try { radio.IsChecked = value; }
+        finally { _suppressPreset = false; }
     }
 
     // P0-5: честные счётчики секций (из Session.Data, иначе 0 — без выдумок).
@@ -159,17 +171,10 @@ public partial class SettingsView : UserControl
                 row.Children.Add(level);
                 row.Children.Add(num);
                 sp.Children.Add(row);
-                // B2: честная подпись: вес + дефолт + «шаблон не так делает» для опасных.
-                var rangeCaption = new TextBlock
-                {
-                    Text = DangerCaption(o),
-                    FontSize = 11,
-                    Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
-                    Margin = new Thickness(0, 4, 0, 0),
-                    Tag = o.Code + "|range",
-                };
-                sp.Children.Add(rangeCaption);
-                RegisterRow(o.Code, slider, level, num, rangeCaption);
+                // Пакет 6: техническая строка (вес/диапазон/дефолт/шаблон) убрана
+                // с карточки — она живёт в подсказке слайдера.
+                slider.ToolTip = DangerCaption(o);
+                RegisterRow(o.Code, slider, level, num);
             }
             else
             {
@@ -285,6 +290,7 @@ public partial class SettingsView : UserControl
         {
             Content = "Применить черновик-фолбэк", Style = (Style)FindResource("BtnSecondary"),
             HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0),
+            ToolTip = "Сохраняет только эту секцию. Нижняя «Применить» сохраняет всё сразу.",
         };
         apply.Click += OnDraftApplyClick;
         sp.Children.Add(apply);
@@ -400,7 +406,7 @@ public partial class SettingsView : UserControl
                 r.S.Value = o.Level;
                 r.L.Text = o.LevelName;
                 r.N.Text = $"({o.Weight})";
-                r.R.Text = DangerCaption(o);
+                r.S.ToolTip = DangerCaption(o);
             }
             RefreshExpertBoxes();
             RefreshJsonPreview();
@@ -460,6 +466,7 @@ public partial class SettingsView : UserControl
         {
             Content = "Применить приоритет", Style = (Style)FindResource("BtnSecondary"),
             HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0),
+            ToolTip = "Сохраняет только эту секцию. Нижняя «Применить» сохраняет всё сразу — она и есть основной путь.",
         };
         apply.Click += OnGradePriorityApplyClick;
         sp.Children.Add(apply);
@@ -542,10 +549,10 @@ public partial class SettingsView : UserControl
         Say(value ? "Предупреждения включены." : "Предупреждения выключены — опасные изменения без спроса.", false);
     }
 
-    private void RegisterRow(string code, Slider s, TextBlock l, TextBlock n, TextBlock r) =>
-        _rows[code] = (s, l, n, r);
+    private void RegisterRow(string code, Slider s, TextBlock l, TextBlock n) =>
+        _rows[code] = (s, l, n);
 
-    private readonly Dictionary<string, (Slider S, TextBlock L, TextBlock N, TextBlock R)> _rows = [];
+    private readonly Dictionary<string, (Slider S, TextBlock L, TextBlock N)> _rows = [];
 
     private void OnSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
@@ -561,7 +568,7 @@ public partial class SettingsView : UserControl
             var o = _editor.Options.First(x => x.Code == code);
             r.L.Text = o.LevelName;
             r.N.Text = $"({o.Weight})";
-            r.R.Text = DangerCaption(o);
+            r.S.ToolTip = DangerCaption(o);
         }
         MarkDirty();
         RefreshExpertBoxes();
@@ -660,6 +667,7 @@ public partial class SettingsView : UserControl
         {
             Content = "Применить перегрузку", Style = (Style)FindResource("BtnSecondary"),
             HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0),
+            ToolTip = "Сохраняет только эту секцию. Нижняя «Применить» сохраняет всё сразу.",
         };
         apply.Click += OnOverloadApplyClick;
         sp.Children.Add(apply);
@@ -839,7 +847,8 @@ public partial class SettingsView : UserControl
 
     private void OnPresetChanged(object sender, RoutedEventArgs e)
     {
-        if (!IsLoaded) return;
+        // Программный выбор радиокнопки (после «Применить»/«Сохранить») — не выбор пресета.
+        if (!IsLoaded || _suppressPreset) return;
         _baseProfile = PresetStudent.IsChecked == true ? "STUDENT_FRIENDLY"
             : PresetTeacher.IsChecked == true ? "TEACHER_FRIENDLY"
             : "STANDARD";
@@ -853,7 +862,7 @@ public partial class SettingsView : UserControl
 
     private void OnResetClick(object sender, RoutedEventArgs e)
     {
-        PresetStandard.IsChecked = true;
+        SetPresetRadio(PresetStandard);
         _baseProfile = "STANDARD";
         _editor = QualitySettingsEditor.FromRules(EffectiveRuleSet.Default);
         BuildQualityPanel();
@@ -891,7 +900,16 @@ public partial class SettingsView : UserControl
                 return false;
             }
             bool confirmed = !o0.IsStrict || _confirmedDangerous.Contains(code);
-            try { _editor.SetWeight(code, w, confirmed); }
+            // Строгое правило без подтверждения не трогаем: это НЕ ошибка ввода —
+            // иначе главная «Применить» не сохраняла бы веса обычных ползунков
+            // (дефолтный strict-вес 100 считался «неприменённым экспертом»).
+            if (!confirmed)
+            {
+                if (w == o0.Weight) continue;
+                badTitle = $"{o0.Title} ({o0.Min}..{o0.Max})";
+                return false;
+            }
+            try { _editor.SetWeight(code, w, true); }
             catch
             {
                 badTitle = $"{o0.Title} ({o0.Min}..{o0.Max})";
@@ -904,13 +922,151 @@ public partial class SettingsView : UserControl
         return true;
     }
 
-    private void ApplyEntities()
+    // --- Пакет 6: одно сохранение вместо четырёх ---
+    // Главные «Применить» и «Сохранить „Моя школа"» собирают ВСЁ: веса слайдеров,
+    // «Приоритет выпускных», «Если идеал не найден», «Перегрузка учителей» и лимиты.
+
+    /// <summary>Собирает FlexSettings из карточек экрана (валидация чисел).</summary>
+    private bool TryReadFlexSettings(out FlexSettingsRow settings, out string? error)
     {
-        foreach (var (_, box, _, _, _) in _entityBoxes)
+        settings = _session.Flex.Settings;
+        error = null;
+        if (_w11Box is null || _w9Box is null || _wOtherBox is null || _heavyBox is null ||
+            _draftExtraBox is null || _draftPolishBox is null)
+            return true; // панели ещё не построены — нечего читать
+        if (!int.TryParse(_w11Box.Text, out int w11) || w11 < 1 || w11 > 5 ||
+            !int.TryParse(_w9Box.Text, out int w9) || w9 < 1 || w9 > 5 ||
+            !int.TryParse(_wOtherBox.Text, out int wo) || wo < 1 || wo > 5 ||
+            !int.TryParse(_heavyBox.Text, out int th) || th < 1 || th > 10)
         {
-            if (box.Tag is EntityTag tag && int.TryParse(box.Text, out int v))
-                tag.Apply(v);
+            error = "Веса — числа 1..5, порог тяжести — 1..10.";
+            return false;
         }
+        if (!int.TryParse(_draftExtraBox.Text, out int extra) || extra < 0 || extra > 2 ||
+            !int.TryParse(_draftPolishBox.Text, out int polish) || polish < 0 || polish > 60)
+        {
+            error = "Превышение лимита — 0..2 урока, доводка — 0..60 секунд.";
+            return false;
+        }
+        var codes = _draftRelaxBoxes.Where(kv => kv.Value.IsChecked == true)
+            .Select(kv => kv.Key).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        settings = settings with
+        {
+            GradePriorityEnabled = _gradePrioBox?.IsChecked == true,
+            W11 = w11,
+            W9 = w9,
+            WOther = wo,
+            IsHeavyThreshold = th,
+            AllowTeacherOverload = _overloadBox?.IsChecked == true,
+            TeacherOverloadCap = Math.Clamp((int)(_overloadCapSlider?.Value ?? 9), 7, 14),
+            DraftFallbackEnabled = _draftFallbackBox?.IsChecked == true,
+            DraftExtraLessonsPerDay = extra,
+            DraftPolishSeconds = polish,
+            DraftRelaxCodes = string.Join(",", codes),
+        };
+        return true;
+    }
+
+    // B2: новые опасные послабления черновика и подъём перегрузки — через подтверждение.
+    private async Task<bool> ConfirmSettingsChangesAsync(FlexSettingsRow next)
+    {
+        var cur = _session.Flex.Settings;
+        var added = next.DraftRelaxCodeSet
+            .Where(c => !cur.DraftRelaxCodeSet.Contains(c) && RuleCatalog.IsDangerous(c))
+            .OrderBy(c => c, StringComparer.Ordinal).ToList();
+        if (next.DraftFallbackEnabled && added.Count > 0)
+        {
+            bool ok = await _session.ConfirmDangerousAsync(
+                System.Windows.Window.GetWindow(this), added[0], "Черновик с послаблениями",
+                string.Join(" ", added.Select(DangerousConsequence)) +
+                " Послабления действуют только на черновик: принять такое расписание в базу нельзя.");
+            if (!ok) return false;
+        }
+        bool raising = next.AllowTeacherOverload &&
+            (!cur.AllowTeacherOverload || next.TeacherOverloadCap > cur.TeacherOverloadCap);
+        if (raising)
+        {
+            bool ok = await _session.ConfirmDangerousAsync(
+                System.Windows.Window.GetWindow(this), "teacher-overload", "Перегрузка учителей",
+                DangerousConsequence("teacher-overload") +
+                $" Потолок: {next.TeacherOverloadCap} уроков в день.");
+            if (!ok) return false;
+        }
+        return true;
+    }
+
+    /// <summary>Лимиты по именам: после пересборки данных Id сущностей новые.</summary>
+    private List<(string Kind, string Name, int Value)> CaptureLimits()
+    {
+        var list = new List<(string Kind, string Name, int Value)>();
+        foreach (var (_, box, _, _, what) in _entityBoxes)
+        {
+            if (!int.TryParse(box.Text, out int v)) continue;
+            var (kind, name) = KindOf(what);
+            if (kind.Length > 0) list.Add((kind, name, v));
+        }
+        return list;
+    }
+
+    private static (string Kind, string Name) KindOf(string what) =>
+        what.StartsWith("класс ", StringComparison.Ordinal) ? ("class", what["класс ".Length..])
+        : what.StartsWith("учитель ", StringComparison.Ordinal) ? ("teacher", what["учитель ".Length..])
+        : what.StartsWith("предмет ", StringComparison.Ordinal)
+            ? ("subject", what["предмет ".Length..].Trim('«', '»'))
+            : ("", what);
+
+    /// <summary>
+    /// Переносит дневные лимиты в текущие сущности сессии (по именам) и
+    /// перестраивает карточки, чтобы поля показывали актуальные значения.
+    /// В SQLite лимиты пока не пишутся: формат FlexDataset их не знает (см. отчёт).
+    /// </summary>
+    private void ApplyLimits(IReadOnlyList<(string Kind, string Name, int Value)> limits)
+    {
+        var d = _session.Data;
+        if (d is null) return;
+        foreach (var (kind, name, value) in limits)
+        {
+            switch (kind)
+            {
+                case "class":
+                    var c = d.Classes.FirstOrDefault(x =>
+                        string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+                    if (c is not null) c.MaxLessonsPerDay = value;
+                    break;
+                case "teacher":
+                    var t = d.Teachers.FirstOrDefault(x =>
+                        string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+                    if (t is not null) t.MaxLessonsPerDay = value;
+                    break;
+                case "subject":
+                    var s = d.Subjects.FirstOrDefault(x =>
+                        string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
+                    if (s is not null) s.MaxPerDay = value;
+                    break;
+            }
+        }
+        BuildEntityPanels();
+    }
+
+    private async Task<(bool Ok, string? Error)> TryApplySettingsAsync(FlexSettingsRow settings)
+    {
+        try
+        {
+            await _session.ApplyFlexAsync(_session.Flex with { Settings = settings });
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            var errs = _session.LastImportErrors;
+            return (false, errs.Count > 0 ? string.Join("; ", errs.Take(3)) : ex.Message);
+        }
+    }
+
+    /// <summary>После сохранения карточки показывают применённые значения, а не старые.</summary>
+    private void RefreshCardValues()
+    {
+        BuildQualityPanel();
+        RefreshExpertBoxes();
     }
 
     // B3: повышение дневных лимитов выше школьного правила — через подтверждение.
@@ -948,16 +1104,33 @@ public partial class SettingsView : UserControl
     private async void OnApplyClick(object sender, RoutedEventArgs e)
     {
         if (!ReadEntityBoxes(out string? err)) { Say(err!, true); return; }
+        // Карточки читаем ДО ReadExpertBoxes: он перестраивает панель качества,
+        // и незасохранённые значения приоритета/черновика иначе потеряются.
+        if (!TryReadFlexSettings(out var nextSettings, out string? settingsErr))
+        {
+            Say(settingsErr!, true);
+            return;
+        }
         // Лимиты классов/учителей применяются независимо от Эксперта:
         // кривой вес больше не блокирует дневные нормы.
         bool expertOk = ReadExpertBoxes(out string? expertBad);
         if (!await ConfirmCapRaisesAsync()) { Say("Отменено — лимиты не тронуты.", true); return; }
-        ApplyEntities();
+        if (!await ConfirmSettingsChangesAsync(nextSettings))
+        {
+            Say("Отменено — настройки не изменены.", true);
+            return;
+        }
+        var limits = CaptureLimits();
         if (!expertOk)
         {
+            var (settingsOk, applyError) = await TryApplySettingsAsync(nextSettings);
+            ApplyLimits(limits);
+            if (settingsOk) RefreshCardValues();
             MarkClean();
-            Say($"Лимиты применены — действуют на следующие генерации. " +
-                $"Эксперт НЕ применён — поле «{expertBad}»: только числа из указанного диапазона.", true);
+            Say(settingsOk
+                ? "Настройки и дневные лимиты применены. " +
+                  $"Эксперт НЕ применён — поле «{expertBad}»: только числа из указанного диапазона."
+                : $"Сохранить настройки не удалось: {applyError}", !settingsOk);
             return;
         }
         // B2: опасные — только с подтверждённым набором (тумблеры выше).
@@ -969,16 +1142,32 @@ public partial class SettingsView : UserControl
             _session.ApplyOverrides(_editor.GetOverrides(), _confirmedDangerous);
         }
         catch (Exception ex) { Say("Не применено: " + ex.Message, true); return; }
+        var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings);
+        ApplyLimits(limits);
+        if (!flexOk)
+        {
+            Say($"Веса применены, но настройки карточек не сохранились: {flexErr}", true);
+            return;
+        }
+        RefreshCardValues();
         MarkClean();
         Say(_editor.IsModified
-            ? "Применено: настройки будут действовать на следующие генерации (без сохранения)."
-            : "Применён пресет без изменений.", false);
+            ? "Применено: веса, приоритет выпускных, черновик, перегрузка и дневные лимиты — " +
+              "действуют на следующие генерации (лимиты — до перезапуска)."
+            : "Сохранено: приоритет выпускных, черновик, перегрузка и дневные лимиты " +
+              "(веса не менялись; лимиты — до перезапуска).", false);
         CheckPresetAfterApply();
     }
 
     private async void OnSaveCustomClick(object sender, RoutedEventArgs e)
     {
         if (!ReadEntityBoxes(out string? err)) { Say(err!, true); return; }
+        // Как и в «Применить»: карточки — до ReadExpertBoxes (он перестраивает панель).
+        if (!TryReadFlexSettings(out var nextSettings, out string? settingsErr))
+        {
+            Say(settingsErr!, true);
+            return;
+        }
         if (!ReadExpertBoxes(out string? expertBad))
         {
             Say($"Не сохранено — поле «{expertBad}»: только числа из указанного диапазона.", true);
@@ -989,24 +1178,35 @@ public partial class SettingsView : UserControl
         try
         {
             if (!await ConfirmCapRaisesAsync()) { Say("Отменено — лимиты не тронуты.", true); return; }
-            ApplyEntities();
+            if (!await ConfirmSettingsChangesAsync(nextSettings))
+            {
+                Say("Отменено — настройки не изменены.", true);
+                return;
+            }
+            var limits = CaptureLimits();
             await _session.SaveCustomProfileAsync(name, _baseProfile, _editor.GetOverrides(), _confirmedDangerous);
+            var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings);
+            ApplyLimits(limits);
+            if (flexOk) RefreshCardValues();
             SavedNameText.Text = $"Сохранён: {name}";
-            PresetCustom.IsChecked = true;
+            SetPresetRadio(PresetCustom);
             MarkClean();
-            Say($"Профиль «{name}» сохранён — восстановится при следующем открытии.", false);
+            Say(flexOk
+                ? $"Профиль «{name}» сохранён: веса, приоритет выпускных, черновик, перегрузка и дневные лимиты " +
+                  "применены. Лимиты действуют до перезапуска."
+                : $"Профиль «{name}» сохранён, но настройки карточек не применились: {flexErr}", !flexOk);
         }
         catch (Exception ex) { Say("Не сохранено: " + ex.Message, true); }
     }
 
     private void CheckPresetAfterApply()
     {
-        PresetCustom.IsChecked = _editor.IsModified;
+        SetPresetRadio(PresetCustom, _editor.IsModified);
         if (!_editor.IsModified)
         {
-            if (_baseProfile == "STUDENT_FRIENDLY") PresetStudent.IsChecked = true;
-            else if (_baseProfile == "TEACHER_FRIENDLY") PresetTeacher.IsChecked = true;
-            else PresetStandard.IsChecked = true;
+            if (_baseProfile == "STUDENT_FRIENDLY") SetPresetRadio(PresetStudent);
+            else if (_baseProfile == "TEACHER_FRIENDLY") SetPresetRadio(PresetTeacher);
+            else SetPresetRadio(PresetStandard);
         }
     }
 
