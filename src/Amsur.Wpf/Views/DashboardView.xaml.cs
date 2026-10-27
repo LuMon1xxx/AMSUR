@@ -30,6 +30,8 @@ public partial class DashboardView : UserControl
         ["QUICK"] = (Glyph(0xE768), "~3 сек"),
         ["STANDARD"] = (Glyph(0xE735), "~40 сек"),
         ["MAXIMUM"] = (Glyph(0xE8A5), "~3 мин"),
+        // Топ-качество было без меты — карточка рисовалась пустой (баг D-скрина).
+        ["TOP"] = (Glyph(0xE734), "~5–10 мин"),
         ["EXPERT"] = (Glyph(0xE713), "Ручной"),
     };
 
@@ -132,6 +134,7 @@ public partial class DashboardView : UserControl
         "QUICK" => "Проверка / быстрый результат",
         "STANDARD" => "Рекомендуется для большинства школ",
         "MAXIMUM" => "Больше времени на лучший вариант",
+        "TOP" => "Глубокая укладка дней учителей (минимум окон)",
         "EXPERT" => "Полный контроль параметров",
         _ => "",
     };
@@ -158,6 +161,9 @@ public partial class DashboardView : UserControl
         var s = Session.Summary;
         bool hasData = Session.HasData;
 
+        // Дублирующий баннер «следующий шаг» нужен только до загрузки данных.
+        NextStepCard.Visibility = hasData ? Visibility.Collapsed : Visibility.Visible;
+
         SubText.Text = hasData
             ? "Данные готовы. Проверьте режим и создавайте расписание."
             : "Загрузите данные школы, чтобы начать.";
@@ -167,7 +173,6 @@ public partial class DashboardView : UserControl
             SchoolCardText.Text = "Данные не загружены";
             SchoolCardDetail.Text = "Шаблон Excel → заполнить → загрузить.";
             DataDetailText.Text = "";
-            MiniDataText.Text = "Шаблон Excel → заполнить → загрузить.";
             MiniDataStatus.Text = "Не загружены";
             MiniDataStatus.Foreground = (Brush)FindResource("BTextMuted");
             MiniDataDot.Fill = (Brush)FindResource("BTextMuted");
@@ -180,7 +185,6 @@ public partial class DashboardView : UserControl
             DataDetailText.Text = $"{s.Days} дн. × {s.Slots} ур. · " +
                 (Session.DataSource == "manual" ? "Ручной ввод"
                     : Session.DataSource == "demo" ? "Демо-данные" : "Excel-импорт");
-            MiniDataText.Text = summary;
             MiniDataStatus.Text = "Загружены";
             MiniDataStatus.Foreground = (Brush)FindResource("BGood");
             MiniDataDot.Fill = (Brush)FindResource("BGood");
@@ -228,6 +232,9 @@ public partial class DashboardView : UserControl
 
     private void PaintNextStep(bool hasData, bool hasActive, bool hasQuality)
     {
+        // Верхний баннер нужен только на шаге 1 (пока данных нет). После импорта
+        // единственная кнопка запуска — HeroGenerateBtn, дублирующий баннер скрыт.
+        NextStepCard.Visibility = hasData ? Visibility.Collapsed : Visibility.Visible;
         // Ввод сетки (дни/уроки) нужен только на шаге загрузки.
         NextStepInputs.Visibility = !hasData ? Visibility.Visible : Visibility.Collapsed;
         DemoBtn.Visibility = !hasData ? Visibility.Visible : Visibility.Collapsed;

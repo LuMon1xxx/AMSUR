@@ -78,9 +78,17 @@
           </Grid>
         </Border>
 
-        <!-- Карточки Школа / Профиль -->
-        <UniformGrid Columns="2" Margin="0,14,0,0" Rows="1">
-          <Border Style="{StaticResource Card}" Margin="0,0,6,0">
+        <!-- Сводка: ровно 3 карточки — данные+шаблон, профиль, активное расписание.
+             Раньше эти же действия дублировались в двух рядах (4+2 карточки). -->
+        <Grid Margin="0,14,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+
+          <!-- 1. Данные школы + шаблон Excel -->
+          <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,6,0">
             <StackPanel>
               <Grid>
                 <Grid.ColumnDefinitions>
@@ -88,52 +96,112 @@
                   <ColumnDefinition Width="*"/>
                   <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10"
-                        Background="{DynamicResource BAccentSoft}" VerticalAlignment="Center">
-                  <TextBlock Text="&#xE825;" FontFamily="Segoe MDL2 Assets" FontSize="20"
-                             Foreground="{DynamicResource BAccent}"
+                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="12"
+                        Background="{DynamicResource BGoodBg}" VerticalAlignment="Center">
+                  <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="17"
+                             Foreground="{DynamicResource BGood}"
                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
-                <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
-                  <TextBlock Text="ШКОЛА" Style="{StaticResource THCaption}"/>
-                  <TextBlock x:Name="SchoolCardText" FontSize="16" FontWeight="SemiBold" Margin="0,2,0,0" Text="Данные не загружены" TextWrapping="Wrap"/>
-                </StackPanel>
-                <Button Grid.Column="2" Content="Просмотреть" Style="{StaticResource BtnSecondary}" Padding="10,4" MinWidth="0" VerticalAlignment="Center" Click="OnDataInfoClick"/>
-              </Grid>
-              <TextBlock x:Name="SchoolCardDetail" Style="{StaticResource THint}" FontSize="12" Margin="0,10,0,0" Text="Шаблон Excel → заполнить → загрузить."/>
-              <TextBlock x:Name="DataDetailText" Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" Text=""/>
-            </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="6,0,0,0">
-            <StackPanel>
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto"/>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="10"
-                        Background="{DynamicResource BAccentSoft}" VerticalAlignment="Center">
-                  <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" FontSize="20"
-                             Foreground="{DynamicResource BAccent}"
-                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <StackPanel Grid.Column="1" Margin="12,0,12,0" VerticalAlignment="Center">
-                  <TextBlock Text="ТЕКУЩИЙ ПРОФИЛЬ" Style="{StaticResource THCaption}"/>
+                <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                  <TextBlock Text="ДАННЫЕ ШКОЛЫ" Style="{StaticResource THCaption}"/>
                   <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                    <TextBlock x:Name="ProfileNameText" FontSize="16" FontWeight="SemiBold" Text="Стандарт" VerticalAlignment="Center"/>
-                    <Border Style="{StaticResource Badge}" Background="{DynamicResource BAccentSoft}" Margin="8,0,0,0" VerticalAlignment="Center">
-                      <TextBlock x:Name="ProfileVersionText" Text="Рекомендуемый" FontSize="11" Foreground="{DynamicResource BAccent}"/>
-                    </Border>
+                    <Ellipse x:Name="MiniDataDot" Width="8" Height="8" VerticalAlignment="Center" Fill="{DynamicResource BTextMuted}"/>
+                    <TextBlock x:Name="MiniDataStatus" x:FieldModifier="public" FontSize="13" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center" Text="Не загружены"/>
                   </StackPanel>
                 </StackPanel>
-                <Button Grid.Column="2" Content="Изменить" Style="{StaticResource BtnSecondary}" Padding="10,4" MinWidth="0" VerticalAlignment="Center" Click="OnSettingsClick"/>
+                <Button Grid.Column="2" Content="Просмотреть" Style="{StaticResource BtnSecondary}" Padding="10,4" MinWidth="0"
+                        VerticalAlignment="Center" Click="OnDataInfoClick"/>
               </Grid>
-              <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,10,0,0"
+              <TextBlock x:Name="SchoolCardText" FontSize="16" FontWeight="SemiBold" Margin="0,10,0,0"
+                         Text="Данные не загружены" TextWrapping="Wrap"/>
+              <TextBlock x:Name="SchoolCardDetail" Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0"
+                         Text="Шаблон Excel → заполнить → загрузить."/>
+              <TextBlock x:Name="DataDetailText" Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" Text=""/>
+              <!-- Шаблон: та же карточка, отдельная полоса — не плодим ещё одну кнопку «Просмотреть» -->
+              <Border BorderBrush="{DynamicResource BBorder}" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,10,0,0">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" Width="32" Height="32" CornerRadius="10"
+                          Background="{DynamicResource BGoodBg}" VerticalAlignment="Center">
+                    <TextBlock Text="&#xE8EC;" FontFamily="Segoe MDL2 Assets" FontSize="15"
+                               Foreground="{DynamicResource BGood}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                  </Border>
+                  <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                    <TextBlock Text="ШАБЛОН EXCEL" Style="{StaticResource THCaption}"/>
+                    <TextBlock x:Name="MiniDataText" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap"
+                               Text="Классы, предметы, нагрузка, учителя"/>
+                  </StackPanel>
+                  <Button Grid.Column="2" Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Padding="10,4"
+                          MinWidth="0" VerticalAlignment="Center" Click="OnTemplateClick"/>
+                </Grid>
+              </Border>
+            </StackPanel>
+          </Border>
+
+          <!-- 2. Профиль качества -->
+          <Border Grid.Column="1" Style="{StaticResource Card}" Margin="3,0,3,0">
+            <StackPanel>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="12"
+                        Background="{DynamicResource BAccentSoft}" VerticalAlignment="Center">
+                  <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="17"
+                             Foreground="{DynamicResource BAccent}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Grid.Column="1" Text="ПРОФИЛЬ КАЧЕСТВА" Style="{StaticResource THCaption}"
+                           Margin="10,0,8,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                <Button Grid.Column="2" Content="Изменить" Style="{StaticResource BtnSecondary}" Padding="10,4" MinWidth="0"
+                        VerticalAlignment="Center" Click="OnSettingsClick"/>
+              </Grid>
+              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <TextBlock x:Name="ProfileNameText" FontSize="16" FontWeight="SemiBold" Text="Стандарт" VerticalAlignment="Center"/>
+                <Border Style="{StaticResource Badge}" Background="{DynamicResource BAccentSoft}" Margin="8,0,0,0" VerticalAlignment="Center">
+                  <TextBlock x:Name="ProfileVersionText" Text="Рекомендуемый" FontSize="11" Foreground="{DynamicResource BAccent}"/>
+                </Border>
+              </StackPanel>
+              <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,10,0,0" TextWrapping="Wrap"
                          Text="Строгие правила одни для всех профилей: ноль окон у учеников, старт не позже 2-го урока."/>
             </StackPanel>
           </Border>
-        </UniformGrid>
+
+          <!-- 3. Активное расписание -->
+          <Border Grid.Column="2" Style="{StaticResource Card}" Margin="6,0,0,0">
+            <StackPanel>
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="40" Height="40" CornerRadius="12"
+                        Background="{DynamicResource BAccentSoft}" VerticalAlignment="Center">
+                  <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="17"
+                             Foreground="{DynamicResource BAccent}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock Grid.Column="1" Text="АКТИВНОЕ РАСПИСАНИЕ" Style="{StaticResource THCaption}"
+                           Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+              </Grid>
+              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Ellipse x:Name="MiniLastDot" Width="8" Height="8" VerticalAlignment="Center" Fill="{DynamicResource BTextMuted}"/>
+                <TextBlock x:Name="MiniLastStatus" FontSize="13" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center" Text="Не создано"/>
+              </StackPanel>
+              <TextBlock x:Name="MiniLastText" Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0"
+                         Text="Пока нет" TextWrapping="Wrap"/>
+              <Button Content="Перейти к сетке" Style="{StaticResource BtnSecondary}" Margin="0,10,0,0"
+                      HorizontalAlignment="Left" Click="OnScheduleClick"/>
+            </StackPanel>
+          </Border>
+        </Grid>
 
         <!-- D: ошибка импорта (баннер выше заменяет старое «сначала загрузите») -->
         <Border x:Name="ErrorCard" Style="{StaticResource Card}" Margin="0,14,0,0"
@@ -151,82 +219,6 @@
                     Margin="0,10,0,0" HorizontalAlignment="Left" Click="OnImportClick"/>
           </StackPanel>
         </Border>
-
-        <!-- Мини-карточки -->
-        <UniformGrid Columns="4" Margin="0,14,0,0">
-          <Border Style="{StaticResource Card}" Margin="0,0,6,0">
-            <StackPanel>
-              <StackPanel Orientation="Horizontal">
-                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource BGoodBg}" VerticalAlignment="Center">
-                  <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="17"
-                             Foreground="{DynamicResource BGood}"
-                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="Данные школы" FontWeight="SemiBold" FontSize="14" TextWrapping="Wrap" Margin="10,0,0,0" VerticalAlignment="Center"/>
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                <Ellipse x:Name="MiniDataDot" Width="8" Height="8" VerticalAlignment="Center" Fill="{DynamicResource BTextMuted}"/>
-                <TextBlock x:Name="MiniDataStatus" x:FieldModifier="public" FontSize="13" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center" Text="Не загружены"/>
-              </StackPanel>
-              <TextBlock x:Name="MiniDataText" Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" Text="Шаблон Excel → заполнить → загрузить."/>
-              <Button Content="Просмотреть" Style="{StaticResource BtnSecondary}" Margin="0,10,0,0" Click="OnDataInfoClick"/>
-            </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="3,0,3,0">
-            <StackPanel>
-              <StackPanel Orientation="Horizontal">
-                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource BGoodBg}" VerticalAlignment="Center">
-                  <TextBlock Text="&#xE8EC;" FontFamily="Segoe MDL2 Assets" FontSize="17"
-                             Foreground="{DynamicResource BGood}"
-                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="Шаблон Excel" FontWeight="SemiBold" FontSize="14" Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                <Ellipse Width="8" Height="8" VerticalAlignment="Center" Fill="{DynamicResource BGood}"/>
-                <TextBlock FontSize="13" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center" Text="Готов" Foreground="{DynamicResource BGood}"/>
-              </StackPanel>
-              <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" Text="Классы, предметы, нагрузка, учителя"/>
-              <Button Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Margin="0,10,0,0" Click="OnTemplateClick"/>
-            </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="3,0,3,0">
-            <StackPanel>
-              <StackPanel Orientation="Horizontal">
-                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource BAccentSoft}" VerticalAlignment="Center">
-                  <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="17"
-                             Foreground="{DynamicResource BAccent}"
-                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="Профиль" FontWeight="SemiBold" FontSize="14" Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                <Ellipse Width="8" Height="8" VerticalAlignment="Center" Fill="{DynamicResource BAccent}"/>
-                <TextBlock x:Name="MiniProfileText" FontSize="13" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center" Text="Стандарт" Foreground="{DynamicResource BAccent}"/>
-              </StackPanel>
-              <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" Text="Можно настроить под свои требования"/>
-              <Button Content="Настроить" Style="{StaticResource BtnSecondary}" Margin="0,10,0,0" Click="OnSettingsClick"/>
-            </StackPanel>
-          </Border>
-          <Border Style="{StaticResource Card}" Margin="6,0,0,0">
-            <StackPanel>
-              <StackPanel Orientation="Horizontal">
-                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource BAccentSoft}" VerticalAlignment="Center">
-                  <TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" FontSize="17"
-                             Foreground="{DynamicResource BAccent}"
-                             HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <TextBlock Text="Последнее расписание" FontWeight="SemiBold" FontSize="14" Margin="10,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                <Ellipse x:Name="MiniLastDot" Width="8" Height="8" VerticalAlignment="Center" Fill="{DynamicResource BTextMuted}"/>
-                <TextBlock x:Name="MiniLastStatus" FontSize="13" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center" Text="Не создано"/>
-              </StackPanel>
-              <TextBlock x:Name="MiniLastText" Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" Text="Пока нет"/>
-              <Button Content="Перейти к сетке" Style="{StaticResource BtnSecondary}" Margin="0,10,0,0" Click="OnScheduleClick"/>
-            </StackPanel>
-          </Border>
-        </UniformGrid>
 
         <!-- Быстрый старт: 5 шагов -->
         <Border Style="{StaticResource Card}" Margin="0,14,0,0">
@@ -257,7 +249,7 @@
                   <TextBlock x:Name="Step2Num" Tag="2" Text="2" FontSize="13" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <TextBlock Text="Выберите профиль" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" TextWrapping="Wrap"/>
-                <TextBlock Text="Стандарт / Требования" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap"/>
+                <TextBlock x:Name="MiniProfileText" Style="{StaticResource THint}" FontSize="12" Text="Стандарт" TextWrapping="Wrap"/>
               </StackPanel>
               <StackPanel Margin="3,0,3,0">
                 <Border x:Name="Step3Circle" Width="28" Height="28" CornerRadius="14" Background="{DynamicResource BAccent}" HorizontalAlignment="Left">
@@ -295,7 +287,7 @@
             <ColumnDefinition Width="Auto"/>
           </Grid.ColumnDefinitions>
           <TextBlock Grid.Column="0" Text="ВЫБОР РЕЖИМА ГЕНЕРАЦИИ" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
-          <Button Grid.Column="1" Content="Параметры" Style="{StaticResource BtnSecondary}" Padding="10,4" MinWidth="0" VerticalAlignment="Center" Click="OnSettingsClick"/>
+          <!-- Кнопка «Параметры» убрана: настройки открываются из карточки профиля слева. -->
         </Grid>
         <StackPanel x:Name="ModeCards"/>
         <TextBlock Text="КАЧЕСТВО РАСПИСАНИЯ" FontWeight="SemiBold" FontSize="13" Margin="0,16,0,8"/>
@@ -344,8 +336,6 @@
             </Grid>
             <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,6,0,0"
                        Text="Если у вас нестандартные требования к расписанию, вы можете настроить все параметры в разделе «Настройки качества»."/>
-            <Button Content="Перейти к настройкам правил →" Style="{StaticResource BtnSecondary}"
-                    Margin="0,10,0,0" HorizontalAlignment="Left" Click="OnSettingsClick"/>
           </StackPanel>
         </Border>
       </StackPanel>

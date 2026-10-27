@@ -18,9 +18,9 @@
         </StackPanel>
         <TextBlock Text="{Binding StatusText}" FontSize="15" Margin="0,8,0,0" TextWrapping="Wrap"/>
         <TextBlock Text="{Binding QualityProfileText}" FontSize="13" Foreground="{DynamicResource BTextSoft}" Margin="0,4,0,0"/>
-        <!-- Режимы: справка по лимитам (выбор — на главной до запуска), честная производная BudgetSeconds -->
-        <TextBlock Text="Режимы (выбор — на главной до запуска):" Style="{DynamicResource THCaption}" Margin="0,12,0,6"/>
-        <UniformGrid x:Name="ModeStrip" Columns="4" Rows="1"/>
+        <!-- Режимы: клик по карточке выбирает режим для перезапуска, честная производная BudgetSeconds -->
+        <TextBlock Text="Режимы (клик по карточке — выбрать):" Style="{DynamicResource THCaption}" Margin="0,12,0,6"/>
+        <UniformGrid x:Name="ModeStrip" Columns="5" Rows="1"/>
       </StackPanel>
     </Border>
 
@@ -104,11 +104,16 @@
                      IsIndeterminate="{Binding CanStop}" Foreground="{DynamicResource BAccent}"
                      Background="{DynamicResource BSubtle}" BorderThickness="0"/>
         <DockPanel Margin="0,10,0,0">
-          <TextBlock Style="{DynamicResource THint}" FontSize="12" VerticalAlignment="Center"
+          <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="12,0,0,0" VerticalAlignment="Center">
+            <Button x:Name="StopButton" Content="⦸  Остановить расчёт" Style="{DynamicResource BtnSecondary}"
+                    Padding="16,8" Foreground="{DynamicResource BBad}"
+                    IsEnabled="{Binding CanStop}" Click="OnStopClick"/>
+            <!-- Перезапуск доступен, когда расчёт не идёт (CanStop == false) -->
+            <Button x:Name="RestartButton" Content="↻  Перезапустить расчёт" Style="{DynamicResource BtnSecondary}"
+                    Padding="16,8" Margin="8,0,0,0" IsEnabled="False" Click="OnRestartClick"/>
+          </StackPanel>
+          <TextBlock Style="{DynamicResource THint}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"
                      Text="Лучшее найденное решение сохраняется автоматически — остановку можно нажать в любой момент."/>
-          <Button x:Name="StopButton" Content="⦸  Остановить расчёт" Style="{DynamicResource BtnSecondary}"
-                  DockPanel.Dock="Right" Margin="12,0,0,0" Padding="16,8"
-                  Foreground="{DynamicResource BBad}" IsEnabled="{Binding CanStop}" Click="OnStopClick"/>
         </DockPanel>
       </StackPanel>
     </Border>
@@ -123,7 +128,7 @@
     <DockPanel Margin="0,20,0,8">
       <TextBlock Text="{Binding Top5.HeaderText}" Style="{DynamicResource TH2}" VerticalAlignment="Center"/>
       <TextBlock Style="{DynamicResource THCaption}" DockPanel.Dock="Right" VerticalAlignment="Center"
-                 Text="сортировка — по качеству (Soft)"/>
+                 Margin="16,0,0,0" Text="сортировка — по качеству (Soft)"/>
     </DockPanel>
     <ItemsControl ItemsSource="{Binding Top5.Cards}">
       <ItemsControl.ItemTemplate>

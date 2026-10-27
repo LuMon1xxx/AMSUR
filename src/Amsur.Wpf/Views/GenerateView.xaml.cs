@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using Amsur.Application;
 
@@ -15,6 +16,9 @@ public partial class GenerateView : UserControl
     private readonly GenerationOrchestrator? _orch;
     private readonly AppSession? _session;
     private bool _started;
+    private bool _running;
+    private readonly Dictionary<string, System.Windows.Controls.Border> _modeCards = [];
+    private string? _selectedMode;
 
     public GenerateView(GenerateViewModel vm, GenerationOrchestrator? orch = null, AppSession? session = null)
     {
@@ -24,6 +28,7 @@ public partial class GenerateView : UserControl
         DataContext = vm;
         InitializeComponent();
         BuildModeStrip();
+        RestartButton.IsEnabled = !_vm.CanStop;
         vm.PropertyChanged += OnVmChanged;
         RefreshDiagnostics();
         RefreshDraft();
@@ -43,6 +48,9 @@ public partial class GenerateView : UserControl
 
     private async Task RunGuardedAsync()
     {
+        if (_running) return;
+        _running = true;
+        _vm.CanStop = true; // перезапуск: «Остановить» снова активна
         // Сюда доходим только из StartOnce при живых orch+session.
         var orch = _orch!;
         var session = _session!;
@@ -76,12 +84,18 @@ public partial class GenerateView : UserControl
                 "Генерация прервана ошибкой: " + ex.Message,
                 "АМСУР", MessageBoxButton.OK, MessageBoxImage.Error));
         }
+        finally
+        {
+            _running = false;
+        }
     }
 
     private void OnVmChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(GenerateViewModel.Diagnostics))
             Dispatcher.InvokeAsync(RefreshDiagnostics);
+        if (e.PropertyName == nameof(GenerateViewModel.CanStop))
+            Dispatcher.InvokeAsync(() => RestartButton.IsEnabled = !_vm.CanStop);
         if (e.PropertyName == nameof(GenerateViewModel.Trajectory))
             Dispatcher.InvokeAsync(() => Chart.Render(_vm.Trajectory));
         if (e.PropertyName is nameof(GenerateViewModel.HasDraft)
@@ -179,6 +193,7 @@ public partial class GenerateView : UserControl
     private void BuildModeStrip()
     {
         ModeStrip.Children.Clear();
+        _modeCards.Clear();
         foreach (var m in GenerateModes.All)
         {
             string limit = m.BudgetSeconds >= 60
@@ -189,12 +204,15 @@ public partial class GenerateView : UserControl
                 Padding = new Thickness(10),
                 Margin = new Thickness(0, 0, 6, 0),
                 ToolTip = m.Description,
+                Cursor = Cursors.Hand,
+                BorderThickness = new Thickness(1),
             };
             if (TryFindResource("Card") is Style cardStyle) card.Style = cardStyle;
             var sp = new System.Windows.Controls.StackPanel();
             sp.Children.Add(new System.Windows.Controls.TextBlock
             {
                 Text = m.Name, FontSize = 12, FontWeight = FontWeights.SemiBold,
+                TextWrapping = TextWrapping.Wrap,
             });
             sp.Children.Add(new System.Windows.Controls.TextBlock
             {
@@ -203,7 +221,32 @@ public partial class GenerateView : UserControl
                 Margin = new Thickness(0, 2, 0, 0),
             });
             card.Child = sp;
+            // Клик по карточке — смена режима без возврата на главную.
+            card.MouseLeftButtonUp += (_, _) => SelectMode(m.Code);
+            _modeCards[m.Code] = card;
             ModeStrip.Children.Add(card);
+        }
+        ApplyModeHighlight();
+    }
+
+    // Выбранный режим: рамка BAccent + мягкий фон (остальные — обычная рамка).
+    private void SelectMode(string code)
+    {
+        _selectedMode = code;
+        _session?.SetGenerateMode(code);
+        ApplyModeHighlight();
+    }
+
+    private void ApplyModeHighlight()
+    {
+        string? current = _selectedMode ?? _session?.GenerateMode.Code;
+        foreach (var (code, card) in _modeCards)
+        {
+            bool on = code == current;
+            card.BorderBrush = (TryFindResource(on ? "BAccent" : "BBorder") as Brush) ?? Brushes.Transparent;
+            card.BorderThickness = new Thickness(on ? 2 : 1);
+            card.Background = (TryFindResource(on ? "BAccentSoft" : "BCard") as Brush)
+                ?? (on ? Brushes.WhiteSmoke : Brushes.Transparent);
         }
     }
 
@@ -221,6 +264,14 @@ public partial class GenerateView : UserControl
     }
 
     private void OnStopClick(object sender, RoutedEventArgs e) => _vm.RequestStop();
+
+    // Перезапуск на этом же экране: новый прогон в выбранном режиме (сеиды режима).
+    private async void OnRestartClick(object sender, RoutedEventArgs e)
+    {
+        if (_orch is null || _session is null) return;
+        if (_vm.CanStop) return; // идёт расчёт — сначала остановите
+        await RunGuardedAsync();
+    }
 
     private void OnOpenClick(object sender, RoutedEventArgs e)
     {
