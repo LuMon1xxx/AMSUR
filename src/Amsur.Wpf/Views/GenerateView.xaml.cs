@@ -12,8 +12,8 @@ namespace Amsur.Wpf.Views;
 // Финал — Session.LastQuality (дашборд подхватит при навигации).
 public partial class GenerateView : UserControl
 {
-    private readonly GenerateViewModel _vm;
-    private readonly GenerationOrchestrator? _orch;
+    private GenerateViewModel _vm;
+    private GenerationOrchestrator? _orch;
     private readonly AppSession? _session;
     private bool _started;
     private bool _running;
@@ -34,6 +34,7 @@ public partial class GenerateView : UserControl
         RefreshDraft();
         Chart.Render(vm.Trajectory);
         Loaded += (_, _) => StartOnce();
+        Loaded += (_, _) => ApplyModeHighlight(); // режим мог смениться на другом экране
         Unloaded += (_, _) => _vm.RequestStop();
     }
 
@@ -80,6 +81,7 @@ public partial class GenerateView : UserControl
         }
         catch (Exception ex)
         {
+            _vm.CanStop = false; // расчёт не идёт — «Остановить» не должна висеть активной
             await Dispatcher.InvokeAsync(() => MessageBox.Show(
                 "Генерация прервана ошибкой: " + ex.Message,
                 "АМСУР", MessageBoxButton.OK, MessageBoxImage.Error));
@@ -87,6 +89,9 @@ public partial class GenerateView : UserControl
         finally
         {
             _running = false;
+            // Расчёт + черновик закончены — перезапуск снова доступен.
+            // Через Dispatcher: finally может выполниться не на UI-потоке.
+            _ = Dispatcher.InvokeAsync(() => RestartButton.IsEnabled = !_vm.CanStop);
         }
     }
 
@@ -95,7 +100,7 @@ public partial class GenerateView : UserControl
         if (e.PropertyName == nameof(GenerateViewModel.Diagnostics))
             Dispatcher.InvokeAsync(RefreshDiagnostics);
         if (e.PropertyName == nameof(GenerateViewModel.CanStop))
-            Dispatcher.InvokeAsync(() => RestartButton.IsEnabled = !_vm.CanStop);
+            Dispatcher.InvokeAsync(() => RestartButton.IsEnabled = !_vm.CanStop && !_running);
         if (e.PropertyName == nameof(GenerateViewModel.Trajectory))
             Dispatcher.InvokeAsync(() => Chart.Render(_vm.Trajectory));
         if (e.PropertyName is nameof(GenerateViewModel.HasDraft)
@@ -265,11 +270,36 @@ public partial class GenerateView : UserControl
 
     private void OnStopClick(object sender, RoutedEventArgs e) => _vm.RequestStop();
 
-    // Перезапуск на этом же экране: новый прогон в выбранном режиме (сеиды режима).
+    // Перезапуск на этом же экране: новый прогон в выбранном режиме.
+    // Бюджет сида и grind-lite фиксируются в момент создания оркестратора
+    // (GenerateHost.CreateView), поэтому для нового режима берём новый
+    // оркестратор на той же сессии и подменяем VM у текущего view.
     private async void OnRestartClick(object sender, RoutedEventArgs e)
     {
-        if (_orch is null || _session is null) return;
         if (_vm.CanStop) return; // идёт расчёт — сначала остановите
+        if (_session?.Data is null) return;
+        // Расчёт уже остановлен, но черновик ещё дописывается: дождёмся конца.
+        for (int i = 0; i < 100 && _running; i++) await Task.Delay(50);
+        if (_running) return;
+        if (_orch is null)
+        {
+            await RunGuardedAsync(); // тестовый режим без оркестратора
+            return;
+        }
+
+        var (discarded, orch) = GenerateHost.CreateView(
+            _session.Data.ToProblemInput(), _session, _session.GenerateMode.Name);
+        _ = discarded; // нужен только оркестратор нового режима; view не показываем
+        var vm = orch.ViewModel;
+        _vm.PropertyChanged -= OnVmChanged;
+        _orch = orch;
+        _vm = vm;
+        DataContext = vm;
+        vm.PropertyChanged += OnVmChanged;
+        Chart.Render(vm.Trajectory);
+        RefreshDiagnostics();
+        RefreshDraft();
+        RestartButton.IsEnabled = !vm.CanStop;
         await RunGuardedAsync();
     }
 
