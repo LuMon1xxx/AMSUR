@@ -443,27 +443,50 @@ public static class ProblemBuilder
         // D-39 «Разрешить перегрузку»: недельная нагрузка учителя из нагрузки
         // (целые + вторые половины сплитов); кому 5 × MaxLessonsPerDay мало —
         // клон с поднятым лимитом до cap (кламп к сетке дня). Остальных не трогаем.
-        // Входные сущности не мутируем — подменяем словарь для задачи.
+        // D-61 авто-лимит двухсменки: двухсменная школа (ClassSlots/сетка ≥12)
+        // или hours > 5 × MaxLessonsPerDay — дневной лимит поднимается до
+        // Clamp(max(8, ceil(hours/3.8)), MaxLessonsPerDay, SlotsPerDay): учитель
+        // помещается в обе смены и может упаковывать нагрузку в плотные дни
+        // с выходными. Входные сущности не мутируем — подменяем словарь.
         var teachersForProblem = teacherById;
         var flex = input.Flex;
-        if (flex is not null && flex.AllowTeacherOverload)
+        var load = new Dictionary<Guid, int>();
+        foreach (var item in input.Curriculum)
         {
-            int cap = Math.Clamp(flex.TeacherOverloadCap, 1, input.SlotsPerDay);
-            var load = new Dictionary<Guid, int>();
-            foreach (var item in input.Curriculum)
-            {
-                load[item.TeacherId] = load.GetValueOrDefault(item.TeacherId) + item.HoursPerWeek;
-                if (item.SplitSubgroups && input.SplitTeachers.TryGetValue(item.Id, out var pair))
-                    load[pair.TeacherB] = load.GetValueOrDefault(pair.TeacherB) + item.HoursPerWeek;
-            }
+            load[item.TeacherId] = load.GetValueOrDefault(item.TeacherId) + item.HoursPerWeek;
+            if (item.SplitSubgroups && input.SplitTeachers.TryGetValue(item.Id, out var pair))
+                load[pair.TeacherB] = load.GetValueOrDefault(pair.TeacherB) + item.HoursPerWeek;
+        }
+        bool twoShift = input.ClassSlots.Count > 0 || input.SlotsPerDay >= 12;
+        bool allowOverload = flex is not null && flex.AllowTeacherOverload;
+        int overloadCap = allowOverload
+            ? Math.Clamp(flex!.TeacherOverloadCap, 1, input.SlotsPerDay)
+            : 0;
+        if (allowOverload || twoShift)
+        {
             teachersForProblem = new Dictionary<Guid, Teacher>(teacherById);
             foreach (var (tid, hours) in load)
             {
                 if (!teachersForProblem.TryGetValue(tid, out var t)) continue;
-                if (hours > 5 * t.MaxLessonsPerDay && cap > t.MaxLessonsPerDay)
+                int target = t.MaxLessonsPerDay;
+                bool needsMore = hours > 5 * t.MaxLessonsPerDay;
+                if (allowOverload)
+                {
+                    // D-39: флаг перегрузки — поднимаем ровно до капа (потолок
+                    // задаёт пользователь; шире авто-лимит не разгоняем).
+                    if (needsMore && overloadCap > target) target = overloadCap;
+                }
+                else if ((twoShift || needsMore) && t.MaxLessonsPerDay < input.SlotsPerDay)
+                {
+                    int auto = Math.Clamp(
+                        Math.Max(8, (int)Math.Ceiling(hours / 3.8)),
+                        t.MaxLessonsPerDay, input.SlotsPerDay);
+                    if (auto > target) target = auto;
+                }
+                if (target > t.MaxLessonsPerDay)
                     teachersForProblem[tid] = new Teacher
                     {
-                        Id = t.Id, Name = t.Name, MaxLessonsPerDay = cap,
+                        Id = t.Id, Name = t.Name, MaxLessonsPerDay = target,
                         PreferredStartSlot = t.PreferredStartSlot,
                         PreferredEndSlot = t.PreferredEndSlot,
                     };

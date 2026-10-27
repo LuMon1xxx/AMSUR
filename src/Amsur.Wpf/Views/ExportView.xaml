@@ -19,7 +19,7 @@
         <StackPanel>
           <TextBlock Text="Параметры выгрузки" FontSize="16" FontWeight="SemiBold"/>
           <TextBlock Style="{StaticResource THCaption}" Margin="0,2,0,0" Text="что войдёт в документ"/>
-          <Border Background="{StaticResource BSubtle}" CornerRadius="8" Padding="10" Margin="0,10,0,0">
+          <Border Background="{DynamicResource BSubtle}" CornerRadius="8" Padding="10" Margin="0,10,0,0">
             <StackPanel Orientation="Horizontal">
               <CheckBox IsChecked="True" IsEnabled="False" VerticalAlignment="Center"/>
               <StackPanel Margin="8,0,0,0">
@@ -34,7 +34,7 @@
                     Margin="0,6,0,0" IsChecked="True" VerticalAlignment="Center"/>
 
           <TextBlock Text="Формат:" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
-          <Border Background="{StaticResource BAccentSoft}" BorderBrush="{StaticResource BAccent}"
+          <Border Background="{DynamicResource BAccentSoft}" BorderBrush="{DynamicResource BAccent}"
                   BorderThickness="2" CornerRadius="10" Padding="10">
             <StackPanel Orientation="Horizontal">
               <Border Background="#107C41" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
@@ -46,18 +46,18 @@
               </StackPanel>
             </StackPanel>
           </Border>
-          <Border Background="{StaticResource BSubtle}" BorderBrush="{StaticResource BBorder}"
+          <Border Background="{DynamicResource BSubtle}" BorderBrush="{DynamicResource BBorder}"
                    BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,8,0,0"
                    ToolTip="Отдельной кнопки PDF нет: выгрузите HTML ниже и напечатайте в PDF из браузера (Ctrl+P)">
             <StackPanel Orientation="Horizontal">
-              <Border Background="{StaticResource BTextMuted}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+              <Border Background="{DynamicResource BTextMuted}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
                 <TextBlock Text="PDF" FontSize="11" FontWeight="Bold" Foreground="White"/>
               </Border>
               <StackPanel Margin="8,0,0,0">
                 <StackPanel Orientation="Horizontal">
                   <TextBlock Text="Печатная форма PDF" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                  <Border Style="{StaticResource Badge}" Background="{StaticResource BSubtle}" Margin="6,0,0,0">
-                    <TextBlock Text="через HTML" FontSize="10" Foreground="{StaticResource BTextSoft}"/>
+                  <Border Style="{StaticResource Badge}" Background="{DynamicResource BSubtle}" Margin="6,0,0,0">
+                    <TextBlock Text="через HTML" FontSize="10" Foreground="{DynamicResource BTextSoft}"/>
                   </Border>
                 </StackPanel>
                 <TextBlock Style="{StaticResource THint}" FontSize="11" Text="Выберите HTML ниже → откройте в браузере → печать в PDF (Ctrl+P)."/>
@@ -100,9 +100,9 @@
         <StackPanel>
           <DockPanel>
             <TextBlock Text="Предпросмотр" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
-            <Border x:Name="GateBadge" Style="{StaticResource Badge}" Background="{StaticResource BGoodBg}"
+            <Border x:Name="GateBadge" Style="{StaticResource Badge}" Background="{DynamicResource BGoodBg}"
                     DockPanel.Dock="Right" VerticalAlignment="Center">
-              <TextBlock x:Name="GateText" x:FieldModifier="public" Text="проверка…" FontSize="11" Foreground="{StaticResource BGood}"/>
+              <TextBlock x:Name="GateText" x:FieldModifier="public" Text="проверка…" FontSize="11" Foreground="{DynamicResource BGood}"/>
             </Border>
           </DockPanel>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0"
@@ -110,7 +110,7 @@
           <ItemsControl x:Name="PreviewList" Margin="0,8,0,0">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <Border Background="{StaticResource BSubtle}" CornerRadius="6" Padding="8,6" Margin="0,0,0,6">
+                <Border Background="{DynamicResource BSubtle}" CornerRadius="6" Padding="8,6" Margin="0,0,0,6">
                   <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap"/>
                 </Border>
               </DataTemplate>

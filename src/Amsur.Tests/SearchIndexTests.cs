@@ -266,4 +266,109 @@ public sealed class SearchIndexTests
         var hard = PlacementValidator.Validate(p, res.Placements).HardViolations;
         Assert.DoesNotContain(hard, v => v.Code != "student-gap" && v.Code != "student-late-start");
     }
+
+    // Синхронный ход: группа (сплит A/B, профильная пара) переезжает целиком.
+    // DeltaTotal обязан совпасть с полным пересчётом soft (у пары общий классо-день,
+    // поэтому сумма поштучных дельт не годится), а CommitSync — оставить индекс
+    // согласованным с гипотетическим размещением.
+    [Fact]
+    public void SyncMove_WholeGroup_DeltaParity()
+    {
+        var p = MidSlack();
+        var repaired = CompactRepair.Repair(p, GreedyStart(p));
+        Assert.True(PlacementValidator.Validate(p, repaired.Placements).IsValid);
+        var index = SearchIndex.Build(p, repaired.Placements);
+
+        var groups = p.Occurrences.Where(o => o.SyncGroupId.HasValue)
+            .GroupBy(o => o.SyncGroupId!.Value).ToList();
+        Assert.NotEmpty(groups);
+
+        int attempted = 0, committed = 0;
+        foreach (var g in groups)
+        {
+            var ids = g.Select(o => o.Id).ToList();
+            if (!ids.All(index.Contains)) continue;
+            var anchor = index.Position(ids[0]);
+            List<int>? days = null, slots = null;
+            foreach (var id in ids)
+            {
+                var d = p.AllowedDays.GetValueOrDefault(id, []);
+                var s = p.AllowedSlots.GetValueOrDefault(id, []);
+                days = days is null ? [.. d] : days.Intersect(d).ToList();
+                slots = slots is null ? [.. s] : slots.Intersect(s).ToList();
+            }
+            if (days is null || slots is null || days.Count == 0 || slots.Count == 0) continue;
+
+            bool done = false;
+            foreach (var day in days)
+            {
+                foreach (var slot in slots)
+                {
+                    if (day == anchor.Day && slot == anchor.Slot) continue;
+                    long before = SoftEvaluator.Evaluate(p, index.Snapshot()).Total;
+                    var (allowed, delta, hard) = index.TryMoveSync(g.Key, day, slot);
+                    attempted++;
+                    // Проверка не мутирует индекс: состояние восстановлено в любом случае.
+                    Assert.Equal(before, SoftEvaluator.Evaluate(p, index.Snapshot()).Total);
+                    if (!allowed)
+                    {
+                        Assert.NotEmpty(hard);
+                        continue;
+                    }
+                    Assert.Empty(hard);
+
+                    var hypo = index.Snapshot().Select(x => ids.Contains(x.OccurrenceId)
+                        ? new PlacedLesson
+                        {
+                            OccurrenceId = x.OccurrenceId, DayIndex = day,
+                            SlotIndex = slot, RoomId = x.RoomId
+                        }
+                        : x).ToList();
+                    long after = SoftEvaluator.Evaluate(p, hypo).Total;
+                    Assert.Equal(after - before, delta);
+
+                    index.CommitSync(g.Key, day, slot);
+                    foreach (var id in ids)
+                    {
+                        var pos = index.Position(id);
+                        Assert.Equal(day, pos.Day);
+                        Assert.Equal(slot, pos.Slot);
+                    }
+                    var committedSnap = index.Snapshot();
+                    Assert.Equal(after, SoftEvaluator.Evaluate(p, committedSnap).Total);
+                    // Как и одиночный ход (D-28), движок идёт по soft-градиенту сквозь
+                    // ученические окна/поздний старт — их доводит CompactRepair.
+                    var bad = PlacementValidator.Validate(p, committedSnap).HardViolations
+                        .Where(v => v.Code != "student-gap" && v.Code != "student-late-start")
+                        .ToList();
+                    Assert.True(bad.Count == 0,
+                        string.Join("; ", bad.Select(v => v.Code + ": " + v.Message)));
+                    committed++;
+                    done = true;
+                    break;
+                }
+                if (done) break;
+            }
+        }
+        Assert.True(attempted > 0, "sync-группы не проверены");
+        Assert.True(committed > 0, "ни один sync-ход не принят");
+    }
+
+    // LS не имеет права двигать участника синхронной группы в одиночку:
+    // после прогона все размещённые участники группы — в одной клетке.
+    [Fact]
+    public void IndexedLS_KeepsSyncGroupsTogether()
+    {
+        var p = Mid();
+        var res = LocalSearch.Improve(p, GreedyStart(p), TimeSpan.FromSeconds(5), seed: 42);
+        var occById = p.Occurrences.ToDictionary(o => o.Id);
+        foreach (var g in res.Placements.GroupBy(x => occById[x.OccurrenceId].SyncGroupId))
+        {
+            if (g.Key is null) continue;
+            Assert.Single(g.Select(x => (x.DayIndex, x.SlotIndex)).Distinct());
+        }
+        Assert.DoesNotContain(
+            PlacementValidator.Validate(p, res.Placements).HardViolations,
+            v => v.Code == "subgroup-sync");
+    }
 }

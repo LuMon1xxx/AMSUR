@@ -40,7 +40,8 @@ public static class LocalSearch
         int seed,
         CancellationToken ct = default,
         Audit? audit = null,
-        EffectiveRuleSet? rules = null)
+        EffectiveRuleSet? rules = null,
+        Action<SolverIncumbent>? sink = null)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var deadline = sw.Elapsed + budget;
@@ -54,6 +55,24 @@ public static class LocalSearch
         // ходы только внутри дня+смены (консолидация без блуждания через границу смен).
         var targeted = TargetedOrder(problem, start, seed);
 
+        var occById = problem.Occurrences.ToDictionary(o => o.Id);
+        // Синхронные группы: ходы всей группой (сплиты A/B, профильные пары).
+        var syncMembers = problem.Occurrences
+            .Where(o => o.SyncGroupId.HasValue)
+            .GroupBy(o => o.SyncGroupId!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Streaming прогресса: не чаще ~250 мс, иначе UI захлёбывается снапшотами.
+        long nextSinkMs = 0;
+        int sinkSeq = 0;
+        Action<long>? emit = sink is null ? null : soft =>
+        {
+            long now = sw.ElapsedMilliseconds;
+            if (now < nextSinkMs) return;
+            nextSinkMs = now + 250;
+            sink(new SolverIncumbent(index.Snapshot(), soft, ++sinkSeq, now, "B", seed));
+        };
+
         int accepted = 0;
         bool improved = true;
         var evalSw = new System.Diagnostics.Stopwatch();
@@ -64,14 +83,14 @@ public static class LocalSearch
         while ((improved) && sw.Elapsed < deadline && !ct.IsCancellationRequested)
         {
             improved = false;
-            if (SinglePhase(problem, index, firstSingle ? targeted : order,
+            if (SinglePhase(problem, index, firstSingle ? targeted : order, occById, syncMembers,
                     firstSingle, deadline, sw, ct, audit, evalSw,
-                    ref evalTicks, ref curSoft, ref accepted))
+                    ref evalTicks, ref curSoft, ref accepted, emit))
                 improved = true;
             firstSingle = false;
             if (sw.Elapsed >= deadline || ct.IsCancellationRequested) break;
             if (SwapPhase(index, order, deadline, sw, ct, audit, evalSw,
-                    ref swapTicks, ref curSoft, ref accepted))
+                    ref swapTicks, ref curSoft, ref accepted, emit))
                 improved = true;
         }
         sw.Stop();
@@ -81,6 +100,9 @@ public static class LocalSearch
             audit.SwapEvalMs = swapTicks * 1000 / System.Diagnostics.Stopwatch.Frequency;
             audit.Trajectory.Add((sw.ElapsedMilliseconds, curSoft));
         }
+        // Финальная точка — всегда, мимо троттлинга: график не остаётся на предпоследнем.
+        if (sink is not null)
+            sink(new SolverIncumbent(index.Snapshot(), curSoft, ++sinkSeq, sw.ElapsedMilliseconds, "B", seed));
         return new ImproveResult(index.Snapshot(), curSoft, accepted, sw.ElapsedMilliseconds);
     }
 
@@ -114,10 +136,13 @@ public static class LocalSearch
     // Single-ходы до сходимости (один проход без улучшений). Возвращает, было ли хоть одно.
     private static bool SinglePhase(
         SchedulingProblem problem, SearchIndex index, List<Guid> order,
+        Dictionary<Guid, LessonOccurrence> occById,
+        Dictionary<Guid, List<LessonOccurrence>> syncMembers,
         bool restrictSameDayShift,
         TimeSpan deadline, System.Diagnostics.Stopwatch sw, CancellationToken ct,
         Audit? audit, System.Diagnostics.Stopwatch evalSw,
-        ref long evalTicks, ref long curSoft, ref int accepted)
+        ref long evalTicks, ref long curSoft, ref int accepted,
+        Action<long>? emit = null)
     {
         bool any = false;
         bool improved = true;
@@ -126,10 +151,26 @@ public static class LocalSearch
             improved = false;
             int sweepAccepted = 0;
             if (audit is not null) audit.Sweeps++;
+            var syncDone = new HashSet<Guid>();
             foreach (var occId in order)
             {
                 if (sw.Elapsed >= deadline || ct.IsCancellationRequested) break;
                 if (!index.Contains(occId)) continue;
+                var node = occById[occId];
+                // Синхронная группа ходит целиком и ровно раз за проход:
+                // иначе участнику A пришлось бы двигаться в одиночку (SubgroupSync).
+                if (node.SyncGroupId is Guid syncId)
+                {
+                    if (!syncDone.Add(syncId)) continue;
+                    if (TrySyncGroup(problem, index, syncId, syncMembers, node, restrictSameDayShift,
+                            deadline, sw, ct, audit, evalSw,
+                            ref evalTicks, ref curSoft, ref accepted, ref sweepAccepted, emit))
+                    {
+                        improved = true;
+                        any = true;
+                    }
+                    continue;
+                }
                 var pos = index.Position(occId);
                 int curDay = pos.Day, curSlot = pos.Slot;
                 var days = problem.AllowedDays.GetValueOrDefault(occId, []);
@@ -172,6 +213,7 @@ public static class LocalSearch
                         improved = true;
                         any = true;
                         if (audit is not null) audit.Trajectory.Add((sw.ElapsedMilliseconds, curSoft));
+                        emit?.Invoke(curSoft);
                     }
                     if (sw.Elapsed >= deadline) break;
                 }
@@ -181,12 +223,78 @@ public static class LocalSearch
         return any;
     }
 
+    // Первый улучшающий ход синхронной группы за проход. Домен цели — пересечение
+    // доменов всех размещённых участников; приём/дельта — через TryMoveSync.
+    private static bool TrySyncGroup(
+        SchedulingProblem problem, SearchIndex index, Guid syncId,
+        Dictionary<Guid, List<LessonOccurrence>> syncMembers,
+        LessonOccurrence anchor, bool restrictSameDayShift,
+        TimeSpan deadline, System.Diagnostics.Stopwatch sw, CancellationToken ct,
+        Audit? audit, System.Diagnostics.Stopwatch evalSw,
+        ref long evalTicks, ref long curSoft, ref int accepted, ref int sweepAccepted,
+        Action<long>? emit)
+    {
+        if (!syncMembers.TryGetValue(syncId, out var group)) return false;
+        var pos = index.Position(anchor.Id);
+        int curDay = pos.Day, curSlot = pos.Slot;
+        List<int>? days = null, slots = null;
+        foreach (var m in group)
+        {
+            if (!index.Contains(m.Id)) continue;
+            var md = problem.AllowedDays.GetValueOrDefault(m.Id, []);
+            var ms = problem.AllowedSlots.GetValueOrDefault(m.Id, []);
+            days = days is null ? [.. md] : days.Intersect(md).ToList();
+            slots = slots is null ? [.. ms] : slots.Intersect(ms).ToList();
+        }
+        if (days is null || slots is null || days.Count == 0 || slots.Count == 0) return false;
+
+        int curBand = restrictSameDayShift
+            ? GapUtils.ShiftIndex(curSlot, problem.ShiftBands) : 0;
+        foreach (int day in days)
+        {
+            if (sw.Elapsed >= deadline || ct.IsCancellationRequested) break;
+            if (restrictSameDayShift && day != curDay) continue;
+            foreach (int slot in slots)
+            {
+                if (sw.Elapsed >= deadline || ct.IsCancellationRequested) break;
+                if (day == curDay && slot == curSlot) continue;
+                if (restrictSameDayShift &&
+                    GapUtils.ShiftIndex(slot, problem.ShiftBands) != curBand)
+                    continue;
+                if (audit is not null) audit.Attempts++;
+                evalSw.Restart();
+                var (allowed, delta, _) = index.TryMoveSync(syncId, day, slot, curSoft);
+                evalSw.Stop();
+                evalTicks += evalSw.ElapsedTicks;
+                if (!allowed)
+                {
+                    if (audit is not null) audit.Forbidden++;
+                    continue;
+                }
+                if (delta >= 0)
+                {
+                    if (audit is not null) audit.NonImproving++;
+                    continue;
+                }
+                index.CommitSync(syncId, day, slot);
+                curSoft += delta;
+                accepted++;
+                sweepAccepted++;
+                if (audit is not null) audit.Trajectory.Add((sw.ElapsedMilliseconds, curSoft));
+                emit?.Invoke(curSoft);
+                return true; // 1 улучшающий ход на SyncGroupId за проход
+            }
+        }
+        return false;
+    }
+
     // Swap-фаза: попарные обмены временем (first-improvement) до прохода без улучшений.
     private static bool SwapPhase(
         SearchIndex index, List<Guid> order,
         TimeSpan deadline, System.Diagnostics.Stopwatch sw, CancellationToken ct,
         Audit? audit, System.Diagnostics.Stopwatch evalSw,
-        ref long swapTicks, ref long curSoft, ref int accepted)
+        ref long swapTicks, ref long curSoft, ref int accepted,
+        Action<long>? emit = null)
     {
         bool any = false;
         bool improved = true;
@@ -215,6 +323,7 @@ public static class LocalSearch
                     improved = true;
                     any = true;
                     if (audit is not null) audit.Trajectory.Add((sw.ElapsedMilliseconds, curSoft));
+                    emit?.Invoke(curSoft);
                 }
             }
             if (audit is not null) audit.SwapAcceptedPerSweep.Add(sweepAccepted);

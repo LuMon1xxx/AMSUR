@@ -79,11 +79,11 @@
         <StackPanel>
           <TextBlock Text="Горячие клавиши" FontSize="16" FontWeight="SemiBold"/>
           <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-            <Border Style="{StaticResource Badge}" Background="{StaticResource BSubtle}">
+            <Border Style="{StaticResource Badge}" Background="{DynamicResource BSubtle}">
               <TextBlock Text="F1" FontSize="12" FontFamily="Consolas"/>
             </Border>
             <TextBlock Text="открыть справку" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>
-            <Border Style="{StaticResource Badge}" Background="{StaticResource BSubtle}" Margin="16,0,0,0">
+            <Border Style="{StaticResource Badge}" Background="{DynamicResource BSubtle}" Margin="16,0,0,0">
               <TextBlock Text="F5" FontSize="12" FontFamily="Consolas"/>
             </Border>
             <TextBlock Text="запустить генерацию" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center"/>

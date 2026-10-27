@@ -1,7 +1,7 @@
 <UserControl x:Class="Amsur.Wpf.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Background="{StaticResource BBg}">
+             Background="{DynamicResource BBg}">
   <!-- P-D3: настройки как view (контент из SettingsWindow 1-в-1).
        «Отмена» = выйти без применения (view пересоздаётся при каждом входе). -->
   <DockPanel Margin="20" TextElement.Foreground="{DynamicResource BText}">
@@ -12,9 +12,9 @@
           <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
                      Text="Обычному завучу ничего настраивать не нужно. Изменения вступают в силу после кнопки «Применить» и действуют на следующие генерации."/>
         </StackPanel>
-        <Border DockPanel.Dock="Right" Style="{StaticResource Badge}" Background="{StaticResource BGoodBg}"
+        <Border DockPanel.Dock="Right" Style="{StaticResource Badge}" Background="{DynamicResource BGoodBg}"
                 VerticalAlignment="Center" Margin="12,0,0,0">
-          <TextBlock x:Name="SavedNameText" FontSize="12" Foreground="{StaticResource BGood}" Text=""/>
+          <TextBlock x:Name="SavedNameText" FontSize="12" Foreground="{DynamicResource BGood}" Text=""/>
         </Border>
       </DockPanel>
       <!-- Пресеты: 4 карточки (имена сохранены, описания честные — без выдуманных секунд/сложности) -->
@@ -24,8 +24,8 @@
           <StackPanel>
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="Стандарт" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-              <Border Style="{StaticResource Badge}" Background="{StaticResource BAccentSoft}" Margin="6,0,0,0">
-                <TextBlock Text="Выбор АМСУР" FontSize="10" Foreground="{StaticResource BAccent}"/>
+              <Border Style="{StaticResource Badge}" Background="{DynamicResource BAccentSoft}" Margin="6,0,0,0">
+                <TextBlock Text="Выбор АМСУР" FontSize="10" Foreground="{DynamicResource BAccent}"/>
               </Border>
             </StackPanel>
             <TextBlock Style="{StaticResource THint}" FontSize="11" Margin="0,4,0,0"
@@ -64,7 +64,7 @@
         <TextBlock Text="Имя профиля:" VerticalAlignment="Center"/>
         <TextBox x:Name="CustomNameBox" Text="Моя школа" Width="200" Margin="6,0,8,0"/>
         <Button Content="Сохранить «Моя школа»" Style="{StaticResource BtnSecondary}" Click="OnSaveCustomClick"/>
-        <TextBlock x:Name="DirtyText" FontSize="12" Foreground="{StaticResource BWarn}"
+        <TextBlock x:Name="DirtyText" FontSize="12" Foreground="{DynamicResource BWarn}"
                    VerticalAlignment="Center" Margin="12,0,0,0" Text=""/>
       </StackPanel>
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -92,8 +92,8 @@
             <ListBoxItem Content="Экспертный режим"/>
             <ListBoxItem Content="Предупреждения"/>
           </ListBox>
-          <Border Style="{StaticResource Badge}" Background="{StaticResource BGoodBg}" Margin="8,12,8,4">
-            <TextBlock Style="{StaticResource THCaption}" TextWrapping="Wrap" Foreground="{StaticResource BGood}"
+          <Border Style="{StaticResource Badge}" Background="{DynamicResource BGoodBg}" Margin="8,12,8,4">
+            <TextBlock Style="{StaticResource THCaption}" TextWrapping="Wrap" Foreground="{DynamicResource BGood}"
                        Text="Готово к пуску: строгие правила проверяются автоматически."/>
           </Border>
         </StackPanel>

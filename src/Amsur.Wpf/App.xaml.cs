@@ -31,8 +31,8 @@ public partial class App : System.Windows.Application
     }
 
     // P-D5: тёмная тема копированием записей поверх Resources.
-    // StaticResource резолвится при загрузке окон — позже созданные окна
-    // увидят тёмные значения без переделки XAML.
+    // Кисти окон резолвятся через DynamicResource — подмена записей обновляет
+    // весь UI сразу, без перезапуска (раньше требовался StaticResource на старте).
     private void ApplyDarkTheme()
     {
         try
@@ -45,6 +45,28 @@ public partial class App : System.Windows.Application
                 Resources[key] = dict[key];
         }
         catch { /* тёмная не легла — остаёмся на светлой, честно без падения */ }
+    }
+
+    // Мгновенная смена темы: "dark" накатывает Themes/Dark.xaml, "light" —
+    // возвращает базовые светлые значения. Снапшот светлой снимается до
+    // первого наката тёмной; тёмные ключи, которых в светлой теме нет
+    // (CWarm/CWarmBorder), при возврате убираются.
+    private IReadOnlyDictionary<object, object>? _lightThemeSnapshot;
+
+    public void ApplyTheme(string theme)
+    {
+        _lightThemeSnapshot ??= Resources.Keys.Cast<object>()
+            .ToDictionary(k => k, k => Resources[k]);
+        if (theme == "dark")
+        {
+            ApplyDarkTheme();
+            return;
+        }
+        foreach (var key in _lightThemeSnapshot.Keys)
+            Resources[key] = _lightThemeSnapshot[key];
+        foreach (var key in Resources.Keys.Cast<object>().ToList())
+            if (!_lightThemeSnapshot.ContainsKey(key))
+                Resources.Remove(key);
     }
 
     // D-48: детект тестраннера (vstest/testhost): прод-старт запрещён.
@@ -78,8 +100,8 @@ public partial class App : System.Windows.Application
             Directory.CreateDirectory(dir);
             Session = new AppSession(dir);
             await Session.InitAsync();
-            // P-D5: тёмная тема — поверх ресурсов ДО создания окон.
-            if (Session.ThemeName == "dark") ApplyDarkTheme();
+            // Тема применяется поверх ресурсов ДО создания окон (и дальше на лету).
+            ApplyTheme(Session.ThemeName);
             // A3: окно создаём ЯВНО после InitAsync (без StartupUri) — конструктор
             // MainWindow больше не может отработать до готовых данных.
             MainWindow = new MainWindow();

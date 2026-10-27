@@ -272,7 +272,7 @@ public partial class ScheduleView : UserControl
 
             for (int d = 0; d < days; d++)
             {
-                byCell.TryGetValue((d, s), out var cellRows);
+                var cellRows = ScheduleMatrixCells.Cell(byCell, d, s + 1); // слоты 1-based
                 var row = cellRows is null || cellRows.Count == 0 ? null : cellRows[0];
                 bool isSelected = row is not null && _selectedRow is not null &&
                     row.OccurrenceId == _selectedRow.OccurrenceId;

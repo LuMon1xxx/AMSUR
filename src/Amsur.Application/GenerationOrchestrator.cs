@@ -101,43 +101,78 @@ public sealed class GenerationOrchestrator
         Report(GenerationPhase.Preparing, wall, bestSoft, candidateCount,
             "Подготовка…", hasFeasible, firstFeasibleAt, SeedOrRun(seeds));
 
-        for (int r = 0; r < seeds.Count; r++)
-        {
-            int seed = seeds[r];
-            if (linked.IsCancellationRequested) break;
-            var problem = _problemFactory(seed);
-            _lastProblem = problem;
-            bool runHadFeasible = hasFeasible;
-            var phase = hasFeasible ? GenerationPhase.Improving : GenerationPhase.SeekingFeasible;
+        // Задачи по сидам строим заранее и вне параллельной секции: фабрика/билдер
+        // не обязаны быть потокобезопасными. Порядок детерминирован индексом сида.
+        var problems = new SchedulingProblem[seeds.Count];
+        for (int r = 0; r < seeds.Count; r++) problems[r] = _problemFactory(seeds[r]);
+        if (problems.Length > 0) _lastProblem = problems[^1];
+        var results = new SolverResult?[seeds.Count];
+        var gate = new object();
 
-            SolverResult result;
+        // Сиды идут параллельно (по числу ядер минус одно): прогон одного сида —
+        // это в основном ожидание solver-воркеров, ядра простаивают впустую.
+        if (seeds.Count > 0 && !linked.IsCancellationRequested)
+        {
+            int maxDegree = Math.Max(1, Math.Min(seeds.Count,
+                Math.Max(1, Environment.ProcessorCount - 1)));
             try
             {
-                result = await _run(problem, linked.Token, inc =>
-                {
-                    // Full-rate path: solver частота, UI — троттлинг (§3).
-                    var c = ScheduleCandidate.Create(problem, inc.Placements, seed, inc.Proxy, inc.Phase,
-                        rules: Rules);
-                    if (c is null) return;
-                    candidateCount++;
-                    _archive.TryAdd(c);
-                    if (!hasFeasible)
+                await Parallel.ForEachAsync(Enumerable.Range(0, seeds.Count),
+                    new ParallelOptions
                     {
-                        hasFeasible = true;
-                        firstFeasibleAt = wall.Elapsed;
-                        runHadFeasible = true;
-                    }
-                    if (bestSoft is null || c.SoftTotal < bestSoft) bestSoft = c.SoftTotal;
-                    RefreshTop5();
-                    Report(GenerationPhase.Improving, wall, bestSoft, candidateCount,
-                        "Ищем подходящее расписание…", hasFeasible, firstFeasibleAt, SeedOrRun(seeds, r));
-                });
+                        MaxDegreeOfParallelism = maxDegree,
+                        CancellationToken = linked.Token
+                    },
+                    async (r, token) =>
+                    {
+                        int seed = seeds[r];
+                        var problem = problems[r];
+                        SolverResult result;
+                        try
+                        {
+                            result = await _run(problem, token, inc =>
+                            {
+                                // Full-rate path: solver частота, UI — троттлинг (§3).
+                                var c = ScheduleCandidate.Create(problem, inc.Placements, seed, inc.Proxy, inc.Phase,
+                                    rules: Rules);
+                                if (c is null) return;
+                                lock (gate)
+                                {
+                                    candidateCount++;
+                                    _archive.TryAdd(c);
+                                    if (!hasFeasible)
+                                    {
+                                        hasFeasible = true;
+                                        firstFeasibleAt = wall.Elapsed;
+                                    }
+                                    if (bestSoft is null || c.SoftTotal < bestSoft) bestSoft = c.SoftTotal;
+                                    RefreshTop5();
+                                    Report(GenerationPhase.Improving, wall, bestSoft, candidateCount,
+                                        "Ищем подходящее расписание…", hasFeasible, firstFeasibleAt,
+                                        SeedOrRun(seeds, r));
+                                }
+                            });
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            return; // остановка: best-so-far уже в архиве
+                        }
+                        results[r] = result;
+                    });
             }
             catch (OperationCanceledException)
             {
-                break;
+                // Остановка пользователя/токена: собранные результаты сохраняются.
             }
+        }
 
+        // Финальное добавление результатов — строго по индексу сида, чтобы
+        // порядок архива/диагностики не зависел от того, кто финишировал первым.
+        for (int r = 0; r < seeds.Count; r++)
+        {
+            if (results[r] is not { } result) continue;
+            var problem = problems[r];
+            var seed = seeds[r];
             // Финал запуска тоже кандидат (фаза A не идёт через sink).
             if (result.Placements.Count > 0)
             {
@@ -145,15 +180,17 @@ public sealed class GenerationOrchestrator
                     rules: Rules);
                 if (c is not null)
                 {
-                    candidateCount++;
-                    _archive.TryAdd(c);
-                    if (!hasFeasible) { hasFeasible = true; firstFeasibleAt = wall.Elapsed; }
-                    if (bestSoft is null || c.SoftTotal < bestSoft) bestSoft = c.SoftTotal;
-                    RefreshTop5();
+                    lock (gate)
+                    {
+                        candidateCount++;
+                        _archive.TryAdd(c);
+                        if (!hasFeasible) { hasFeasible = true; firstFeasibleAt = wall.Elapsed; }
+                        if (bestSoft is null || c.SoftTotal < bestSoft) bestSoft = c.SoftTotal;
+                        RefreshTop5();
+                    }
                 }
             }
             statuses.Add(result.Status.ToString());
-            _ = runHadFeasible;
             UpdateDiagnostics(seeds, problem, result, wall, bestSoft, candidateCount);
             Report(hasFeasible ? GenerationPhase.Improving : GenerationPhase.SeekingFeasible,
                 wall, bestSoft, candidateCount, "Ищем подходящее расписание…",

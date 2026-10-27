@@ -96,21 +96,45 @@ public sealed class OrToolsSolver : IScheduleSolver
                 .OrderBy(p => p.Day).ThenBy(p => p.Slot).ToList());
 
         // E12/D-24: жадный старт для Phase A (только hints; семантика та же).
-        // Multi-start по seed (кап ~2с): разные порядки → разное покрытие;
-        // берём лучшее покрытие (при равенстве — первый). Детерминировано.
+        // D-61 портфель стартов: до 6 greedy (3 плотных compact+dayReuse —
+        // плотная упаковка учителе-дней со старта, 3 обычных), каждый с
+        // completion-досевом неразмещённых (GreedyCompletion). Выбор — минимум
+        // Unplaced, при равенстве минимум (FailedDays, TeacherGridGaps, Soft)
+        // после CompactRepair. Детерминировано; общий кап ~4с.
         var swGreedy = Stopwatch.StartNew();
-        var greedy = GreedyPlacer.Place(problem, problem.Options.RandomSeed ?? 0);
-        int greedyStarts = 1;
-        for (int gs = 1; gs < 4 && greedy.Unplaced.Count > 0 &&
-                swGreedy.Elapsed < TimeSpan.FromSeconds(2); gs++)
+        var evalOccById = problem.Occurrences.ToDictionary(o => o.Id);
+        GreedyPlacement? greedy = null;
+        (int FailedDays, int Gaps, long Soft)? greedyKey = null;
+        int greedyStarts = 0;
+        for (int gi = 0; gi < 6; gi++)
         {
-            var alt = GreedyPlacer.Place(problem, (problem.Options.RandomSeed ?? 0) + gs * 7919);
+            if (greedy is not null && swGreedy.Elapsed >= TimeSpan.FromSeconds(4)) break;
+            bool dense = gi < 3;
+            int seed = (problem.Options.RandomSeed ?? 0) + gi * 7919;
+            var cand = GreedyPlacer.Place(problem, seed, compact: dense, dayReuse: dense);
             greedyStarts++;
-            if (alt.Unplaced.Count < greedy.Unplaced.Count) greedy = alt;
+            if (cand.Unplaced.Count > 0)
+                cand = GreedyCompletion.Complete(problem, cand, seed);
+            if (greedy is null || cand.Unplaced.Count < greedy.Unplaced.Count)
+            {
+                greedy = cand;
+                greedyKey = null; // ленивый пересчёт при первом тайбрейке
+                continue;
+            }
+            if (cand.Unplaced.Count == greedy.Unplaced.Count)
+            {
+                greedyKey ??= GreedyMetricsKey(problem, greedy, rs, evalOccById);
+                var candKey = GreedyMetricsKey(problem, cand, rs, evalOccById);
+                if (CmpKey(candKey, greedyKey.Value) < 0)
+                {
+                    greedy = cand;
+                    greedyKey = candKey;
+                }
+            }
         }
         swGreedy.Stop();
-        diagnostics.Add($"Greedy: placed {greedy.Placed.Count}/{problem.Occurrences.Count} " +
-            $"in {swGreedy.ElapsedMilliseconds}ms, starts {greedyStarts} (hints for phase A).");
+        diagnostics.Add($"Greedy: placed {greedy!.Placed.Count}/{problem.Occurrences.Count} " +
+            $"in {swGreedy.ElapsedMilliseconds}ms, starts {greedyStarts} (portfolio + completion, hints for phase A).");
         if (greedy.Unplaced.Count > 0)
         {
             var occById = problem.Occurrences.ToDictionary(o => o.Id);
@@ -200,19 +224,35 @@ public sealed class OrToolsSolver : IScheduleSolver
                 sw, phaseMs, diagnostics, firstFeasibleMs,
                 wasCancelled: resA.Cancelled, optimalProven: false, stats: resA.Stats, rules: rs);
 
-        // Фаза B': локальный поиск от baseline (first-improvement, time-boxed).
-        // Дешёвые быстрые победы до CP-SAT; seed-различие даёт diversity multi-seed.
-        // Измерено (D-24): на ≥388 occ CP-SAT B даёт 0 инкумбентов за десятки секунд,
-        // а LS стабильно улучшает — поэтому LS забирает половину бюджета B (кап 300с).
-        // Финал всё равно идёт через FullValidator-gate в Accept.
-        double lsBudgetSec = Math.Clamp(budgetB * 0.5, 0.5, 300);
-        var ls = LocalSearch.Improve(problem,
-            bestValues.Select(kv => new PlacedLesson
-            {
-                OccurrenceId = kv.Key, DayIndex = kv.Value.Day,
-                SlotIndex = kv.Value.Slot, RoomId = kv.Value.RoomId
-            }).ToList(),
-            TimeSpan.FromSeconds(lsBudgetSec), problem.Options.RandomSeed ?? 0, ct, rules: rs);
+        // Фаза B': локальный поиск + GrindLite от baseline (time-boxed).
+        // На большой школе CP-SAT Phase B не даёт инкумбентов — резервировать под
+        // него половину бюджета бессмысленно: 45% идёт в LocalSearch, 45% — в
+        // GrindLite (полный LNS-набор), 10% — на финальный RuinRecreate/CompactRepair.
+        // Малые школы оставляют Phase B ~50% (LS 20% + GrindLite 20% + финал 10%).
+        bool largeSchool = problem.Occurrences.Count >= LargeSchoolPhaseBThreshold;
+        var swB = Stopwatch.StartNew();
+        double BudgetLeft() => Math.Max(0, budgetB - swB.Elapsed.TotalSeconds);
+        double Slice(double share, double min, double max) =>
+            Math.Min(BudgetLeft(), Math.Clamp(budgetB * share, min, max));
+        int seedBase = problem.Options.RandomSeed ?? 0;
+
+        // Любой incumbent от LS/GrindLite идёт в тот же sink, что и CP-SAT:
+        // график прогресса и Top-5 оживают по ходу поиска на любой школе.
+        // Троттлинг ~250 мс — на финал он не распространяется.
+        int sinkSeq = 0;
+        long lastSinkMs = long.MinValue / 2;
+        void Emit(IReadOnlyList<PlacedLesson> pl, long soft, bool force = false)
+        {
+            if (sink is null || pl.Count == 0) return;
+            long now = sw.ElapsedMilliseconds;
+            if (!force && now - lastSinkMs < 250) return;
+            lastSinkMs = now;
+            sink(new SolverIncumbent(pl, soft, ++sinkSeq, now, "B", options.RandomSeed));
+        }
+
+        double lsBudgetSec = Slice(largeSchool ? 0.45 : 0.20, 0.5, 300);
+        var ls = LocalSearch.Improve(problem, ToPlacements(bestValues),
+            TimeSpan.FromSeconds(lsBudgetSec), seedBase, ct, rules: rs, sink: sink);
         diagnostics.Add($"LocalSearch: soft {bestQuality}->{ls.SoftTotal} " +
             $"in {ls.ElapsedMs}ms, moves {ls.AcceptedMoves}.");
         if (ls.SoftTotal < bestQuality)
@@ -221,95 +261,41 @@ public sealed class OrToolsSolver : IScheduleSolver
             bestValues = ls.Placements.ToDictionary(
                 p => p.OccurrenceId, p => new SlotPick(p.DayIndex, p.SlotIndex, p.RoomId));
         }
-        // D-28b: polish-циклы repair→LS→repair (макс 3, пока failedDays убывает).
-        // Ремонт сдвигает блоки, LS переоптимизирует contention-ландшафт, ремонт
-        // повторяет попытку. Дешёво, когда уже чисто (первый repair — выход).
+
+        // GrindLite.Polish — все LNS-операторы в одном месте (не только режим ТОП):
+        // DayClose → TeacherDay → Sync → ThinDay → CrossShift → Swap → Overload →
+        // CompactRepair → GradeOneBalance → PeSpacing → RuinRecreate (остаток).
+        double grindBudgetSec = Slice(largeSchool ? 0.45 : 0.20, 0.5, 300);
+        if (grindBudgetSec > 0)
         {
-            double polishBudgetSec = Math.Clamp(budgetB * 0.2, 0.5, 30);
-            var polishSw = Stopwatch.StartNew();
-            int seedBase = problem.Options.RandomSeed ?? 0;
-            int lastFailed = int.MaxValue;
-            for (int round = 0; round < 3; round++)
+            var grind = GrindLite.Polish(problem, ToPlacements(bestValues), rs,
+                TimeSpan.FromSeconds(grindBudgetSec), seedBase + 31, ct, sink);
+            diagnostics.Add($"GrindLite: soft {bestQuality}->{grind.SoftTotal}, " +
+                $"hard={grind.HardViolations}, tw={grind.TeacherWindows}, budget {grindBudgetSec:F1}s.");
+            foreach (var line in grind.Log.TakeLast(6)) diagnostics.Add("GrindLite: " + line);
+            if (grind.SoftTotal < bestQuality)
             {
-                var pre = bestValues.Select(kv => new PlacedLesson
-                {
-                    OccurrenceId = kv.Key, DayIndex = kv.Value.Day,
-                    SlotIndex = kv.Value.Slot, RoomId = kv.Value.RoomId
-                }).ToList();
-                var rep = CompactRepair.Repair(problem, pre);
-                bestValues = rep.Placements.ToDictionary(
+                bestQuality = grind.SoftTotal;
+                bestValues = grind.Placements.ToDictionary(
                     p => p.OccurrenceId, p => new SlotPick(p.DayIndex, p.SlotIndex, p.RoomId));
-                bestQuality = SoftQuality(problem, bestValues, rs);
-                diagnostics.Add($"CompactRepair(polish r{round}): дней починено {rep.RepairedDays}, " +
-                    $"не удалось {rep.FailedDays}, soft {bestQuality}.");
-                foreach (var n in rep.Notes) diagnostics.Add("CompactRepair: " + n);
-                if (rep.FailedDays == 0 || rep.FailedDays >= lastFailed) break;
-                lastFailed = rep.FailedDays;
-                if (polishSw.Elapsed.TotalSeconds >= polishBudgetSec || ct.IsCancellationRequested) break;
-                double slice = Math.Min(5, polishBudgetSec - polishSw.Elapsed.TotalSeconds);
-                if (slice < 0.5) break;
-                var ls2 = LocalSearch.Improve(problem, rep.Placements,
-                    TimeSpan.FromSeconds(slice), seedBase + (round + 1) * 101, ct, rules: rs);
-                diagnostics.Add($"LocalSearch(polish r{round}): soft {bestQuality}->{ls2.SoftTotal} " +
-                    $"in {ls2.ElapsedMs}ms, moves {ls2.AcceptedMoves}.");
-                if (ls2.SoftTotal < bestQuality)
-                {
-                    bestQuality = ls2.SoftTotal;
-                    bestValues = ls2.Placements.ToDictionary(
-                        p => p.OccurrenceId, p => new SlotPick(p.DayIndex, p.SlotIndex, p.RoomId));
-                }
             }
         }
 
-        // D-28d: LNS ruin&recreate для остаточных окон (цепочки single/swap не берут).
-        {
-            var occById = problem.Occurrences.ToDictionary(o => o.Id);
-            var cur = bestValues.Select(kv => new PlacedLesson
-            {
-                OccurrenceId = kv.Key, DayIndex = kv.Value.Day,
-                SlotIndex = kv.Value.Slot, RoomId = kv.Value.RoomId
-            }).ToList();
-            int failed = RuinRecreate.FailedDays(problem, occById, cur);
-            if (failed > 0 && !ct.IsCancellationRequested)
-            {
-                double lnsBudgetSec = Math.Clamp(budgetB * 0.3, 1, 30);
-                int seedBase = problem.Options.RandomSeed ?? 0;
-                var lns = RuinRecreate.Improve(problem, cur,
-                    TimeSpan.FromSeconds(lnsBudgetSec), seedBase + 777, ct, rules: rs);
-                diagnostics.Add($"RuinRecreate: failed {failed}->{lns.FailedDays}, " +
-                    $"soft {bestQuality}->{lns.SoftTotal}, iters {lns.Iterations} accepted {lns.Accepted}.");
-                if (lns.FailedDays < failed || (lns.FailedDays == failed && lns.SoftTotal < bestQuality))
-                {
-                    bestValues = lns.Placements.ToDictionary(
-                        p => p.OccurrenceId, p => new SlotPick(p.DayIndex, p.SlotIndex, p.RoomId));
-                    bestQuality = lns.SoftTotal;
-                    var ls3 = LocalSearch.Improve(problem, lns.Placements,
-                        TimeSpan.FromSeconds(Math.Min(5, lnsBudgetSec * 0.3)), seedBase + 888, ct, rules: rs);
-                    diagnostics.Add($"LocalSearch(post-LNS): soft {bestQuality}->{ls3.SoftTotal} " +
-                        $"in {ls3.ElapsedMs}ms, moves {ls3.AcceptedMoves}.");
-                    if (ls3.SoftTotal < bestQuality)
-                    {
-                        bestQuality = ls3.SoftTotal;
-                        bestValues = ls3.Placements.ToDictionary(
-                            p => p.OccurrenceId, p => new SlotPick(p.DayIndex, p.SlotIndex, p.RoomId));
-                    }
-                }
-            }
-        }
-
-        double cpBudget = Math.Max(0.5, budgetB - lsBudgetSec);
+        double finalReserveSec = Math.Min(BudgetLeft(),
+            Math.Clamp(budgetB * 0.10, 0.5, 60));
 
         // H6: на большой школе CP-SAT B не даёт инкумбентов — пропускаем
         // (качество уже ведёт LS+VND настоящим soft; Accept-gate без изменений).
         int rejectedB = 0;
         int seqB = 0;
         PhaseResult? resB = null;
-        if (problem.Occurrences.Count < LargeSchoolPhaseBThreshold)
+        if (!largeSchool)
         {
+            double cpBudget = Math.Max(0.5, BudgetLeft() - finalReserveSec);
             // Фаза B: hints + proxy-objective + callback best-so-far по SoftEvaluator.
             // Каждый incumbent проходит FullValidator (счётчик rejected — данные для P0.5/P1;
             // hard-нарушающий incumbent никогда не становится best, защита в глубину).
-            var swB = Stopwatch.StartNew();
+            var swPhaseB = Stopwatch.StartNew();
             resB = SolvePhase(problem, allowedPairs, roomList, roomIndex, options, useObjective: true,
                 hints: bestValues.ToDictionary(kv => kv.Key, kv => kv.Value with { RoomId = null }),
                 timeLimit: cpBudget, ct: ct,
@@ -327,8 +313,8 @@ public sealed class OrToolsSolver : IScheduleSolver
                     long q = SoftEvaluator.Evaluate(problem, pl, rs).Total;
                     if (q < bestQuality) { bestQuality = q; bestValues = values; }
                 });
-            swB.Stop();
-            phaseMs["phaseB"] = swB.ElapsedMilliseconds;
+            swPhaseB.Stop();
+            phaseMs["phaseB"] = swPhaseB.ElapsedMilliseconds;
             phaseMs["modelBuildB"] = resB.ModelBuildMs;
             diagnostics.Add($"Phase B incumbents: {solutionsFound - 1}, validator-rejected: {rejectedB}.");
             if (resB.Values is not null)
@@ -353,20 +339,35 @@ public sealed class OrToolsSolver : IScheduleSolver
         {
             phaseMs["phaseB"] = 0;
             phaseMs["modelBuildB"] = 0;
-            diagnostics.Add($"Phase B skipped (large school: {problem.Occurrences.Count} occ >= {LargeSchoolPhaseBThreshold}).");
+            diagnostics.Add($"Phase B skipped (large school: {problem.Occurrences.Count} occ >= {LargeSchoolPhaseBThreshold}); " +
+                $"budget -> LocalSearch + GrindLite + final LNS/repair.");
         }
 
         bool cancelled = resB is null ? resA.Cancelled : resA.Cancelled || resB.Cancelled;
-        // D-28: финальная дефрагментация перед Accept-гейтом (solver-фазы компактность
-        // не моделируют структурно; LS идёт по soft-градиенту, ремонт доводит до HARD).
-        // Плюс балансировка 1-х классов (ровно один 5-день) — междневное, ремонт не покрывает.
+        // 10% бюджета B (или всё, что осталось): финальный ruin&recreate по
+        // остаточным failedDays, затем дефрагментация перед Accept-гейтом
+        // (solver-фазы компактность не моделируют; LS идёт по soft-градиенту,
+        // ремонт доводит до HARD) + балансировка 1-х классов (междневное).
         {
-            var pre = bestValues.Select(kv => new PlacedLesson
+            var occById = problem.Occurrences.ToDictionary(o => o.Id);
+            var cur = ToPlacements(bestValues);
+            int failed = RuinRecreate.FailedDays(problem, occById, cur);
+            double finalBudgetSec = Math.Min(BudgetLeft(), Math.Max(finalReserveSec, 0.5));
+            if (failed > 0 && finalBudgetSec >= 0.5 && !ct.IsCancellationRequested)
             {
-                OccurrenceId = kv.Key, DayIndex = kv.Value.Day,
-                SlotIndex = kv.Value.Slot, RoomId = kv.Value.RoomId
-            }).ToList();
-            var rep = CompactRepair.Repair(problem, pre);
+                var lns = RuinRecreate.Improve(problem, cur, TimeSpan.FromSeconds(finalBudgetSec),
+                    seedBase + 777, ct, rules: rs);
+                diagnostics.Add($"RuinRecreate(final): failed {failed}->{lns.FailedDays}, " +
+                    $"soft {bestQuality}->{lns.SoftTotal}, iters {lns.Iterations} accepted {lns.Accepted}.");
+                if (lns.FailedDays < failed || (lns.FailedDays == failed && lns.SoftTotal < bestQuality))
+                {
+                    bestValues = lns.Placements.ToDictionary(
+                        p => p.OccurrenceId, p => new SlotPick(p.DayIndex, p.SlotIndex, p.RoomId));
+                    bestQuality = lns.SoftTotal;
+                    Emit(lns.Placements, bestQuality, force: true);
+                }
+            }
+            var rep = CompactRepair.Repair(problem, ToPlacements(bestValues));
             diagnostics.Add($"CompactRepair(final): дней починено {rep.RepairedDays}, " +
                 $"не удалось {rep.FailedDays}.");
             foreach (var n in rep.Notes) diagnostics.Add("CompactRepair: " + n);
@@ -378,10 +379,14 @@ public sealed class OrToolsSolver : IScheduleSolver
                 p => p.OccurrenceId, p => new SlotPick(p.DayIndex, p.SlotIndex, p.RoomId));
             bestQuality = SoftQuality(problem, bestValues, rs);
         }
-        return Accept(problem, bestValues, bestQuality, solutionsFound,
+        var accepted = Accept(problem, bestValues, bestQuality, solutionsFound,
             sw, phaseMs, diagnostics, firstFeasibleMs,
             wasCancelled: cancelled, optimalProven: (resB?.Optimal ?? false) && !cancelled,
             stats: resB?.Stats ?? resA.Stats, rules: rs);
+        // Финал в sink: даже если промежуточные incumbents не прошли validator-gate,
+        // график получает точку итогового расписания.
+        Emit(accepted.Placements, accepted.ObjectiveValue, force: true);
+        return accepted;
     }
 
     private static SolverResult Cancelled(SchedulingProblem problem, Stopwatch sw,
@@ -439,11 +444,40 @@ public sealed class OrToolsSolver : IScheduleSolver
         return SoftEvaluator.Evaluate(problem, placements, rules ?? EffectiveRuleSet.Default).Total;
     }
 
+    // D-61: ключ качества greedy-старта после CompactRepair — для тайбрейка
+    // портфеля при равном покрытии (FailedDays → TeacherGridGaps → SoftTotal).
+    private static (int FailedDays, int Gaps, long Soft) GreedyMetricsKey(
+        SchedulingProblem problem, GreedyPlacement g, EffectiveRuleSet rs,
+        Dictionary<Guid, LessonOccurrence> occById)
+    {
+        var pl = g.Placed.Select(kv => new PlacedLesson
+        {
+            OccurrenceId = kv.Key, DayIndex = kv.Value.Day,
+            SlotIndex = kv.Value.Slot, RoomId = kv.Value.RoomId
+        }).ToList();
+        var rep = CompactRepair.Repair(problem, pl);
+        return (RuinRecreate.FailedDays(problem, occById, rep.Placements),
+            TeacherDayLns.TeacherGridGaps(occById, rep.Placements),
+            SoftEvaluator.Evaluate(problem, rep.Placements, rs).Total);
+    }
+
+    private static int CmpKey((int FailedDays, int Gaps, long Soft) a, (int FailedDays, int Gaps, long Soft) b) =>
+        a.FailedDays != b.FailedDays ? a.FailedDays.CompareTo(b.FailedDays) :
+        a.Gaps != b.Gaps ? a.Gaps.CompareTo(b.Gaps) :
+        a.Soft.CompareTo(b.Soft);
+
     private static Dictionary<Guid, SlotPick> ToSlotPicks(
         Dictionary<Guid, (int Day, int Slot, Guid? RoomId)> placed, bool includeRooms = true) =>
         placed.ToDictionary(kv => kv.Key,
             kv => new SlotPick(kv.Value.Day, kv.Value.Slot,
                 includeRooms ? kv.Value.RoomId : null));
+
+    private static List<PlacedLesson> ToPlacements(Dictionary<Guid, SlotPick> values) =>
+        values.Select(kv => new PlacedLesson
+        {
+            OccurrenceId = kv.Key, DayIndex = kv.Value.Day,
+            SlotIndex = kv.Value.Slot, RoomId = kv.Value.RoomId
+        }).ToList();
 
     private sealed record PhaseResult(
         Dictionary<Guid, SlotPick>? Values,

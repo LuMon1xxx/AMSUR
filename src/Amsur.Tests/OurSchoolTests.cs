@@ -422,7 +422,11 @@ public sealed class OurSchoolTests(Xunit.Abstractions.ITestOutputHelper output)
             $"teachers={problem.Teachers.Count} rooms={problem.Rooms.Count}");
     }
 
-    // --- Greedy-покрытие: школа как есть не влезает — находим, КТО не влез ---
+    // --- Greedy-покрытие: D-61 авто-лимит двухсменки ---
+    // Политика изменилась осознанно: в двухсменке (ClassSlots / SlotsPerDay ≥ 12)
+    // дневной лимит учителя поднимается автоматически (ProblemBuilder), поэтому
+    // школа влезает полностью. Раньше при капах 6/день здесь фиксировалась
+    // честная нехватка русских (≥20). Имя теста оставлено историческим.
     [Fact]
     public void OurSchool_GreedyCoverage_NamesShortage()
     {
@@ -436,13 +440,8 @@ public sealed class OurSchoolTests(Xunit.Abstractions.ITestOutputHelper output)
             .OrderByDescending(x => x.Count).ToList();
         foreach (var (name, count) in bySubject.Take(10))
             output.WriteLine($"OURS greedy unplaced: {name} — {count}");
-        // Арифметика штата: русский блок 122ч на 3 учителей × 30 слотов → ≥32 не влезет.
-        var rusUnplaced = bySubject
-            .Where(x => x.Name is "Русский язык" or "Русская литература")
-            .Sum(x => x.Count);
-        Assert.True(g.Placed.Count < problem.Occurrences.Count);
-        Assert.True(rusUnplaced >= 20,
-            $"Ожидалась нехватка русских (≥20), факт {rusUnplaced} — проверь пулы.");
+        // D-61: авто-лимит двухсменки снимает кадровую нехватку — покрытие полное.
+        Assert.Empty(g.Unplaced);
     }
 
     // --- Короткий solver-зонд: честный статус, запрет «оптимума» ---

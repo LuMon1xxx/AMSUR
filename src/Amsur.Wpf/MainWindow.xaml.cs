@@ -34,7 +34,8 @@ public partial class MainWindow : Window, IViewNavigator
         RefreshChrome();
     }
 
-    // P-D5: смена темы — сохранение + перезапуск (StaticResource применяется при загрузке).
+    // Смена темы мгновенная: кисти окон резолвятся через DynamicResource,
+    // ApplyTheme подменяет записи в Resources на лету — без перезапуска.
     private async void OnThemeChanged(object sender, RoutedEventArgs e)
     {
         if (sender is not CheckBox box || !IsLoaded) return;
@@ -42,30 +43,16 @@ public partial class MainWindow : Window, IViewNavigator
         if (want == Session.ThemeName) return;
         try { await Session.SetThemeAsync(want); }
         catch { return; }
-        var res = MessageBox.Show(
-            "Тема применится после перезапуска. Перезапустить АМСУР сейчас?",
-            "АМСУР", MessageBoxButton.YesNo, MessageBoxImage.Question);
-        if (res != MessageBoxResult.Yes) return;
-        try
-        {
-            var exe = Process.GetCurrentProcess().MainModule?.FileName;
-            if (exe is not null)
-                Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
-        }
-        catch { return; }
-        Close();
+        ((App)System.Windows.Application.Current).ApplyTheme(want);
     }
 
     public void NavigateTo(string view)
     {
+        if (view == "Generate") { OpenGenerateOrReuse(); return; }
         UserControl next = view switch
         {
             "Data" => new DataView(Session) { Navigator = this },
             "Settings" => new SettingsView(Session) { Navigator = this },
-            "Generate" => new PlaceholderView("Генерация расписания",
-                "Запустите расчёт с главной (кнопка или F5).",
-                "Открыть генерацию старым окном (временно)")
-            { LegacyOpen = () => Dashboard.OnGenerateClick(this, new RoutedEventArgs()) },
             "Schedule" => new ScheduleView(Session) { Navigator = this },
             "Export" => new ExportView(Session),
             "Help" => new HelpView(),
@@ -75,6 +62,25 @@ public partial class MainWindow : Window, IViewNavigator
         ViewHost.Content = next;
         PlayEnter(next);
         PaintNav(view);
+    }
+
+    // Генерация без заглушки: последний GenerateView храним и показываем как есть —
+    // уже посчитанные варианты не сбрасываются (старт на Loaded защищён _started).
+    // Сохранённого view ещё нет — путь через дашборд: он создаст новый GenerateView,
+    // а без данных честно подскажет загрузить их.
+    private GenerateView? _lastGenerateView;
+
+    private void OpenGenerateOrReuse()
+    {
+        if (_lastGenerateView is not null)
+        {
+            ViewHost.Content = _lastGenerateView;
+            PlayEnter(_lastGenerateView);
+            PaintNav("Generate");
+            return;
+        }
+        NavigateTo("Dashboard");
+        Dashboard.OnGenerateClick(this, new RoutedEventArgs());
     }
 
     // P-D0 анимация: появление раздела (fade + подъём 12px, 220мс).
@@ -112,6 +118,7 @@ public partial class MainWindow : Window, IViewNavigator
     public void OpenGenerate(Amsur.Scheduling.Core.ProblemInput input)
     {
         var (view, _) = GenerateHost.CreateView(input, Session, Session.GenerateMode.Name);
+        _lastGenerateView = view;
         ViewHost.Content = view;
         PlayEnter(view);
         PaintNav("Generate");
@@ -122,7 +129,7 @@ public partial class MainWindow : Window, IViewNavigator
         if (sender == NavHome) NavigateTo("Dashboard");
         else if (sender == NavData) NavigateTo("Data");
         else if (sender == NavSettings || sender == NavProfiles) NavigateTo("Settings");
-        else if (sender == NavGenerate) Dashboard.OnGenerateClick(sender, e);
+        else if (sender == NavGenerate) NavigateTo("Generate");
         else if (sender == NavSchedule) NavigateTo("Schedule");
         else if (sender == NavExport) NavigateTo("Export");
         else if (sender == NavHelp) NavigateTo("Help");

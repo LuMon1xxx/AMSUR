@@ -46,4 +46,19 @@ public sealed class ScheduleMatrixCellsTests
     {
         Assert.Empty(ScheduleMatrixCells.Group([]));
     }
+
+    // Слоты движка 1-based (GapUtils.cs): строка «1 урок» = slot 1, клетки slot 0 нет.
+    // Регресс 16.10.2026 (CRITICAL): матрица искала (день, 0) индексом цикла — «1 урок»
+    // всегда пуст, уроки на строку ниже, последний урок дня не виден.
+    [Fact]
+    public void Cell_FirstLessonLivesInSlotOne_NotInZero()
+    {
+        var rows = new[] { Row(0, 1, "Иванов"), Row(0, 3, "Сидоров") };
+        var cells = ScheduleMatrixCells.Group(rows);
+
+        Assert.Equal("Иванов", ScheduleMatrixCells.Cell(cells, 0, 1)![0].TeacherName);
+        Assert.Null(ScheduleMatrixCells.Cell(cells, 0, 0));
+        Assert.NotNull(ScheduleMatrixCells.Cell(cells, 0, 3));
+        Assert.Null(ScheduleMatrixCells.Cell(cells, 0, 4));
+    }
 }

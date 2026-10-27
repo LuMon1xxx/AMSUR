@@ -2,8 +2,9 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- P-D5: тёмная тема. ТОЛЬКО цвета/кисти/hero — те же x:Key, что светлая.
        Стили/радиусы/отступы живут в App.xaml и не дублируются.
-       Применение: App.ApplyDarkTheme() копирует записи поверх Resources
-       ДО загрузки окон (StaticResource резолвится при загрузке). -->
+       Применение: App.ApplyTheme("dark") копирует записи поверх Resources
+       на лету — кисти окон резолвятся через DynamicResource, смена мгновенная,
+       без перезапуска. -->
 
   <Color x:Key="CAccent">#7DD3FC</Color>
   <Color x:Key="CAccentDark">#38BDF8</Color>

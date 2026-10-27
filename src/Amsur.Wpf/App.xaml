@@ -3,16 +3,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnMainWindowClose">
   <Application.Resources>
-    <!-- Этап C: visual system — светлая спокойная тема, сине-фиолетовый акцент -->
-    <!-- P0-0: токены выровнены под Stitch-handoff (S5 decision: честные значения, ключи сохранены) -->
-    <Color x:Key="CAccent">#4F46E5</Color>
-    <Color x:Key="CAccentDark">#4338CA</Color>
-    <Color x:Key="CAccentPressed">#3730A3</Color>
-    <Color x:Key="CAccentSoft">#EEF2FF</Color>
-    <Color x:Key="CAccentBorder">#C7D2FE</Color>
-    <Color x:Key="CBg">#F8FAFC</Color>
+    <!-- Visual system: инженерный стиль (Fluent/Linear) — спокойный светло-серый
+         фон, белые карточки, один синий акцент, мягкие тени -->
+    <Color x:Key="CAccent">#2563EB</Color>
+    <Color x:Key="CAccentDark">#1D4ED8</Color>
+    <Color x:Key="CAccentPressed">#1E40AF</Color>
+    <Color x:Key="CAccentSoft">#EFF6FF</Color>
+    <Color x:Key="CAccentBorder">#BFDBFE</Color>
+    <Color x:Key="CBg">#F4F6F9</Color>
     <Color x:Key="CCard">#FFFFFF</Color>
-    <Color x:Key="CSubtle">#F1F5F9</Color>
+    <Color x:Key="CSubtle">#F8FAFC</Color>
     <Color x:Key="CBorder">#E2E8F0</Color>
     <Color x:Key="CBorderStrong">#CBD5E1</Color>
     <Color x:Key="CText">#0F172A</Color>
@@ -73,8 +73,8 @@
                        To="1" Duration="0:0:0.12"/>
     </Storyboard>
 
-    <CornerRadius x:Key="RCard">12</CornerRadius>
-    <CornerRadius x:Key="RControl">8</CornerRadius>
+    <CornerRadius x:Key="RCard">8</CornerRadius>
+    <CornerRadius x:Key="RControl">6</CornerRadius>
     <CornerRadius x:Key="RTag">4</CornerRadius>
     <Thickness x:Key="TCardPadding">16</Thickness>
 
@@ -86,10 +86,10 @@
       <GradientStop Color="#7C3AED" Offset="1"/>
     </LinearGradientBrush>
 
-    <!-- D4: мягкая тень баннеров (hero + следующий шаг). Чёрная с низкой
-         непрозрачностью — корректна и в тёмной теме (там почти не видна). -->
-    <DropShadowEffect x:Key="BannerShadow" Color="Black" Opacity="0.18"
-                      BlurRadius="18" ShadowDepth="5" Direction="270"/>
+    <!-- Тень баннеров (hero + следующий шаг): короткая и почти невидимая —
+         инженерный стиль без «парящих» карточек. Корректна и в тёмной теме. -->
+    <DropShadowEffect x:Key="BannerShadow" Color="Black" Opacity="0.06"
+                      BlurRadius="6" ShadowDepth="2" Direction="270"/>
 
     <Style x:Key="TH1" TargetType="TextBlock">
       <Setter Property="FontSize" Value="22"/>

@@ -148,6 +148,15 @@ public static class GreedyPlacer
                     dayReuse: dayReuse))
                 unplaced.AddRange(ids);
         }
+        // D-61: тяжёлым — внутренние слоты смены (пост-пасс, покрытие не меняет).
+        PreferHeavyInterior(problem, occById, placed, teacherBusy, groupBusy, wholeBusy, subBusy,
+            roomUsers, classDay);
+        // D-61: сдвоенность пост-пассом — пары ставим рядом, не теряя покрытие.
+        PairUpAdjacent(problem, occById, placed, teacherBusy, groupBusy, wholeBusy, subBusy,
+            roomUsers, classDay);
+        // НДТП-7: разнос физкультуры по дням (без троек подряд).
+        SpreadPe(problem, occById, placed, teacherBusy, groupBusy, wholeBusy, subBusy,
+            roomUsers, teacherDay, classDay);
         return new GreedyPlacement(placed, unplaced);
     }
 
@@ -281,6 +290,9 @@ public static class GreedyPlacer
                 }
                 return worst;
             }
+            // D-61: предпочтение внутренних слотов смены для тяжёлых предметов
+            // делается пост-пассом (PreferHeavyInterior) — порядок слотов не трогаем,
+            // иначе страдает покрытие (проверено OurIdeal: 880/882).
             IEnumerable<int> orderedSlots = slots
                 .OrderBy(CohesionRank)
                 .ThenBy(AdjScore)
@@ -327,6 +339,300 @@ public static class GreedyPlacer
                 }
                 foreach (var kv in unitUse)
                     roomUsers[kv.Key] = roomUsers.GetValueOrDefault(kv.Key) + kv.Value;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // D-61: тяжёлые предметы — внутренние слоты смены (не 1-й и не последний),
+    // пост-пассом: переставляем урок внутри его дня, если внутренний слот свободен.
+    // Порядок слотов при упаковке не трогаем — иначе падает покрытие (OurIdeal 880/882).
+    private static void PreferHeavyInterior(
+        SchedulingProblem problem,
+        Dictionary<Guid, LessonOccurrence> occById,
+        Dictionary<Guid, (int Day, int Slot, Guid? RoomId)> placed,
+        HashSet<(Guid, int, int)> teacherBusy,
+        HashSet<(Guid, int, int)> groupBusy,
+        HashSet<(Guid, int, int)> wholeBusy,
+        HashSet<(Guid, int, int)> subBusy,
+        Dictionary<(Guid, int, int), int> roomUsers,
+        Dictionary<(Guid, int), HashSet<int>> classDay)
+    {
+        foreach (var id in placed.Keys.OrderBy(k => occById[k].StableKey, StringComparer.Ordinal).ToList())
+        {
+            var o = occById[id];
+            if (o.SyncGroupId.HasValue) continue; // sync живёт одним слотом
+            if (!problem.Subjects.TryGetValue(o.SubjectId, out var s) ||
+                s.Difficulty < problem.Flex.IsHeavyThreshold) continue;
+            int slot = placed[id].Slot;
+            int b = GapUtils.ShiftIndex(slot, problem.ShiftBands);
+            if (b < 0) continue;
+            var band = problem.ShiftBands[b];
+            if (slot != band.FromSlot && slot != band.ToSlot) continue; // уже внутренний
+            foreach (int target in Enumerable.Range(band.FromSlot, band.ToSlot - band.FromSlot + 1)
+                         .Where(x => x != band.FromSlot && x != band.ToSlot)
+                         .OrderBy(x => x))
+                if (TryShiftTo(problem, occById, placed, id, target,
+                        teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, classDay))
+                    break;
+        }
+    }
+
+    // D-61: сдвоенность пост-пассом. Для каждого (класс, день, предмет) с 2+
+    // уроками двигаем урок вплотную к соседнему того же предмета. Слот
+    // освобождается, другой занимается — набор занятых клеток класса не растёт,
+    // поэтому покрытие и дневные капы не страдают (в отличие от бонуса в
+    // порядке слотов, который ронял Grind/Staffing).
+    private static void PairUpAdjacent(
+        SchedulingProblem problem,
+        Dictionary<Guid, LessonOccurrence> occById,
+        Dictionary<Guid, (int Day, int Slot, Guid? RoomId)> placed,
+        HashSet<(Guid, int, int)> teacherBusy,
+        HashSet<(Guid, int, int)> groupBusy,
+        HashSet<(Guid, int, int)> wholeBusy,
+        HashSet<(Guid, int, int)> subBusy,
+        Dictionary<(Guid, int, int), int> roomUsers,
+        Dictionary<(Guid, int), HashSet<int>> classDay)
+    {
+        var groups = placed
+            .Where(kv =>
+            {
+                var o = occById[kv.Key];
+                if (o.SyncGroupId.HasValue) return false; // sync-пара живёт одним слотом
+                return !(problem.Subjects.TryGetValue(o.SubjectId, out var s) &&
+                         (s.IsPhysicalEducation || s.IsNonLesson));
+            })
+            .GroupBy(kv => (Class: occById[kv.Key].ClassId, kv.Value.Day, Subject: occById[kv.Key].SubjectId))
+            .OrderBy(g => g.Key.Class).ThenBy(g => g.Key.Day).ThenBy(g => g.Key.Subject)
+            .ToList();
+        foreach (var g in groups)
+        {
+            var items = g.OrderBy(kv => kv.Value.Slot).Select(kv => kv.Key).ToList();
+            for (int i = 1; i < items.Count; i++)
+            {
+                var prevId = items[i - 1];
+                var curId = items[i];
+                int prevSlot = placed[prevId].Slot;
+                int curSlot = placed[curId].Slot;
+                if (curSlot - prevSlot == 1) continue;
+                if (TryShiftTo(problem, occById, placed, curId, prevSlot + 1,
+                        teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, classDay))
+                    continue;
+                TryShiftTo(problem, occById, placed, curId, prevSlot - 1,
+                    teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, classDay);
+            }
+        }
+        RebuildClassDay(problem, occById, placed, classDay);
+    }
+
+    // Переставить урок внутри его дня в конкретный слот, если клетка свободна
+    // для учителя/группы/класса и в кабинете есть место. Иначе false.
+    private static bool TryShiftTo(
+        SchedulingProblem problem,
+        Dictionary<Guid, LessonOccurrence> occById,
+        Dictionary<Guid, (int Day, int Slot, Guid? RoomId)> placed,
+        Guid id, int toSlot,
+        HashSet<(Guid, int, int)> teacherBusy,
+        HashSet<(Guid, int, int)> groupBusy,
+        HashSet<(Guid, int, int)> wholeBusy,
+        HashSet<(Guid, int, int)> subBusy,
+        Dictionary<(Guid, int, int), int> roomUsers,
+        Dictionary<(Guid, int), HashSet<int>> classDay)
+    {
+        var (day, slot, room) = placed[id];
+        var o = occById[id];
+        if (slot == toSlot) return false;
+        if (!problem.AllowedSlots.GetValueOrDefault(id, []).Contains(toSlot)) return false;
+        if (teacherBusy.Contains((o.TeacherId, day, toSlot))) return false;
+        if (groupBusy.Contains(((o.GroupId ?? o.ClassId), day, toSlot))) return false;
+        var cls = occById[id].ClassId;
+        if (wholeBusy.Contains((cls, day, toSlot)) || subBusy.Contains((cls, day, toSlot))) return false;
+        if (classDay.GetValueOrDefault((cls, day))?.Contains(toSlot) == true) return false;
+        if (room.HasValue &&
+            problem.Rooms.TryGetValue(room.Value, out var r) &&
+            roomUsers.GetValueOrDefault((room.Value, day, toSlot)) + 1 > Math.Max(1, r.MaxSimultaneousGroups))
+            return false;
+
+        // Снять со старого слота (соседи по группе/кабинету не затрагиваются).
+        teacherBusy.Remove((o.TeacherId, day, slot));
+        groupBusy.Remove(((o.GroupId ?? o.ClassId), day, slot));
+        if (o.GroupId.HasValue) subBusy.Remove((cls, day, slot));
+        else wholeBusy.Remove((cls, day, slot));
+        bool otherSameClassAtOld = placed.Any(p =>
+            p.Key != id && occById[p.Key].ClassId == cls && p.Value.Day == day &&
+            p.Value.Slot == slot && IsCounted(problem, occById[p.Key]));
+        if (!otherSameClassAtOld && IsCounted(problem, o))
+            classDay.GetValueOrDefault((cls, day))?.Remove(slot);
+        if (room.HasValue && roomUsers.TryGetValue((room.Value, day, slot), out var n))
+        {
+            if (n <= 1) roomUsers.Remove((room.Value, day, slot));
+            else roomUsers[(room.Value, day, slot)] = n - 1;
+        }
+        // Поставить на новый.
+        teacherBusy.Add((o.TeacherId, day, toSlot));
+        groupBusy.Add(((o.GroupId ?? o.ClassId), day, toSlot));
+        if (o.GroupId.HasValue) subBusy.Add((cls, day, toSlot));
+        else wholeBusy.Add((cls, day, toSlot));
+        if (IsCounted(problem, o))
+        {
+            if (!classDay.TryGetValue((cls, day), out var cset)) classDay[(cls, day)] = cset = [];
+            cset.Add(toSlot);
+        }
+        if (room.HasValue)
+            roomUsers[(room.Value, day, toSlot)] =
+                roomUsers.GetValueOrDefault((room.Value, day, toSlot)) + 1;
+        placed[id] = (day, toSlot, room);
+        return true;
+    }
+
+    private static void RebuildClassDay(
+        SchedulingProblem problem,
+        Dictionary<Guid, LessonOccurrence> occById,
+        Dictionary<Guid, (int Day, int Slot, Guid? RoomId)> placed,
+        Dictionary<(Guid, int), HashSet<int>> classDay)
+    {
+        classDay.Clear();
+        foreach (var kv in placed)
+        {
+            var o = occById[kv.Key];
+            if (!IsCounted(problem, o)) continue;
+            if (!classDay.TryGetValue((o.ClassId, kv.Value.Day), out var set))
+                classDay[(o.ClassId, kv.Value.Day)] = set = [];
+            set.Add(kv.Value.Slot);
+        }
+    }
+
+    // НДТП-7: точечный разнос физкультуры — если у класса 3 дня ПЕ подряд,
+    // переносим один урок тройки на свободный день. Мягко: нет места — оставляем
+    // (финальный гейт — валидатор).
+    private static void SpreadPe(
+        SchedulingProblem problem,
+        Dictionary<Guid, LessonOccurrence> occById,
+        Dictionary<Guid, (int Day, int Slot, Guid? RoomId)> placed,
+        HashSet<(Guid, int, int)> teacherBusy,
+        HashSet<(Guid, int, int)> groupBusy,
+        HashSet<(Guid, int, int)> wholeBusy,
+        HashSet<(Guid, int, int)> subBusy,
+        Dictionary<(Guid, int, int), int> roomUsers,
+        Dictionary<(Guid, int), int> teacherDay,
+        Dictionary<(Guid, int), HashSet<int>> classDay)
+    {
+        var classes = placed.Keys.Select(id => occById[id].ClassId).Distinct()
+            .OrderBy(c => problem.Classes.TryGetValue(c, out var cl) ? cl.Name : "", StringComparer.Ordinal)
+            .ToList();
+        foreach (var classId in classes)
+        {
+            for (int guard = 0; guard < 8; guard++)
+            {
+                var pe = placed
+                    .Where(kv =>
+                    {
+                        var o = occById[kv.Key];
+                        return o.ClassId == classId && !o.SyncGroupId.HasValue &&
+                               problem.Subjects.TryGetValue(o.SubjectId, out var s) && s.IsPhysicalEducation;
+                    })
+                    .Select(kv => (kv.Key, kv.Value.Day))
+                    .OrderBy(x => x.Day).ThenBy(x => x.Key)
+                    .ToList();
+                if (pe.Count < 3) break;
+                var peDays = pe.Select(x => x.Day).Distinct().OrderBy(d => d).ToList();
+                int tri = -1;
+                for (int i = 2; i < peDays.Count; i++)
+                    if (peDays[i] == peDays[i - 1] + 1 && peDays[i - 1] == peDays[i - 2] + 1)
+                    {
+                        tri = i;
+                        break;
+                    }
+                if (tri < 0) break;
+                bool moved = false;
+                foreach (var (id, day) in pe.Where(x => x.Day == peDays[tri]).OrderBy(x => x.Key))
+                    if (TryMoveToDay(problem, occById, placed, id, peDays.Where(d => d != day).ToList(),
+                            teacherBusy, groupBusy, wholeBusy, subBusy, roomUsers, teacherDay, classDay))
+                    {
+                        moved = true;
+                        break;
+                    }
+                if (!moved) break;
+            }
+        }
+    }
+
+    private static bool HasTripleDays(IEnumerable<int> days)
+    {
+        var ds = days.Distinct().OrderBy(x => x).ToList();
+        for (int i = 2; i < ds.Count; i++)
+            if (ds[i] == ds[i - 1] + 1 && ds[i - 1] == ds[i - 2] + 1) return true;
+        return false;
+    }
+
+    private static bool TryMoveToDay(
+        SchedulingProblem problem,
+        Dictionary<Guid, LessonOccurrence> occById,
+        Dictionary<Guid, (int Day, int Slot, Guid? RoomId)> placed,
+        Guid id, List<int> peDays,
+        HashSet<(Guid, int, int)> teacherBusy,
+        HashSet<(Guid, int, int)> groupBusy,
+        HashSet<(Guid, int, int)> wholeBusy,
+        HashSet<(Guid, int, int)> subBusy,
+        Dictionary<(Guid, int, int), int> roomUsers,
+        Dictionary<(Guid, int), int> teacherDay,
+        Dictionary<(Guid, int), HashSet<int>> classDay)
+    {
+        var o = occById[id];
+        var (oldDay, oldSlot, room) = placed[id];
+        var allowedDays = problem.AllowedDays.GetValueOrDefault(id, []);
+        var allowedSlots = problem.AllowedSlots.GetValueOrDefault(id, []);
+        bool counted = IsCounted(problem, o);
+        var candidates = Enumerable.Range(0, problem.DaysCount)
+            .Where(d => d != oldDay && allowedDays.Contains(d))
+            .Where(d => !HasTripleDays(peDays.Append(d)))
+            .OrderBy(d => classDay.GetValueOrDefault((o.ClassId, d))?.Count ?? 0)
+            .ThenBy(d => d);
+        foreach (int day in candidates)
+        {
+            if (counted && problem.Classes.TryGetValue(o.ClassId, out var cls) &&
+                (classDay.GetValueOrDefault((o.ClassId, day))?.Count ?? 0) + 1 > cls.MaxLessonsPerDay)
+                continue;
+            if (counted && problem.Teachers.TryGetValue(o.TeacherId, out var t) &&
+                teacherDay.GetValueOrDefault((o.TeacherId, day)) + 1 > t.MaxLessonsPerDay)
+                continue;
+            foreach (int slot in allowedSlots.OrderBy(x => x))
+            {
+                if (teacherBusy.Contains((o.TeacherId, day, slot))) continue;
+                if (groupBusy.Contains(((o.GroupId ?? o.ClassId), day, slot))) continue;
+                if (wholeBusy.Contains((o.ClassId, day, slot)) || subBusy.Contains((o.ClassId, day, slot)))
+                    continue;
+                if (classDay.GetValueOrDefault((o.ClassId, day))?.Contains(slot) == true) continue;
+                if (room.HasValue && problem.Rooms.TryGetValue(room.Value, out var r) &&
+                    roomUsers.GetValueOrDefault((room.Value, day, slot)) + 1 > Math.Max(1, r.MaxSimultaneousGroups))
+                    continue;
+                // Перенос: снять со старого дня/слота.
+                teacherBusy.Remove((o.TeacherId, oldDay, oldSlot));
+                groupBusy.Remove(((o.GroupId ?? o.ClassId), oldDay, oldSlot));
+                if (o.GroupId.HasValue) subBusy.Remove((o.ClassId, oldDay, oldSlot));
+                else wholeBusy.Remove((o.ClassId, oldDay, oldSlot));
+                if (room.HasValue && roomUsers.TryGetValue((room.Value, oldDay, oldSlot), out var n))
+                {
+                    if (n <= 1) roomUsers.Remove((room.Value, oldDay, oldSlot));
+                    else roomUsers[(room.Value, oldDay, oldSlot)] = n - 1;
+                }
+                teacherDay[(o.TeacherId, oldDay)] = Math.Max(0, teacherDay.GetValueOrDefault((o.TeacherId, oldDay)) - 1);
+                if (counted && classDay.TryGetValue((o.ClassId, oldDay), out var oldSet)) oldSet.Remove(oldSlot);
+                // Поставить на новый.
+                teacherBusy.Add((o.TeacherId, day, slot));
+                groupBusy.Add(((o.GroupId ?? o.ClassId), day, slot));
+                if (o.GroupId.HasValue) subBusy.Add((o.ClassId, day, slot));
+                else wholeBusy.Add((o.ClassId, day, slot));
+                if (room.HasValue)
+                    roomUsers[(room.Value, day, slot)] = roomUsers.GetValueOrDefault((room.Value, day, slot)) + 1;
+                teacherDay[(o.TeacherId, day)] = teacherDay.GetValueOrDefault((o.TeacherId, day)) + 1;
+                if (counted)
+                {
+                    if (!classDay.TryGetValue((o.ClassId, day), out var nset)) classDay[(o.ClassId, day)] = nset = [];
+                    nset.Add(slot);
+                }
+                placed[id] = (day, slot, room);
                 return true;
             }
         }
@@ -400,3 +706,4 @@ public static class GreedyPlacer
     private static string RoomName(SchedulingProblem problem, Guid roomId) =>
         roomId == Guid.Empty ? "" : problem.Rooms.TryGetValue(roomId, out var r) ? r.Name : "";
 }
+

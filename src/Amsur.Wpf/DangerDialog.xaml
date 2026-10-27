@@ -5,12 +5,12 @@
         MinWidth="420" MinHeight="240" WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize" ShowInTaskbar="False"
         Style="{DynamicResource ChromeWindow}"
-        Background="{StaticResource BBg}">
+        Background="{DynamicResource BBg}">
   <StackPanel Margin="20" TextElement.Foreground="{DynamicResource BText}">
     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-      <Border Width="36" Height="36" CornerRadius="9" Background="{StaticResource BWarnBg}" VerticalAlignment="Center">
+      <Border Width="36" Height="36" CornerRadius="9" Background="{DynamicResource BWarnBg}" VerticalAlignment="Center">
         <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="18"
-                   Foreground="{StaticResource BWarn}"
+                   Foreground="{DynamicResource BWarn}"
                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
       </Border>
       <TextBlock x:Name="TitleText" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,0"

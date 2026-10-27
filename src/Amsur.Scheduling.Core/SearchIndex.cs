@@ -58,10 +58,15 @@ public sealed class SearchIndex
     private long _wAlternation = RuleCatalog.Alternation;
     private long _wPe = RuleCatalog.PeConsecutive;
 
+    // Набор весов, с которым построен индекс: нужен точной soft-дельте
+    // синхронного хода (SoftEvaluator по гипотетическому размещению).
+    private EffectiveRuleSet _rules;
+
     private SearchIndex(SchedulingProblem problem)
     {
         _problem = problem;
         _occById = problem.Occurrences.ToDictionary(o => o.Id);
+        _rules = EffectiveRuleSet.Default;
         _wLate = RuleCatalog.StudentLateStart;
     }
 
@@ -74,6 +79,7 @@ public sealed class SearchIndex
         var idx = new SearchIndex(problem);
         if (rules is not null)
         {
+            idx._rules = rules;
             idx._wStudentGap = rules.Weight("student-gap");
             idx._wLate = rules.Weight("student-late-start");
             idx._wOrdinary = rules.Weight("teacher-gap");
@@ -219,6 +225,233 @@ public sealed class SearchIndex
         Remove(b, pb.Day, pb.Slot, pb.Room);
         Insert(aId, pb.Day, pb.Slot, pa.Room);
         Insert(bId, pa.Day, pa.Slot, pb.Room);
+    }
+
+    // Синхронный ход группы (A/B-сплиты, профильные пары): ВСЯ группа переезжает
+    // в (newDay, newSlot) вместе — SubgroupSync соблюдён по построению.
+    // Чистый: lift всех участников → домены/коллизии в целевой клетке → restore.
+    // Дельта — точная разница soft гипотетического размещения (SoftEvaluator):
+    // у участников общий классо-день, поэтому сумма поштучных SoftDelta считала
+    // бы общий вклад дважды, а полный пересчёт — ровно один раз.
+    public (bool Allowed, long DeltaTotal, IReadOnlyList<ValidationIssue> Hard) TryMoveSync(
+        Guid syncGroupId, int newDay, int newSlot) =>
+        TryMoveSyncCore(syncGroupId, newDay, newSlot, currentSoft: null);
+
+    // Та же проверка с soft текущего размещения от вызывающего (LocalSearch):
+    // избавляет от повторного полного пересчёта «до» в цикле кандидатов.
+    // Контракт: currentSoft == SoftEvaluator по текущему состоянию индекса.
+    internal (bool Allowed, long DeltaTotal, IReadOnlyList<ValidationIssue> Hard) TryMoveSync(
+        Guid syncGroupId, int newDay, int newSlot, long currentSoft) =>
+        TryMoveSyncCore(syncGroupId, newDay, newSlot, currentSoft);
+
+    private (bool Allowed, long DeltaTotal, IReadOnlyList<ValidationIssue> Hard) TryMoveSyncCore(
+        Guid syncGroupId, int newDay, int newSlot, long? currentSoft)
+    {
+        var members = new List<(LessonOccurrence Node, int Day, int Slot, Guid? Room)>();
+        foreach (var o in _problem.Occurrences)
+            if (o.SyncGroupId == syncGroupId && _pos.TryGetValue(o.Id, out var p))
+                members.Add((o, p.Day, p.Slot, p.Room));
+        if (members.Count == 0)
+            return (false, 0, [new ValidationIssue
+            {
+                Code = "unknown-sync-group",
+                Message = "Синхронная группа не размещена."
+            }]);
+        if (members.All(m => m.Day == newDay && m.Slot == newSlot))
+            return (false, 0, []); // группа уже в этой клетке — no-op
+
+        var hard = new List<ValidationIssue>();
+        foreach (var m in members)
+        {
+            CheckDomain(m.Node, newDay, newSlot, hard);
+            CheckRoomCap(m.Node, m.Room, newDay, newSlot, hard);
+        }
+        if (hard.Count > 0) return (false, 0, hard);
+
+        long before = currentSoft ?? SoftNow();
+        long after = before;
+        bool clean = false;
+        foreach (var m in members) Remove(m.Node, m.Day, m.Slot, m.Room);
+        try
+        {
+            var roomCells = new HashSet<(Guid Room, int Day, int Slot)>();
+            foreach (var m in members)
+                CheckSyncScopes(m.Node, m.Room, newDay, newSlot, members, roomCells, hard);
+            clean = hard.Count == 0;
+            if (clean)
+            {
+                foreach (var m in members) Insert(m.Node.Id, newDay, newSlot, m.Room);
+                after = SoftNow();
+                foreach (var m in members) Remove(m.Node, newDay, newSlot, m.Room);
+            }
+        }
+        finally
+        {
+            foreach (var m in members) Insert(m.Node.Id, m.Day, m.Slot, m.Room);
+        }
+        if (!clean) hard = [.. hard.DistinctBy(v => (v.Code, v.OccurrenceId, v.ClassId, v.TeacherId, v.RoomId))];
+        return (clean, clean ? after - before : 0, hard);
+    }
+
+    public void CommitSync(Guid syncGroupId, int newDay, int newSlot)
+    {
+        var members = new List<(LessonOccurrence Node, int Day, int Slot, Guid? Room)>();
+        foreach (var o in _problem.Occurrences)
+            if (o.SyncGroupId == syncGroupId && _pos.TryGetValue(o.Id, out var p))
+                members.Add((o, p.Day, p.Slot, p.Room));
+        foreach (var m in members) Remove(m.Node, m.Day, m.Slot, m.Room);
+        foreach (var m in members) Insert(m.Node.Id, newDay, newSlot, m.Room);
+    }
+
+    private long SoftNow() => SoftEvaluator.Evaluate(_problem, Snapshot(), _rules).Total;
+
+    // Проверки целевой клетки для участника синхронного хода: индекс уже БЕЗ
+    // всей группы (lift), поэтому отдельно добираем коллизии ВНУТРИ хода.
+    private void CheckSyncScopes(
+        LessonOccurrence node, Guid? room, int day, int slot,
+        IReadOnlyList<(LessonOccurrence Node, int Day, int Slot, Guid? Room)> moving,
+        HashSet<(Guid Room, int Day, int Slot)> roomCells,
+        List<ValidationIssue> hard)
+    {
+        if (_teacherCell.ContainsKey((node.TeacherId, day, slot)) ||
+            moving.Any(m => m.Node.Id != node.Id && m.Node.TeacherId == node.TeacherId))
+            hard.Add(new ValidationIssue
+            {
+                Code = PhysicalRuleCodes.TeacherCollision,
+                Message = "Учитель уже ведёт урок в это время.",
+                TeacherId = node.TeacherId, OccurrenceId = node.Id
+            });
+
+        bool blocked = _wholeCell.ContainsKey((node.ClassId, day, slot)) ||
+            (node.GroupId.HasValue
+                ? _groupCell.ContainsKey((node.GroupId.Value, day, slot))
+                : _subCell.ContainsKey((node.ClassId, day, slot)));
+        if (!blocked)
+            foreach (var m in moving)
+            {
+                if (m.Node.Id == node.Id) continue;
+                bool blocks = !node.GroupId.HasValue || !m.Node.GroupId.HasValue
+                    ? node.ClassId == m.Node.ClassId
+                    : node.GroupId == m.Node.GroupId;
+                if (blocks) { blocked = true; break; }
+            }
+        if (blocked)
+            hard.Add(new ValidationIssue
+            {
+                Code = PhysicalRuleCodes.GroupCollision,
+                Message = "Класс/группа уже заняты в это время.",
+                ClassId = node.ClassId, OccurrenceId = node.Id
+            });
+
+        if (room.HasValue && _problem.Rooms.TryGetValue(room.Value, out var rm))
+        {
+            var cell = (room.Value, day, slot);
+            if (roomCells.Add(cell))
+            {
+                int units = SyncCellUnits(rm, cell, moving);
+                if (units > rm.MaxSimultaneousGroups)
+                    hard.Add(new ValidationIssue
+                    {
+                        Code = PhysicalRuleCodes.RoomOverflow,
+                        Message = $"Кабинет занят ({units} при лимите {rm.MaxSimultaneousGroups}).",
+                        RoomId = rm.Id, OccurrenceId = node.Id
+                    });
+            }
+        }
+
+        var mode = _problem.Flex.AssignMode;
+        if (IsCounted(node) && !node.GroupId.HasValue &&
+            mode is TeacherAssignMode.HardClass or TeacherAssignMode.HardParallel &&
+            SyncSplitDistinctWith(node, moving) > 1)
+            hard.Add(new ValidationIssue
+            {
+                Code = "teacher-assign",
+                Message = "Предмет в классе/параллели ведут несколько учителей.",
+                ClassId = node.ClassId, OccurrenceId = node.Id, TeacherId = node.TeacherId
+            });
+
+        if (IsCounted(node) && _problem.Teachers.TryGetValue(node.TeacherId, out var teacher))
+        {
+            int count = _teacherDay.GetValueOrDefault((node.TeacherId, day)) +
+                moving.Count(m => m.Node.TeacherId == node.TeacherId && IsCounted(m.Node));
+            if (count > teacher.MaxLessonsPerDay)
+                hard.Add(new ValidationIssue
+                {
+                    Code = "teacher-maxperday",
+                    Message = $"Превышен дневной лимит учителя ({count} > {teacher.MaxLessonsPerDay}).",
+                    TeacherId = node.TeacherId
+                });
+        }
+
+        if (IsCounted(node) && _problem.Classes.TryGetValue(node.ClassId, out var cls))
+        {
+            var list = _classSlots.GetValueOrDefault((node.ClassId, day), []);
+            var distinct = new HashSet<int>(list);
+            int count = distinct.Contains(slot) ? distinct.Count : distinct.Count + 1;
+            if (count > cls.MaxLessonsPerDay)
+                hard.Add(new ValidationIssue
+                {
+                    Code = "class-maxperday",
+                    Message = $"Превышен дневной лимит класса ({count} > {cls.MaxLessonsPerDay}).",
+                    ClassId = node.ClassId
+                });
+        }
+    }
+
+    // Единицы клетки кабинета ПОСЛЕ хода всей группы (индекс БЕЗ группы).
+    private int SyncCellUnits(
+        Domain.Room room, (Guid Room, int Day, int Slot) cell,
+        IReadOnlyList<(LessonOccurrence Node, int Day, int Slot, Guid? Room)> moving)
+    {
+        if (room.CountSubgroupAsGroup)
+            return _roomCell.GetValueOrDefault(cell) + moving.Count(m => m.Room == cell.Room);
+        var classes = new HashSet<Guid>();
+        if (_roomKeys.TryGetValue(cell, out var ks))
+            foreach (var (c, cnt) in ks)
+                if (cnt > 0) classes.Add(c);
+        foreach (var m in moving)
+            if (m.Room == cell.Room) classes.Add(m.Node.ClassId);
+        return classes.Count;
+    }
+
+    // P2/R7 для синхронного хода: distinct учителей (класс/параллель, предмет)
+    // с учётом участников хода (они сняты с индекса).
+    private int SyncSplitDistinctWith(
+        LessonOccurrence node,
+        IReadOnlyList<(LessonOccurrence Node, int Day, int Slot, Guid? Room)> moving)
+    {
+        var mode = _problem.Flex.AssignMode;
+        if (mode == Domain.TeacherAssignMode.HardParallel &&
+            _problem.Classes.TryGetValue(node.ClassId, out var cls))
+        {
+            var teachers = new HashSet<Guid>();
+            if (_splitP.TryGetValue((cls.Grade, node.SubjectId), out var pd))
+                foreach (var (t, cnt) in pd)
+                    if (cnt > 0) teachers.Add(t);
+            foreach (var m in moving)
+            {
+                var o = m.Node;
+                if (!IsCounted(o) || o.GroupId.HasValue || o.SubjectId != node.SubjectId) continue;
+                if (_problem.Classes.TryGetValue(o.ClassId, out var c2) && c2.Grade == cls.Grade)
+                    teachers.Add(o.TeacherId);
+            }
+            return teachers.Count;
+        }
+        if (mode == Domain.TeacherAssignMode.HardClass)
+        {
+            var teachers = new HashSet<Guid>();
+            if (_splitC.TryGetValue((node.ClassId, node.SubjectId), out var cd))
+                foreach (var (t, cnt) in cd)
+                    if (cnt > 0) teachers.Add(t);
+            foreach (var m in moving)
+            {
+                var o = m.Node;
+                if (!IsCounted(o) || o.GroupId.HasValue || o.SubjectId != node.SubjectId) continue;
+                if (o.ClassId == node.ClassId) teachers.Add(o.TeacherId);
+            }
+            return teachers.Count;
+        }
+        return 1;
     }
 
     private void CheckDomain(LessonOccurrence node, int day, int slot, List<ValidationIssue> hard)
