@@ -19,11 +19,12 @@
       <!-- Тулбар фильтров: вид + имя + поиск (всё UI-only, контракты не меняются) -->
       <StackPanel Orientation="Horizontal" Margin="0,10,0,0" VerticalAlignment="Center">
         <TextBlock Text="Показать:" VerticalAlignment="Center" FontSize="13"/>
-        <ComboBox x:Name="ViewBox" Width="150" Margin="6,0,0,0" SelectionChanged="OnViewChanged">
-          <ComboBoxItem Content="Всё расписание" IsSelected="True"/>
-          <ComboBoxItem Content="Класс…"/>
-          <ComboBoxItem Content="Учитель…"/>
-          <ComboBoxItem Content="Кабинет…"/>
+        <ComboBox x:Name="ViewBox" Width="250" Margin="6,0,0,0" SelectionChanged="OnViewChanged">
+          <ComboBoxItem Content="0: Все уроки (таблица)" IsSelected="True"/>
+          <ComboBoxItem Content="1: По классу (сетка)"/>
+          <ComboBoxItem Content="2: По учителю (сетка)"/>
+          <ComboBoxItem Content="3: По кабинету (сетка)"/>
+          <ComboBoxItem Content="4: Шахматка по дню (все классы)"/>
         </ComboBox>
         <ComboBox x:Name="NameBox" Width="200" Margin="8,0,0,0" SelectionChanged="OnViewChanged"/>
         <TextBox x:Name="SearchBox" Width="240" Margin="8,0,0,0"
@@ -75,8 +76,10 @@
     <!-- Horizontal Disabled: иначе DataGrid *-колонки схлопываются (замер в бесконечность) -->
     <ScrollViewer Margin="0,10,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel>
-        <ScrollViewer x:Name="MatrixScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
-                      Visibility="Collapsed">
+        <!-- Двухсменка: до 16 слотов в дне — матрица выше окна, поэтому скролл вертикальный
+             (MaxHeight ограничивает бесконечную меру внешнего ScrollViewer, иначе он не включится). -->
+        <ScrollViewer x:Name="MatrixScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                      MaxHeight="560" Visibility="Collapsed">
           <Grid x:Name="MatrixGrid" Margin="0,0,0,4"/>
         </ScrollViewer>
         <TextBlock x:Name="EmptyText" Style="{DynamicResource THint}" Margin="0,8,0,0"
