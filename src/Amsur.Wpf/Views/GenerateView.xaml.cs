@@ -237,8 +237,8 @@ public partial class GenerateView : UserControl
         {
             string limit = m.Code switch
             {
-                "STANDARD" => "12 с · большая школа до 60",
-                "EXPERT" => "12 с · большая школа до 60",
+                "STANDARD" => "12 с · большая школа до 30",
+                "EXPERT" => "12 с · большая школа до 30",
                 _ => m.BudgetSeconds >= 60
                     ? $"лимит ~{m.BudgetSeconds / 60:0} мин"
                     : $"лимит ~{m.BudgetSeconds:0} сек",

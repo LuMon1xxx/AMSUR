@@ -273,9 +273,13 @@ public sealed class OrToolsSolver : IScheduleSolver
             diagnostics.Add($"GrindLite: soft {bestQuality}->{grind.SoftTotal}, " +
                 $"hard={grind.HardViolations}, tw={grind.TeacherWindows}, budget {grindBudgetSec:F1}s.");
             foreach (var line in grind.Log.TakeLast(6)) diagnostics.Add("GrindLite: " + line);
-            // GrindLite мог улучшить учительские окна при том же soft — такой
-            // результат тоже принимаем (равенство по soft не регрессия).
-            if (grind.SoftTotal <= bestQuality)
+            bool grindClean = grind.HardViolations == 0 &&
+                PlacementValidator.Validate(problem, grind.Placements, rs).IsValid;
+            bool bestClean = PlacementValidator.Validate(problem, ToPlacements(bestValues), rs).IsValid;
+            // Чистое решение важнее «красивой» цифры soft: если текущий лучший
+            // вариант отклоняется валидатором, принимаем чистый GrindLite даже
+            // с худшей оценкой. Иначе финальный gate обнуляет весь расчёт.
+            if (grind.SoftTotal <= bestQuality || (grindClean && !bestClean))
             {
                 bestQuality = grind.SoftTotal;
                 bestValues = grind.Placements.ToDictionary(

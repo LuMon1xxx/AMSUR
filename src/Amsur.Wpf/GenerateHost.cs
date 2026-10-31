@@ -27,8 +27,8 @@ public static class GenerateHost
             ? mode.Code switch
             {
                 "QUICK" => 20,
-                "STANDARD" => 60,
-                "EXPERT" => 60,
+                "STANDARD" => 30,
+                "EXPERT" => 45,
                 _ => Math.Max(60, mode.BudgetSeconds),
             }
             : mode.BudgetSeconds;
@@ -40,9 +40,12 @@ public static class GenerateHost
             if (!problem.Options.EnableGrindLite || result.Placements.Count == 0)
                 return result;
             var polished = GrindLite.Polish(problem, result.Placements, rs,
-                TimeSpan.FromSeconds(60), problem.Options.RandomSeed ?? 11, ct);
+                TimeSpan.FromSeconds(20), problem.Options.RandomSeed ?? 11, ct);
+            var hard = PlacementValidator.Validate(problem, polished.Placements, rs).HardViolations.Count;
+            // Полировка не должна ухудшать: если она сломала жёсткое правило,
+            // возвращаем исходный валидный результат.
+            if (hard > 0) return result;
             var bd = SoftEvaluator.Evaluate(problem, polished.Placements, rs);
-            var hard = PlacementValidator.Validate(problem, polished.Placements).HardViolations.Count;
             return result with
             {
                 Placements = polished.Placements,
