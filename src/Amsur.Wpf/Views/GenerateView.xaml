@@ -4,10 +4,8 @@
              xmlns:local="clr-namespace:Amsur.Wpf">
   <!-- P-D3: генерация как view (контент из GenerateWindow 1-в-1).
        Жизненный цикл оркестратора — в code-behind (старт на Loaded, стоп на Unloaded). -->
-  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                HorizontalContentAlignment="Stretch">
-  <Border Padding="24">
-  <StackPanel MaxWidth="860" HorizontalAlignment="Left" TextElement.Foreground="{DynamicResource BText}">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Margin="24" MaxWidth="1200" TextElement.Foreground="{DynamicResource BText}">
     <!-- Верх: заголовок + честный статус (без ложного процента) -->
     <Border Style="{DynamicResource Card}">
       <StackPanel>
@@ -22,7 +20,7 @@
         <TextBlock Text="{Binding QualityProfileText}" FontSize="13" Foreground="{DynamicResource BTextSoft}" Margin="0,4,0,0"/>
         <!-- Режимы: клик по карточке выбирает режим для перезапуска, честная производная BudgetSeconds -->
         <TextBlock Text="Режимы (клик по карточке — выбрать):" Style="{DynamicResource THCaption}" Margin="0,12,0,6"/>
-        <UniformGrid x:Name="ModeStrip" Columns="3" Rows="2"/>
+        <UniformGrid x:Name="ModeStrip" Columns="5" Rows="1"/>
       </StackPanel>
     </Border>
 
@@ -39,8 +37,8 @@
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            Foreground="{DynamicResource BTextMuted}"/>
               </Border>
-              <TextBlock x:Name="StageText" Text="{Binding Name}" FontSize="12" Margin="8,0,0,0"
-                         TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{DynamicResource BTextSoft}"/>
+              <TextBlock x:Name="StageText" Text="{Binding Name}" FontSize="13" Margin="8,0,0,0"
+                         VerticalAlignment="Center" Foreground="{DynamicResource BTextSoft}"/>
             </StackPanel>
           </Border>
           <DataTemplate.Triggers>
@@ -229,6 +227,5 @@
       </Expander>
     </Border>
   </StackPanel>
-  </Border>
   </ScrollViewer>
 </UserControl>

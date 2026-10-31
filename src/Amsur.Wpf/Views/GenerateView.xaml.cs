@@ -246,7 +246,7 @@ public partial class GenerateView : UserControl
             var card = new System.Windows.Controls.Border
             {
                 Padding = new Thickness(10),
-                Margin = new Thickness(0, 0, 6, 6),
+                Margin = new Thickness(0, 0, 6, 0),
                 ToolTip = m.Description,
                 Cursor = Cursors.Hand,
                 BorderThickness = new Thickness(1),
