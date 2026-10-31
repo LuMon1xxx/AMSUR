@@ -39,7 +39,7 @@ public sealed record SchoolData(
     /// <inheritdoc cref="DaysOff"/>
     public IReadOnlyList<TeacherUnavailability> Unavailability { get; init; } = [];
 
-    public ProblemInput ToProblemInput()
+    public ProblemInput ToProblemInput(bool autoClassLimits = false)
     {
         // P2: flex → problem (имена → Id; неизвестные имена назначений пропускаем:
         // P3-UI предлагает только существующие; молчаливого создания сущностей нет).
@@ -87,7 +87,8 @@ public sealed record SchoolData(
             },
             assignments: Flex.Assignments
                 .Select(ResolveAssign).Where(a => a is not null).Cast<TeacherAssignment>().ToList(),
-            flex: Flex.Settings.ToSettings());
+            flex: Flex.Settings.ToSettings(),
+            autoClassLimits: autoClassLimits);
     }
 }
 
@@ -187,10 +188,16 @@ public static class SchoolDataImporter
                 if (count <= 0)
                     throw new InvalidOperationException(
                         $"Класс '{key}': учеников должно быть больше 0.");
+                // D-28: персист дневного лимита класса (1..10), иначе школьный дефолт.
+                var lim = flex.ClassLimits?.FirstOrDefault(x =>
+                    string.Equals(x.ClassName, key, StringComparison.OrdinalIgnoreCase));
                 c = new SchoolClass
                 {
                     AcademicYearId = academicYearId, Name = key,
-                    Grade = grade, StudentCount = count
+                    Grade = grade, StudentCount = count,
+                    MaxLessonsPerDay = lim is { MaxLessonsPerDay: >= 1 and <= 10 }
+                        ? lim.MaxLessonsPerDay
+                        : SchoolClass.DefaultMaxLessonsPerDay,
                 };
                 if (cfg?.ClassTeacherName is not null)
                     c.ClassTeacherId = Teach(cfg.ClassTeacherName).Id;
@@ -204,7 +211,16 @@ public static class SchoolDataImporter
             var key = name.Trim();
             if (!teachers.TryGetValue(key, out var t))
             {
-                t = new Teacher { Name = key, MaxLessonsPerDay = 6 };
+                // D-28: персист дневного лимита учителя (1..12), иначе школьный дефолт 6.
+                var lim = flex.TeacherLimits?.FirstOrDefault(x =>
+                    string.Equals(x.TeacherName, key, StringComparison.OrdinalIgnoreCase));
+                t = new Teacher
+                {
+                    Name = key,
+                    MaxLessonsPerDay = lim is { MaxLessonsPerDay: >= 1 and <= 12 }
+                        ? lim.MaxLessonsPerDay
+                        : Teacher.DefaultMaxLessonsPerDay,
+                };
                 teachers[key] = t;
             }
             return t;
@@ -319,7 +335,11 @@ public static class SchoolDataImporter
                             new StudentGroup { ClassId = cls.Id, Name = "B" });
                     groups[cls.Id] = pair;
                 }
-                var teacherB = Teach(r.SplitTeacherBName!);
+                if (string.IsNullOrWhiteSpace(r.SplitTeacherBName))
+                    throw new InvalidOperationException(
+                        $"Класс '{cls.Name}', предмет '{subj.Name}': деление на подгруппы A/B, " +
+                        "но не указан учитель подгруппы B.");
+                var teacherB = Teach(r.SplitTeacherBName);
                 splitTeachers[item.Id] = (teacher.Id, teacherB.Id);
             }
             curriculum.Add(item);
@@ -403,8 +423,7 @@ public static class SchoolDataImporter
             throw new InvalidOperationException(
                 $"Двухсменка: уроков в день — не больше 12 (нумерация стены №1–12; задано {slotsPerDay}).");
         if (twoShift && slotsPerDay < 12)
-            throw new InvalidOperationException(
-                "Двухсменка: поставьте 12 уроков в день (нумерация стены №1–12).");
+            slotsPerDay = 12; // двухсменка всегда по нумерации стены №1–12
         var classSlots = new Dictionary<Guid, IReadOnlyList<int>>();
         if (twoShift)
             foreach (var (clsName, shift) in shiftOfClass)

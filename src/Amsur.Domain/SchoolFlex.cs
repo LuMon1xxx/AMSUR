@@ -139,6 +139,16 @@ public sealed record ClassConfigRow(
     int Grade,
     int StudentCount = 25);
 
+// Дневные лимиты (D-28): отдельные таблицы, чтобы не ломать старые БД ALTER-ом.
+// Отсутствие строки = дефолт (класс 7, учитель 6).
+public sealed record ClassLimitRow(
+    string ClassName,
+    int MaxLessonsPerDay);
+
+public sealed record TeacherLimitRow(
+    string TeacherName,
+    int MaxLessonsPerDay);
+
 public sealed record HourNormRow(
     string SubjectName,
     int Grade,
@@ -215,7 +225,9 @@ public sealed record FlexDataset(
     IReadOnlyList<SubjectDifficultyRow> SubjectDifficulty,
     CommonLessonRow? CommonLesson,
     IReadOnlyList<TeacherAssignRow> Assignments,
-    FlexSettingsRow Settings)
+    FlexSettingsRow Settings,
+    IReadOnlyList<ClassLimitRow>? ClassLimits = null,
+    IReadOnlyList<TeacherLimitRow>? TeacherLimits = null)
 {
     public static FlexDataset Empty => new([], [], [], [], [], null, [],
         FlexSettingsRow.Default);

@@ -105,7 +105,15 @@ public static class DraftPlanner
             soft = ls.SoftTotal;
         }
 
+        // Разнесение физкультуры (НДТП-7): ни жадный конструктив, ни LocalSearch
+        // правило не знают, поэтому тройки чиним точечно — до валидации, чтобы
+        // блокер выгрузки (sanpin-pe-spacing) снимался. Ремонт не добавляет
+        // новых нарушений (см. PeSpacingRepair.NoNewHards).
+        if (!ct.IsCancellationRequested)
+            placements = PeSpacingRepair.Repair(problem, placements);
+
         var validation = PlacementValidator.Validate(problem, placements, rulesForDraft);
+
         // Три честных ведра: блокирует выгрузку / не блокирует, но проверь глазами /
         // разрешено школой. Полнота отдельно — списком Unplaced (не дублируем строкой
         // «placement-count»). Набор неблокирующих кодов — один на проект (см. выше).

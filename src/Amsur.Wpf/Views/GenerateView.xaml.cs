@@ -1,8 +1,10 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Amsur.Application;
 
 namespace Amsur.Wpf.Views;
@@ -17,6 +19,9 @@ public partial class GenerateView : UserControl
     private readonly AppSession? _session;
     private bool _started;
     private bool _running;
+    public IViewNavigator? Navigator { get; set; }
+    private readonly Stopwatch _wall = new();
+    private readonly DispatcherTimer _ticker = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly Dictionary<string, System.Windows.Controls.Border> _modeCards = [];
     private string? _selectedMode;
 
@@ -28,6 +33,10 @@ public partial class GenerateView : UserControl
         DataContext = vm;
         InitializeComponent();
         BuildModeStrip();
+        // Пока идёт расчёт, время и график обновляются каждую секунду, даже если
+        // от движка не пришло ни одного события (раньше цифра «замирала»).
+        _ticker.Tick += (_, _) => TickLive();
+        Unloaded += (_, _) => _ticker.Stop();
         RestartButton.IsEnabled = !_vm.CanStop;
         vm.PropertyChanged += OnVmChanged;
         RefreshDiagnostics();
@@ -52,6 +61,8 @@ public partial class GenerateView : UserControl
         if (_running) return;
         _running = true;
         _vm.CanStop = true; // перезапуск: «Остановить» снова активна
+        _wall.Restart();
+        _ticker.Start();
         // Сюда доходим только из StartOnce при живых orch+session.
         var orch = _orch!;
         var session = _session!;
@@ -89,10 +100,33 @@ public partial class GenerateView : UserControl
         finally
         {
             _running = false;
+            _ticker.Stop();
+            _vm.ElapsedText = $"Прошло: {(int)_wall.Elapsed.TotalSeconds} с";
+            Chart.Render(BuildLiveSnapshot());
             // Расчёт + черновик закончены — перезапуск снова доступен.
             // Через Dispatcher: finally может выполниться не на UI-потоке.
             _ = Dispatcher.InvokeAsync(() => RestartButton.IsEnabled = !_vm.CanStop);
         }
+    }
+
+    private void TickLive()
+    {
+        if (!_vm.CanStop) { _ticker.Stop(); return; }
+        _vm.ElapsedText = $"Прошло: {(int)_wall.Elapsed.TotalSeconds} с";
+        Chart.Render(BuildLiveSnapshot());
+    }
+
+    // Продлевает ось времени «живой» точкой с последней известной оценкой:
+    // график движется, даже когда новых событий от движка нет.
+    private TrajectorySnapshot BuildLiveSnapshot()
+    {
+        var s = _vm.Trajectory;
+        if (!s.HasData || s.Points.Count == 0) return s;
+        var pts = s.Points.ToList();
+        var last = pts[^1];
+        if (_wall.Elapsed > last.Elapsed)
+            pts.Add(new TrajectoryPoint(_wall.Elapsed, last.BestSoft, last.Phase, last.RunKey, false));
+        return new TrajectorySnapshot(pts, s.Markers, true, s.HasLine);
     }
 
     private void OnVmChanged(object? sender, PropertyChangedEventArgs e)
@@ -201,13 +235,18 @@ public partial class GenerateView : UserControl
         _modeCards.Clear();
         foreach (var m in GenerateModes.All)
         {
-            string limit = m.BudgetSeconds >= 60
-                ? $"лимит ~{m.BudgetSeconds / 60:0} мин"
-                : $"лимит ~{m.BudgetSeconds:0} сек";
+            string limit = m.Code switch
+            {
+                "STANDARD" => "12 с · большая школа до 60",
+                "EXPERT" => "12 с · большая школа до 60",
+                _ => m.BudgetSeconds >= 60
+                    ? $"лимит ~{m.BudgetSeconds / 60:0} мин"
+                    : $"лимит ~{m.BudgetSeconds:0} сек",
+            };
             var card = new System.Windows.Controls.Border
             {
                 Padding = new Thickness(10),
-                Margin = new Thickness(0, 0, 6, 0),
+                Margin = new Thickness(0, 0, 6, 6),
                 ToolTip = m.Description,
                 Cursor = Cursors.Hand,
                 BorderThickness = new Thickness(1),
@@ -288,7 +327,7 @@ public partial class GenerateView : UserControl
         }
 
         var (discarded, orch) = GenerateHost.CreateView(
-            _session.Data.ToProblemInput(), _session, _session.GenerateMode.Name);
+            _session.Data.ToProblemInput(true), _session, _session.GenerateMode.Name);
         _ = discarded; // нужен только оркестратор нового режима; view не показываем
         var vm = orch.ViewModel;
         _vm.PropertyChanged -= OnVmChanged;
@@ -303,15 +342,51 @@ public partial class GenerateView : UserControl
         await RunGuardedAsync();
     }
 
-    private void OnOpenClick(object sender, RoutedEventArgs e)
+    private async void OnOpenClick(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.Button b && b.Tag is CandidateCardModel card)
-            _vm.RequestOpen(card);
+        if (sender is not System.Windows.Controls.Button b || b.Tag is not CandidateCardModel card) return;
+        if (!card.CanAccept)
+        {
+            MessageBox.Show(System.Windows.Window.GetWindow(this),
+                "Этот вариант нельзя принять: в нём есть жёсткие нарушения.",
+                "Редактор", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (MessageBox.Show(System.Windows.Window.GetWindow(this),
+                $"Открыть вариант {card.Rank} в редакторе? Он будет сохранён как активное расписание.",
+                "Открыть в редакторе", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+        if (_orch is null)
+        {
+            MessageBox.Show(System.Windows.Window.GetWindow(this),
+                "Хранилище не подключено — открыть редактор нельзя.",
+                "Редактор", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        try
+        {
+            var outcome = await _orch.AcceptAsync(card);
+            if (outcome.Succeeded)
+                Navigator?.NavigateTo("Schedule");
+            else
+                MessageBox.Show(System.Windows.Window.GetWindow(this), outcome.Message,
+                    "Не удалось открыть", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(System.Windows.Window.GetWindow(this),
+                "Не удалось открыть редактор: " + ex.Message,
+                "Редактор", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void OnAcceptClick(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.Button b && b.Tag is CandidateCardModel card)
-            _vm.RequestAccept(card);
+        if (sender is not System.Windows.Controls.Button b || b.Tag is not CandidateCardModel card) return;
+        if (MessageBox.Show(System.Windows.Window.GetWindow(this),
+                $"Принять вариант {card.Rank} как активное расписание? Текущее активное расписание будет заменено.",
+                "Приёмка варианта", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+        _vm.RequestAccept(card);
     }
 }

@@ -209,7 +209,7 @@ public sealed class FlexP34Tests : IAsyncDisposable
             await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
 
             var win = new DataView(session);
-            var btn = (System.Windows.Controls.Button)win.FindName("ApplyRoomsBtn");
+            var btn = (System.Windows.Controls.Button)win.FindName("SaveAllBtn");
             btn.RaiseEvent(new System.Windows.RoutedEventArgs(ButtonBase.ClickEvent));
             // async void-обработчик: даём диспетчеру отработать.
             for (int i = 0; i < 50 && session.Flex.Rooms.Count == 0; i++)

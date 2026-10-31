@@ -30,6 +30,12 @@ public sealed class TrajectoryHistory
 
     public int Count { get { lock (_gate) return _points.Count; } }
 
+    /// <summary>Очистка истории при новом запуске генерации.</summary>
+    public void Clear()
+    {
+        lock (_gate) _points.Clear();
+    }
+
     /// <summary>Потокобезопасно. Вызывать из подписки на IIncumbentStream.</summary>
     public void Append(GenerationProgressDto dto)
     {

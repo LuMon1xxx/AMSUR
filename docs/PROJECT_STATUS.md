@@ -2,7 +2,7 @@
 
 > Статус: **продукт готов** (FULL UI: dashboard, режимы, настройки, рейтинг).
 > Полный сьют (16.10.2026, после фичи черновика-фолбэка):
-> **457 пройдено + 11 skipped, 0 failed за ~10 мин**
+> **484 пройдено + 11 skipped, 0 failed за ~13 мин (прогон 31.10.2026)**
 > (скипы: карантин D-35, FullRunV2, ScratchGen + 2 долгие grind-кампании;
 > оригинал школы 140 окон, рекорд движка v4 — 132).
 > Финальные материалы конкурса — `contest/NDTP_AMSUR_v8.pdf`.
@@ -88,7 +88,7 @@
 
 ## 3. Последние тесты и замеры
 
-### История роста сьюта (актуальный полный прогон — в шапке файла: 440/0/5)
+### История роста сьюта (актуальный полный прогон — в шапке файла: 484/0/11)
 - 163 базовых (валидатор, solver, subgroups, паритет, персистентность, обмен, UI-shell, E2E-цикл).
 - +15 split/parity/profiles (`TeacherGapSplitTests`: таблица ordinary/cross,
   backward-совместимость, паритет индекс==full на 3 наборах весов, профили, шкала).
@@ -203,5 +203,5 @@
   `RuleCatalog.cs` (v5), `SoftEvaluator.cs`, `SearchIndex.cs` (`LocalSearch.cs`
   targeted-старт), `QualityExplainer.cs` + `QualityHints.cs`, `QualityProfiles`
   (`SqliteQualityProfileStore.cs`), `RealSchoolStressTests.cs` (fixture, классные 1–4).
-- Команды: `dotnet build src/Amsur.slnx`, `dotnet test src/Amsur.Tests` (~11 мин, 440 тестов).
+- Команды: `dotnet build src/Amsur.slnx`, `dotnet test src/Amsur.Tests` (~13 мин, 484 теста).
 - Артефакты Compose+: `.opencode/compose-plus/` (baseline, critique, decision, plan, risks).

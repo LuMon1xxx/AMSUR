@@ -17,6 +17,7 @@ public sealed class SchedulingProblem
     public Dictionary<Guid, List<int>> AllowedDays { get; init; } = [];   // occId -> дни
     public Dictionary<Guid, List<int>> AllowedSlots { get; init; } = [];  // occId -> слоты
     public Dictionary<Guid, Guid> GroupParents { get; init; } = [];       // groupId -> classId
+    public Dictionary<Guid, string> GroupNames { get; init; } = [];       // groupId -> имя подгруппы (A/B)
     public Dictionary<(Guid RoomId, Guid SubjectId), Amsur.Domain.RoomCapabilityKind> RoomCaps { get; init; } = [];
     /// <summary>E3 perturbation: occId → запрещённые глобальные времена (day*SP+slot).</summary>
     public Dictionary<Guid, HashSet<int>> BannedTimes { get; init; } = [];

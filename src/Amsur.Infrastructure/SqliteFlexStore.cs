@@ -67,6 +67,12 @@ public sealed class SqliteFlexStore(string connectionString)
               DraftExtraLessonsPerDay INTEGER NOT NULL DEFAULT 1,
               DraftPolishSeconds INTEGER NOT NULL DEFAULT 10,
               DraftRelaxCodes TEXT NOT NULL DEFAULT 'class-maxperday,teacher-maxperday,student-late-start');
+            CREATE TABLE IF NOT EXISTS ClassLimit(
+              ClassName TEXT PRIMARY KEY,
+              MaxLessonsPerDay INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS TeacherLimit(
+              TeacherName TEXT PRIMARY KEY,
+              MaxLessonsPerDay INTEGER NOT NULL);
             """;
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = ddl;
@@ -137,6 +143,18 @@ public sealed class SqliteFlexStore(string connectionString)
                 ct, ("$n", (object)c.ClassName),
                 ("$t", (object?)c.ClassTeacherName ?? DBNull.Value), ("$g", c.Grade),
                 ("$sc", c.StudentCount));
+
+        await ExecAsync(conn, tx, "DELETE FROM ClassLimit;", ct);
+        foreach (var l in data.ClassLimits ?? [])
+            await ExecAsync(conn, tx,
+                "INSERT INTO ClassLimit(ClassName, MaxLessonsPerDay) VALUES($n, $v);",
+                ct, ("$n", (object)l.ClassName), ("$v", l.MaxLessonsPerDay));
+
+        await ExecAsync(conn, tx, "DELETE FROM TeacherLimit;", ct);
+        foreach (var l in data.TeacherLimits ?? [])
+            await ExecAsync(conn, tx,
+                "INSERT INTO TeacherLimit(TeacherName, MaxLessonsPerDay) VALUES($n, $v);",
+                ct, ("$n", (object)l.TeacherName), ("$v", l.MaxLessonsPerDay));
 
         await ExecAsync(conn, tx, "DELETE FROM HourNorms;", ct);
         foreach (var n in data.HourNorms)
@@ -267,7 +285,24 @@ public sealed class SqliteFlexStore(string connectionString)
                     r.GetInt32(6) != 0, r.GetInt32(7),
                     r.GetInt32(8) != 0, r.GetInt32(9), r.GetInt32(10), r.GetString(11));
         }
-        return new FlexDataset(rooms, classes, norms, overrides, difficulty, common, assigns, settings);
+        var classLimits = new List<ClassLimitRow>();
+        await using (var q = conn.CreateCommand())
+        {
+            q.CommandText = "SELECT ClassName, MaxLessonsPerDay FROM ClassLimit;";
+            await using var r = await q.ExecuteReaderAsync(ct);
+            while (await r.ReadAsync(ct))
+                classLimits.Add(new ClassLimitRow(r.GetString(0), r.GetInt32(1)));
+        }
+        var teacherLimits = new List<TeacherLimitRow>();
+        await using (var q = conn.CreateCommand())
+        {
+            q.CommandText = "SELECT TeacherName, MaxLessonsPerDay FROM TeacherLimit;";
+            await using var r = await q.ExecuteReaderAsync(ct);
+            while (await r.ReadAsync(ct))
+                teacherLimits.Add(new TeacherLimitRow(r.GetString(0), r.GetInt32(1)));
+        }
+        return new FlexDataset(rooms, classes, norms, overrides, difficulty, common, assigns, settings,
+            classLimits, teacherLimits);
     }
 
     private static async Task ExecAsync(SqliteConnection conn, SqliteTransaction tx,

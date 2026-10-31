@@ -692,7 +692,7 @@ public partial class ScheduleView : UserControl
                 try
                 {
                     var ev = _session.EditService.Preview(_problem, _active.Placements,
-                        new CandidateMove(_selectedRow.OccurrenceId, d, s, _selectedRow.RoomId));
+                        new CandidateMove(_selectedRow.OccurrenceId, d, s, _selectedRow.RoomId), _session.QualityRules);
                     _cellEvals[(d, s)] = new CellEval(ev.CanCommit, ev.SoftDelta, ev.VerdictText);
                 }
                 catch (Exception ex)
@@ -787,7 +787,7 @@ public partial class ScheduleView : UserControl
         try
         {
             _preview = _session.EditService.Preview(_problem!, _active!.Placements,
-                new CandidateMove(row.OccurrenceId, dayIndex, slot, row.RoomId));
+                new CandidateMove(row.OccurrenceId, dayIndex, slot, row.RoomId), _session.QualityRules);
             VerdictText.Text = _preview.VerdictText;
             StyleVerdict(_preview.VerdictText);
         }
@@ -974,7 +974,7 @@ public partial class ScheduleView : UserControl
             var row = GetSelected();
             int day = ParseDay(), slot = ParseSlot();
             _preview = _session.EditService.Preview(_problem!, _active!.Placements,
-                new CandidateMove(row.OccurrenceId, day, slot, row.RoomId));
+                new CandidateMove(row.OccurrenceId, day, slot, row.RoomId), _session.QualityRules);
             _targetCell = (day, slot);
             VerdictText.Text = _preview.VerdictText;
             StyleVerdict(_preview.VerdictText);
@@ -1001,7 +1001,7 @@ public partial class ScheduleView : UserControl
                 return;
             }
             var outcome = await _session.EditService.CommitAsync(
-                _session.AcademicYearId, _problem!, _preview);
+                _session.AcademicYearId, _problem!, _preview, _session.QualityRules);
             VerdictText.Text = outcome.Message;
             StyleVerdict(outcome.Message);
             if (outcome.Committed) await ReloadAsync();

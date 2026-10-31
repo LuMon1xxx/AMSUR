@@ -68,18 +68,20 @@ public static class PlacementValidator
             }
 
             // Shift-domain (частично): слот в допустимом множестве.
+            string cName = problem.Classes.TryGetValue(occ.ClassId, out var cc0)
+                ? cc0.Name : "класс";
             if (problem.AllowedSlots.TryGetValue(occ.Id, out var slots) && !slots.Contains(p.SlotIndex))
                 result.HardViolations.Add(new ValidationIssue
                 {
                     Code = PhysicalRuleCodes.ShiftDomain,
-                    Message = $"Occurrence {occ.Id} placed at forbidden slot {p.SlotIndex}.",
+                    Message = $"Класс {cName}: урок в запрещённый слот {p.SlotIndex}.",
                     OccurrenceId = occ.Id, ClassId = occ.ClassId, TeacherId = occ.TeacherId
                 });
             if (problem.AllowedDays.TryGetValue(occ.Id, out var days) && !days.Contains(p.DayIndex))
                 result.HardViolations.Add(new ValidationIssue
                 {
                     Code = PhysicalRuleCodes.ShiftDomain,
-                    Message = $"Occurrence {occ.Id} placed at forbidden day {p.DayIndex}.",
+                    Message = $"Класс {cName}: урок в запрещённый день {p.DayIndex + 1}.",
                     OccurrenceId = occ.Id, ClassId = occ.ClassId, TeacherId = occ.TeacherId
                 });
 
@@ -88,12 +90,16 @@ public static class PlacementValidator
             if (!byTeacher.TryGetValue(tk, out var tl)) byTeacher[tk] = tl = [];
             tl.Add(occ.Id);
             if (tl.Count > 1)
+            {
+                string tName = problem.Teachers.TryGetValue(occ.TeacherId, out var tt)
+                    ? tt.Name : "учитель";
                 result.HardViolations.Add(new ValidationIssue
                 {
                     Code = PhysicalRuleCodes.TeacherCollision,
-                    Message = $"Teacher {occ.TeacherId} double-booked at day {p.DayIndex} slot {p.SlotIndex}.",
+                    Message = $"Учитель {tName}: два урока одновременно (день {p.DayIndex + 1}, урок {p.SlotIndex}).",
                     TeacherId = occ.TeacherId, OccurrenceId = occ.Id
                 });
+            }
 
             // Class/subgroup occupancy через GroupParents (D-фикс: HashSet-ключ, N>2 корректно).
             Guid occupancyKey = occ.GroupId.HasValue ? occ.GroupId.Value : occ.ClassId;
@@ -102,12 +108,17 @@ public static class PlacementValidator
             gl.Add(occ.Id);
             // whole-class (GroupId null) блокирует всё: проверяем отдельно ниже.
             if (gl.Count > 1)
+            {
+                string gName = occ.GroupId.HasValue
+                    ? $" ({problem.GroupNames.GetValueOrDefault(occ.GroupId.Value, "подгруппа")})"
+                    : "";
                 result.HardViolations.Add(new ValidationIssue
                 {
                     Code = PhysicalRuleCodes.GroupCollision,
-                    Message = $"Group {occupancyKey} double-booked at day {p.DayIndex} slot {p.SlotIndex}.",
+                    Message = $"Класс {cName}{gName}: два урока одновременно (день {p.DayIndex + 1}, урок {p.SlotIndex}).",
                     ClassId = occ.ClassId, OccurrenceId = occ.Id
                 });
+            }
 
             // Teacher availability / day-off / maxperday (D-04: Hard FROZEN).
             if (problem.Teachers.TryGetValue(occ.TeacherId, out var teacher))
@@ -289,7 +300,7 @@ public static class PlacementValidator
         {
             var placedOccs = placements
                 .Select(p => occById.GetValueOrDefault(p.OccurrenceId))
-                .Where(o => o is not null && !o.GroupId.HasValue)
+                .Where(o => o is not null && !o.GroupId.HasValue && IsCounted(o))
                 .Cast<LessonOccurrence>()
                 .ToList();
             IEnumerable<IGrouping<string, LessonOccurrence>> agroups =

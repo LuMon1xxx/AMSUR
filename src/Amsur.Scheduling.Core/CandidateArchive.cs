@@ -26,7 +26,7 @@ public sealed record ScheduleCandidate(
         int seed, long proxy, string phase, string stats = "",
         EffectiveRuleSet? rules = null)
     {
-        if (!PlacementValidator.Validate(problem, placements).IsValid) return null;
+        if (!PlacementValidator.Validate(problem, placements, rules).IsValid) return null;
         var rs = rules ?? EffectiveRuleSet.Default;
         var breakdown = SoftEvaluator.Evaluate(problem, placements, rs);
         var keys = problem.Occurrences.ToDictionary(o => o.Id,
@@ -77,6 +77,16 @@ public sealed class ScheduleCandidateArchive(int maxSize = 5, long diversityThre
 
     public IReadOnlyList<ScheduleCandidate> Members =>
         _members.OrderBy(m => m.SoftTotal).ToList();
+
+    /// <summary>Сброс архива между запусками генерации (Top-5 не должен переживать прогон).</summary>
+    public void Clear()
+    {
+        _members.Clear();
+        AcceptedCount = 0;
+        RejectedInvalidCount = 0;
+        RejectedWorseCount = 0;
+        RejectedSimilarCount = 0;
+    }
 
     public static long Distance(ScheduleCandidate a, ScheduleCandidate b)
     {

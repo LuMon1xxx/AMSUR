@@ -277,7 +277,7 @@ public sealed class AppSession
         LastImportErrors = [];
         var data = SchoolDataImporter.Import(AcademicYearId, rows, days, slots, flex ?? Flex);
         // Fail-loud ДО принятия данных: вход обязан строиться.
-        var (problem, errors) = ProblemBuilder.Build(data.ToProblemInput());
+        var (problem, errors) = ProblemBuilder.Build(data.ToProblemInput(true));
         if (problem is null)
         {
             LastImportErrors = errors.ToList();
@@ -294,7 +294,7 @@ public sealed class AppSession
     {
         if (Data is null)
             throw new InvalidOperationException("Нет данных школы — загрузите нагрузку.");
-        var (problem, errors) = ProblemBuilder.Build(Data.ToProblemInput());
+        var (problem, errors) = ProblemBuilder.Build(Data.ToProblemInput(true));
         if (problem is null)
             throw new InvalidOperationException(
                 "Данные не строятся в задачу: " + string.Join("; ", errors.Take(5)));

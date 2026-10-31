@@ -9,7 +9,8 @@ public sealed class SchoolClass : Entity
     public Guid ShiftId { get; set; }
     public int StudentCount { get; set; }
     /// <summary>СанПиН-максимум уроков в день (SANPIN_RB.md §3): 1→5, 2–4→5, 5–6→6, 7–11→7. HARD.</summary>
-    public int MaxLessonsPerDay { get; set; } = 7;
+    public const int DefaultMaxLessonsPerDay = 7;
+    public int MaxLessonsPerDay { get; set; } = DefaultMaxLessonsPerDay;
     /// <summary>R4: классный руководитель (источник учителя для общего урока R3).</summary>
     public Guid? ClassTeacherId { get; set; }
 }
@@ -25,7 +26,8 @@ public sealed class StudentGroup : Entity
 public sealed class Teacher : Entity
 {
     public string Name { get; set; } = "";
-    public int MaxLessonsPerDay { get; set; } = 6;  // D-04: Hard FROZEN в P0
+    public const int DefaultMaxLessonsPerDay = 6;
+    public int MaxLessonsPerDay { get; set; } = DefaultMaxLessonsPerDay;  // D-04: Hard FROZEN в P0
     public int PreferredStartSlot { get; set; } = 1;
     public int PreferredEndSlot { get; set; } = 7;
 }

@@ -142,15 +142,7 @@ public sealed class SearchIndex
                 Message = "Нельзя поставить в этот номер урока.",
                 OccurrenceId = node.Id, ClassId = node.ClassId, TeacherId = node.TeacherId
             });
-        if (move.RoomId.HasValue &&
-            _problem.RoomCaps.TryGetValue((move.RoomId.Value, node.SubjectId), out var cap) &&
-            cap == RoomCapabilityKind.Forbidden)
-            hard.Add(new ValidationIssue
-            {
-                Code = "forbidden-room",
-                Message = "Кабинет запрещён для этого предмета.",
-                OccurrenceId = node.Id, RoomId = move.RoomId
-            });
+        CheckRoomCap(node, move.RoomId, move.DayIndex, move.SlotIndex, hard);
 
         // Lift: временно убираем N из индекса — дальше все счётчики про «остальных».
         Remove(node, old.Day, old.Slot, old.Room);

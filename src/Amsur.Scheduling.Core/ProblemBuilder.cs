@@ -21,6 +21,11 @@ public sealed class ProblemInput
     public int DaysCount { get; }
     public int SlotsPerDay { get; }
 
+    // Импорт школы: поднимать дневной лимит класса, если недельная нагрузка
+    // физически не влезает в сетку. Для тестов/ручных задач по умолчанию false:
+    // явно заданный лимит класса остаётся жёстким.
+    public bool AutoClassLimits { get; }
+
     // Для сплитов A/B: CurriculumItemId -> (teacherA, teacherB).
     public IReadOnlyDictionary<Guid, (Guid TeacherA, Guid TeacherB)> SplitTeachers { get; }
 
@@ -61,7 +66,8 @@ public sealed class ProblemInput
         IReadOnlyList<ShiftBand>? shiftBands = null,
         CommonLesson? commonLesson = null,
         IReadOnlyList<TeacherAssignment>? assignments = null,
-        FlexSettings? flex = null)
+        FlexSettings? flex = null,
+        bool autoClassLimits = false)
     {
         Classes = classes;
         Teachers = teachers;
@@ -82,6 +88,7 @@ public sealed class ProblemInput
         CommonLesson = commonLesson;
         Assignments = assignments ?? [];
         Flex = flex ?? FlexSettings.Neutral;
+        AutoClassLimits = autoClassLimits;
     }
 
     /// <summary>Дефолтные смены по сетке (S5): 14 слотов → две смены, иначе одна.</summary>
@@ -339,6 +346,10 @@ public static class ProblemBuilder
             allowedSlots[occ.Id] = slots;
         }
 
+        // Ошибки домена (пустая смена/недоступность) делают дальнейшую сборку
+        // бессмысленной: ниже allowedSlots/массивы читаются по occ.Id без проверки.
+        if (errors.Count > 0) return (null, errors);
+
         // P2/R3: фиксация общего урока в заданной клетке (вне смены/доступности — громко).
         if (commonLesson is not null && commonLesson.Enabled)
         {
@@ -448,6 +459,32 @@ public static class ProblemBuilder
         // Clamp(max(8, ceil(hours/3.8)), MaxLessonsPerDay, SlotsPerDay): учитель
         // помещается в обе смены и может упаковывать нагрузку в плотные дни
         // с выходными. Входные сущности не мутируем — подменяем словарь.
+        // D-70 авто-лимит класса: импорт ставит 6 уроков/день, но класс с 33–34 ч/нед
+        // физически не влезает в 5×6. Поднимаем дневной лимит до ceil(hours/days)
+        // в пределах доступной сетки класса — иначе «Стандарт» сразу даёт 0 вариантов.
+        var classLoad = new Dictionary<Guid, int>();
+        foreach (var item in input.Curriculum)
+            classLoad[item.ClassId] = classLoad.GetValueOrDefault(item.ClassId) + item.HoursPerWeek;
+        if (input.AutoClassLimits)
+        foreach (var (cid, hours) in classLoad)
+        {
+            if (!clsById.TryGetValue(cid, out var c)) continue;
+            int grid = input.ClassSlots.TryGetValue(cid, out var allowed) && allowed.Count > 0
+                ? allowed.Count
+                : input.SlotsPerDay;
+            int maxSlots = Math.Min(grid, input.SlotsPerDay);
+            int need = (int)Math.Ceiling(hours / (double)Math.Max(1, input.DaysCount));
+            if (need > c.MaxLessonsPerDay)
+                clsById[cid] = new SchoolClass
+                {
+                    Id = c.Id, Name = c.Name, Grade = c.Grade,
+                    AcademicYearId = c.AcademicYearId, ShiftId = c.ShiftId,
+                    StudentCount = c.StudentCount,
+                    MaxLessonsPerDay = Math.Min(maxSlots, Math.Max(need, c.MaxLessonsPerDay)),
+                    ClassTeacherId = c.ClassTeacherId
+                };
+        }
+
         var teachersForProblem = teacherById;
         var flex = input.Flex;
         var load = new Dictionary<Guid, int>();
@@ -469,7 +506,12 @@ public static class ProblemBuilder
             {
                 if (!teachersForProblem.TryGetValue(tid, out var t)) continue;
                 int target = t.MaxLessonsPerDay;
-                bool needsMore = hours > 5 * t.MaxLessonsPerDay;
+                // Активные дни конкретного учителя: выходные D-XX не должны
+                // раздувать дневной лимит (иначе он «не влезает» в свои же 4 дня).
+                int activeDays = Math.Max(1, input.DaysCount -
+                    input.DaysOff.Where(d => d.TeacherId == tid)
+                        .Select(d => d.DayIndex).Distinct().Count());
+                bool needsMore = hours > activeDays * t.MaxLessonsPerDay;
                 if (allowOverload)
                 {
                     // D-39: флаг перегрузки — поднимаем ровно до капа (потолок
@@ -479,7 +521,7 @@ public static class ProblemBuilder
                 else if ((twoShift || needsMore) && t.MaxLessonsPerDay < input.SlotsPerDay)
                 {
                     int auto = Math.Clamp(
-                        Math.Max(8, (int)Math.Ceiling(hours / 3.8)),
+                        Math.Max(8, (int)Math.Ceiling(hours / (double)Math.Max(1, activeDays - 1))),
                         t.MaxLessonsPerDay, input.SlotsPerDay);
                     if (auto > target) target = auto;
                 }
@@ -503,6 +545,7 @@ public static class ProblemBuilder
             AllowedDays = allowedDays,
             AllowedSlots = allowedSlots,
             GroupParents = groupParents,
+            GroupNames = input.Groups.ToDictionary(g => g.Id, g => g.Name),
             Relations = input.Relations.ToList(),
             DaysCount = input.DaysCount,
             SlotsPerDay = input.SlotsPerDay,

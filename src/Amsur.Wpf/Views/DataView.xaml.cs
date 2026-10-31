@@ -353,10 +353,19 @@ public partial class DataView : UserControl
         }
     }
 
+    private bool ConfirmReplaceData(string action)
+    {
+        if (!_session.HasData) return true;
+        return MessageBox.Show(System.Windows.Window.GetWindow(this),
+            $"{action} заменит текущие данные школы. Загруженные строки и справочники будут перезаписаны. Продолжить?",
+            "Замена данных", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes;
+    }
+
     private async void OnImportClick(object sender, RoutedEventArgs e)
     {
         var dlg = new OpenFileDialog { Filter = "Excel (*.xlsx)|*.xlsx" };
         if (dlg.ShowDialog() != true) return;
+        if (!ConfirmReplaceData("Загрузка Excel")) return;
         try
         {
             if (!int.TryParse(DaysBox.Text, out int days) || days <= 0 ||
@@ -379,6 +388,7 @@ public partial class DataView : UserControl
 
     private async void OnDemoClick(object sender, RoutedEventArgs e)
     {
+        if (!ConfirmReplaceData("Демо-набор")) return;
         try
         {
             await _session.ImportDemoAsync();
@@ -536,6 +546,92 @@ public partial class DataView : UserControl
             return;
         }
         await ApplyManualRows(_session.LoadRows.ToList(), days, slots);
+    }
+
+    // Единая кнопка: проверяет и сохраняет все вкладки одним патчем,
+    // вместо семи отдельных «Применить …» на каждой вкладке.
+    private async void OnSaveAllClick(object sender, RoutedEventArgs e)
+    {
+        foreach (var r in _classRows)
+        {
+            if (r.Grade < 0 || r.Grade > 12) { SayApplyError($"Класс «{r.Name}»: параллель — 0..12."); return; }
+            if (r.StudentCount <= 0) { SayApplyError($"Класс «{r.Name}»: учеников должно быть больше 0."); return; }
+        }
+        var classRows = _classRows.Select(r => new ClassConfigRow(r.Name,
+            r.ClassTeacher == None ? null : r.ClassTeacher, r.Grade, r.StudentCount)).ToList();
+
+        var assignRows = new List<TeacherAssignRow>();
+        foreach (var r in _assignRows)
+        {
+            if (string.IsNullOrWhiteSpace(r.Teacher) || string.IsNullOrWhiteSpace(r.Subject))
+            { SayApplyError("Назначение: укажите учителя и предмет (или удалите строку)."); return; }
+            int? grade = null;
+            if (!string.IsNullOrWhiteSpace(r.Grade))
+            {
+                if (!int.TryParse(r.Grade, out int g) || g < 1 || g > 12)
+                { SayApplyError($"Назначение {r.Teacher} — {r.Subject}: параллель — 1..12."); return; }
+                grade = g;
+            }
+            assignRows.Add(new TeacherAssignRow(r.Teacher, r.Subject,
+                r.Scope == "Параллель" ? AssignmentScope.Parallel : AssignmentScope.Class,
+                r.Class == None ? null : r.Class, grade));
+        }
+
+        foreach (var r in _subjectRows)
+            if (r.Difficulty < 1 || r.Difficulty > 10)
+            { SayApplyError($"Предмет «{r.Name}»: сложность — 1..10."); return; }
+        var subjectRows = _subjectRows.Select(r => new SubjectDifficultyRow(r.Name, r.Difficulty)).ToList();
+
+        var roomRows = new List<RoomConfigRow>();
+        foreach (var r in _roomRows)
+        {
+            if (r.MaxGroups < 1) { SayApplyError($"Кабинет «{r.Name}»: максимум групп — от 1."); return; }
+            if (r.DesiredGroups < 0 || r.DesiredGroups > r.MaxGroups)
+            { SayApplyError($"Кабинет «{r.Name}»: желательно — 0 (авто) или 1..{r.MaxGroups}."); return; }
+            bool manual = r.Mode == RoomModes[1];
+            bool only = r.Mode == RoomModes[2];
+            if (only && (string.IsNullOrWhiteSpace(r.OnlySubject) || r.OnlySubject == None))
+            { SayApplyError($"Кабинет «{r.Name}»: режим «Только предмет» требует предмет."); return; }
+            roomRows.Add(new RoomConfigRow(r.Name, manual, only ? r.OnlySubject : null,
+                r.MaxGroups, r.DesiredGroups, r.CountSubgroupAsGroup));
+        }
+
+        foreach (var n in _normRows)
+        {
+            if (string.IsNullOrWhiteSpace(n.Subject)) { SayApplyError("Норма: укажите предмет."); return; }
+            if (n.Grade < 0 || n.Grade > 12) { SayApplyError($"Норма «{n.Subject}»: параллель — 0 (дефолт)..12."); return; }
+            if (n.Hours <= 0) { SayApplyError($"Норма «{n.Subject}»: часов должно быть больше 0."); return; }
+        }
+        foreach (var o in _overrideRows)
+        {
+            if (string.IsNullOrWhiteSpace(o.Class) || string.IsNullOrWhiteSpace(o.Subject))
+            { SayApplyError("Переопределение: укажите класс и предмет."); return; }
+            if (o.Hours <= 0) { SayApplyError($"Переопределение «{o.Class} — {o.Subject}»: часов больше 0."); return; }
+        }
+        var norms = _normRows.Select(n => new HourNormRow(n.Subject, n.Grade, n.Hours)).ToList();
+        var ovs = _overrideRows.Select(o => new HourOverrideRow(o.Class, o.Subject, o.Hours)).ToList();
+
+        bool commonEnabled = CommonEnabledBox.IsChecked == true;
+        int commonDay = CommonDayBox.SelectedIndex >= 0 ? CommonDayBox.SelectedIndex : 3;
+        if (!int.TryParse(CommonSlotBox.Text, out int commonSlot) || commonSlot < 1)
+        { SayApplyError("Общий урок: номер урока — число от 1."); return; }
+        if (!int.TryParse(CommonSlot2Box.Text, out int commonSlot2) || commonSlot2 < 0)
+        { SayApplyError("Общий урок: урок 2-й смены — число от 0 (0 = нет второй группы)."); return; }
+        var commonRow = new CommonLessonRow(commonEnabled, commonDay, commonSlot,
+            (CommonGradesBox.Text ?? "").Trim(), CommonOwnRoomsBox.IsChecked == true, commonSlot2);
+
+        var mode = AssignModeFromIndex(AssignModeBox.SelectedIndex);
+        await ApplyFlexSlice(f => f with
+        {
+            Classes = classRows,
+            Assignments = assignRows,
+            Settings = f.Settings with { AssignMode = mode },
+            SubjectDifficulty = subjectRows,
+            Rooms = roomRows,
+            HourNorms = norms,
+            HourOverrides = ovs,
+            CommonLesson = commonRow,
+        });
     }
 
     // --- P3: применение гибких настроек (срез FlexDataset → сессия → персист) ---

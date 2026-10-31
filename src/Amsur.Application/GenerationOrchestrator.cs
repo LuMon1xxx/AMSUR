@@ -91,6 +91,13 @@ public sealed class GenerationOrchestrator
     {
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _stopCts = linked;
+        // Повторный запуск с того же экрана не должен показывать Top-5 и график
+        // прошлого прогона (и тем более давать принять устаревший кандидат).
+        _archive.Clear();
+        _history.Clear();
+        _lastProblem = null;
+        LastDraft = null;
+        _vm.HasDraft = false;
         var wall = Stopwatch.StartNew();
         int candidateCount = 0;
         long? bestSoft = null;
@@ -182,8 +189,13 @@ public sealed class GenerationOrchestrator
                 {
                     lock (gate)
                     {
-                        candidateCount++;
-                        _archive.TryAdd(c);
+                        // Тот же вариант уже мог прийти через sink этого сида — не дублируем.
+                        bool duplicate = _archive.Members.Any(m => m.Fingerprint == c.Fingerprint);
+                        if (!duplicate)
+                        {
+                            candidateCount++;
+                            _archive.TryAdd(c);
+                        }
                         if (!hasFeasible) { hasFeasible = true; firstFeasibleAt = wall.Elapsed; }
                         if (bestSoft is null || c.SoftTotal < bestSoft) bestSoft = c.SoftTotal;
                         RefreshTop5();
@@ -243,7 +255,7 @@ public sealed class GenerationOrchestrator
         var year = _lastProblem.Classes.Values.FirstOrDefault()?.AcademicYearId ?? Guid.Empty;
         if (year == Guid.Empty)
             return Fail("Нет учебного года — принять нельзя.");
-        var validation = PlacementValidator.Validate(_lastProblem, card.Candidate.Placements);
+        var validation = PlacementValidator.Validate(_lastProblem, card.Candidate.Placements, Rules);
         if (!validation.IsValid)
             return Fail($"Не принято: {validation.HardViolations.Count} жёстких нарушений — вариант не сохранён.");
         var c = card.Candidate;

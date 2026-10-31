@@ -29,9 +29,15 @@ public sealed class Top5PanelModel
     public int TotalFound { get; init; }
 
     // §9: никаких пустых карточек и фальшивых дубликатов.
+    // Причина пустоты (перегруз классов/учителей) идёт в тот же заголовок,
+    // чтобы пользователь не гадал: «нет вариантов» само по себе бесполезно.
+    public string? EmptyHint { get; init; }
+
     public string HeaderText => TotalFound switch
     {
-        0 => "Подходящих вариантов пока нет",
+        0 => EmptyHint is null
+            ? "Подходящих вариантов пока нет"
+            : "Подходящих вариантов пока нет. " + EmptyHint,
         1 => "Найден 1 подходящий вариант",
         2 or 3 or 4 => $"Найдено {TotalFound} подходящих варианта",
         _ => $"Найдено {TotalFound} подходящих вариантов",
@@ -75,7 +81,14 @@ public sealed class Top5PanelModel
                         : QualityExplainer.Compare(problem, best!, m),
             });
         }
-        return new Top5PanelModel { Cards = cards, TotalFound = members.Count };
+        return new Top5PanelModel
+        {
+            Cards = cards,
+            TotalFound = members.Count,
+            EmptyHint = members.Count == 0 && problem is not null
+                ? CapacityDiagnostics.EmptyReason(problem)
+                : null,
+        };
     }
 
     /// <summary>Ключ min-gaps: учительские окна кандидата (ordinary + cross-shift).</summary>
@@ -133,7 +146,22 @@ public sealed class GenerateViewModel : INotifyPropertyChanged
     public GenerationDiagnostics Diagnostics { get => _diagnostics; set => Set(ref _diagnostics, value); }
 
     private bool _canStop = true;
-    public bool CanStop { get => _canStop; set => Set(ref _canStop, value); }
+    public bool CanStop
+    {
+        get => _canStop;
+        set
+        {
+            if (_canStop == value) return;
+            _canStop = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanStop)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RunStateText)));
+        }
+    }
+
+    /// <summary>Крупная строка состояния: видно, что расчёт ещё идёт.</summary>
+    public string RunStateText => _canStop
+        ? "● Идёт расчёт — экран обновляется каждую секунду."
+        : "Расчёт завершён.";
 
     public event Action? StopRequested;
     public event Action<CandidateCardModel>? OpenRequested;
@@ -156,10 +184,15 @@ public sealed class GenerateViewModel : INotifyPropertyChanged
             GenerationPhase.Preparing => 0,
             GenerationPhase.SeekingFeasible => 1,
             GenerationPhase.Improving => 2,
+            GenerationPhase.Done or GenerationPhase.Stopped => -1, // всё завершено
             _ => 3,
         };
         string[] names = ["Подготовка", "Поиск рабочего решения", "Улучшение", "Формирование вариантов"];
-        Stages = names.Select((n, i) => new StageItem(n, i == stageIdx, i < stageIdx)).ToList();
+        // stageIdx < 0 — работа закончена: ни один этап не «текущий», все пройдены.
+        // Раньше на Done подсвечивался последний этап, и экран выглядел зависшим.
+        Stages = names.Select((n, i) => new StageItem(n,
+            IsCurrent: stageIdx >= 0 && i == stageIdx,
+            IsDone: stageIdx < 0 || i < stageIdx)).ToList();
         if (p.Phase is GenerationPhase.Done or GenerationPhase.Stopped) CanStop = false;
     }
 

@@ -55,16 +55,15 @@ public sealed class ShiftImportTests
         Assert.Contains("по-разному", ex.Message);
     }
 
-    // --- 4. Двухсменка требует 12 уроков (нумерация стены №1–12) ---
+    // --- 4. Двухсменка автоматически переводит сетку на 12 уроков (№1–12) ---
     [Fact]
     public void Shift_TwoShift_Needs12()
     {
         var rows = Rows(
             new LoadRow("6А", "Мат", 2, "Петров", false, null, null, Shift: 2));
-        var ex = Assert.Throws<InvalidOperationException>(
-            () => SchoolDataImporter.Import(Guid.NewGuid(), rows,
-                daysCount: 5, slotsPerDay: 8));
-        Assert.Contains("Двухсменка: поставьте 12", ex.Message);
+        var data = SchoolDataImporter.Import(Guid.NewGuid(), rows,
+            daysCount: 5, slotsPerDay: 8);
+        Assert.Equal(12, data.SlotsPerDay);
     }
 
     // --- 5. Больше 12 при двухсменке — fail-loud (номера стены №1–12).

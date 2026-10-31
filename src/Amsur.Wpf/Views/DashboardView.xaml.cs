@@ -478,7 +478,7 @@ public partial class DashboardView : UserControl
                 return;
             }
             // P-D3: генерация — внутри оболочки (view + оркестратор), без popup.
-            Navigator?.OpenGenerate(Session.Data!.ToProblemInput());
+            Navigator?.OpenGenerate(Session.Data!.ToProblemInput(true));
         }
         catch (Exception ex) { ShowError(ex); }
     }

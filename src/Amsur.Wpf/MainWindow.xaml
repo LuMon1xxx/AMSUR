@@ -1,8 +1,8 @@
 <Window x:Class="Amsur.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="АМСУР — школьное расписание" Height="900" Width="1600"
-        MinWidth="1280" MinHeight="720" WindowStartupLocation="CenterScreen"
+        Title="АМСУР — школьное расписание" Height="860" Width="1280"
+        MinWidth="1024" MinHeight="680" WindowStartupLocation="CenterScreen"
         WindowState="Maximized" Style="{DynamicResource ChromeWindow}"
         Background="{DynamicResource BBg}">
   <!-- P-D0: оболочка одного окна. Контент разделов — views в ViewHost,

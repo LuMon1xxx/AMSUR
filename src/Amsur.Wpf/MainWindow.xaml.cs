@@ -30,6 +30,11 @@ public partial class MainWindow : Window, IViewNavigator
         _navButtons["Help"] = NavHelp;
         Dashboard = new DashboardView { Navigator = this, ChromeRefresh = RefreshChrome };
         ThemeBox.IsChecked = Session.ThemeName == "dark";
+        Loaded += (_, _) =>
+        {
+            if (WindowState != System.Windows.WindowState.Maximized)
+                WindowState = System.Windows.WindowState.Maximized;
+        };
         NavigateTo("Dashboard");
         RefreshChrome();
     }
@@ -118,6 +123,7 @@ public partial class MainWindow : Window, IViewNavigator
     public void OpenGenerate(Amsur.Scheduling.Core.ProblemInput input)
     {
         var (view, _) = GenerateHost.CreateView(input, Session, Session.GenerateMode.Name);
+        view.Navigator = this;
         _lastGenerateView = view;
         ViewHost.Content = view;
         PlayEnter(view);

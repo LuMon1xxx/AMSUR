@@ -13,9 +13,9 @@
         </StackPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
           <TextBlock Text="Дней:" VerticalAlignment="Center"/>
-          <TextBox x:Name="DaysBox" Text="5" Width="48" Padding="6,4" Margin="6,0,10,0"/>
+          <TextBox x:Name="DaysBox" Text="5" Width="48" Padding="4,2" VerticalContentAlignment="Center" Margin="6,0,10,0"/>
           <TextBlock Text="Уроков:" VerticalAlignment="Center"/>
-          <TextBox x:Name="SlotsBox" Text="8" Width="48" Padding="6,4" Margin="6,0,10,0"/>
+          <TextBox x:Name="SlotsBox" Text="8" Width="48" Padding="4,2" VerticalContentAlignment="Center" Margin="6,0,10,0"/>
           <Button Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Click="OnTemplateClick"/>
           <Button Content="Загрузить Excel" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0" Padding="12,7" FontSize="13" Click="OnImportClick"/>
           <Button x:Name="DemoBtn" x:FieldModifier="public" Content="Демо" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Padding="10,4"
@@ -59,8 +59,11 @@
           </ListBox>
           <Border Style="{StaticResource Badge}" Background="{DynamicResource BAccentSoft}" Margin="8,12,8,4">
             <TextBlock Style="{StaticResource THCaption}" TextWrapping="Wrap"
-                       Text="Можно и без Excel: добавьте/измените строки здесь, или загрузите Excel пачкой. Excel удобен для 100+ строк. Настройки ниже применяются кнопкой таба."/>
+                       Text="Можно и без Excel: добавьте/измените строки здесь или загрузите Excel пачкой. Правки всех вкладок сохраняет одна кнопка «Сохранить изменения»."/>
           </Border>
+          <Button x:Name="SaveAllBtn" x:FieldModifier="public" Content="Сохранить изменения" Style="{StaticResource BtnPrimary}" Margin="8,8,8,0"
+                  Padding="10,6" Click="OnSaveAllClick"
+                  ToolTip="Сохранить правки всех вкладок сразу: классы, часы, учителя, предметы, кабинеты, общий урок"/>
         </StackPanel>
       </Border>
 
@@ -157,7 +160,6 @@
             <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,6,0,0">
               <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnOverrideAddClick"/>
               <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnOverrideDelClick"/>
-              <Button Content="Применить часы" Style="{StaticResource BtnPrimary}" Padding="10,4" Margin="8,0,0,0" x:Name="ApplyHoursBtn" Click="OnHoursApplyClick"/>
             </StackPanel>
           </Grid>
 
@@ -180,9 +182,6 @@
                 <DataGridComboBoxColumn x:Name="ClassTeacherCol" Header="Классный руководитель" SelectedItemBinding="{Binding ClassTeacher}" Width="*"/>
               </DataGrid.Columns>
             </DataGrid>
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,6,0,0">
-              <Button Content="Применить классы" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplyClassesBtn" Click="OnClassesApplyClick"/>
-            </StackPanel>
           </Grid>
 
           <!-- Учителя: режим закрепления + явные назначения -->
@@ -233,7 +232,6 @@
             <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,6,0,0">
               <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnAssignAddClick"/>
               <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnAssignDelClick"/>
-              <Button Content="Применить учителей" Style="{StaticResource BtnPrimary}" Padding="10,4" Margin="8,0,0,0" x:Name="ApplyTeachersBtn" Click="OnTeachersApplyClick"/>
             </StackPanel>
           </Grid>
 
@@ -255,9 +253,6 @@
                 <DataGridTextColumn Header="Макс/день" Binding="{Binding MaxPerDay}" Width="100" IsReadOnly="True"/>
               </DataGrid.Columns>
             </DataGrid>
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,6,0,0">
-              <Button Content="Применить предметы" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplySubjectsBtn" Click="OnSubjectsApplyClick"/>
-            </StackPanel>
           </Grid>
 
           <!-- Кабинеты: режим + вместимость -->
@@ -281,9 +276,6 @@
                 <DataGridCheckBoxColumn Header="Подгр.=класс" Binding="{Binding CountSubgroupAsGroup}" Width="100"/>
               </DataGrid.Columns>
             </DataGrid>
-            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,6,0,0">
-              <Button Content="Применить кабинеты" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplyRoomsBtn" Click="OnRoomsApplyClick"/>
-            </StackPanel>
           </Grid>
 
           <!-- Подгруппы: только чтение (задаются колонкой «Группа» в Excel/диалоге строки).
@@ -338,9 +330,6 @@
               <TextBlock Grid.Row="4" Grid.Column="0" Text="Кабинеты:" VerticalAlignment="Center" FontSize="13"/>
               <CheckBox x:Name="CommonOwnRoomsBox" Grid.Row="4" Grid.Column="1" Content="Свои кабинеты у каждого класса" Margin="0,3,0,3" VerticalAlignment="Center"/>
             </Grid>
-            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-              <Button Content="Применить общий урок" Style="{StaticResource BtnPrimary}" Padding="10,4" x:Name="ApplyCommonBtn" Click="OnCommonApplyClick"/>
-            </StackPanel>
           </StackPanel>
         </Grid>
       </DockPanel>

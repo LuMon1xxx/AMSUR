@@ -4,8 +4,10 @@
              xmlns:local="clr-namespace:Amsur.Wpf">
   <!-- P-D3: генерация как view (контент из GenerateWindow 1-в-1).
        Жизненный цикл оркестратора — в code-behind (старт на Loaded, стоп на Unloaded). -->
-  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-  <StackPanel Margin="24" MaxWidth="1200" TextElement.Foreground="{DynamicResource BText}">
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                HorizontalContentAlignment="Stretch">
+  <Border Padding="24">
+  <StackPanel MaxWidth="860" HorizontalAlignment="Left" TextElement.Foreground="{DynamicResource BText}">
     <!-- Верх: заголовок + честный статус (без ложного процента) -->
     <Border Style="{DynamicResource Card}">
       <StackPanel>
@@ -20,7 +22,7 @@
         <TextBlock Text="{Binding QualityProfileText}" FontSize="13" Foreground="{DynamicResource BTextSoft}" Margin="0,4,0,0"/>
         <!-- Режимы: клик по карточке выбирает режим для перезапуска, честная производная BudgetSeconds -->
         <TextBlock Text="Режимы (клик по карточке — выбрать):" Style="{DynamicResource THCaption}" Margin="0,12,0,6"/>
-        <UniformGrid x:Name="ModeStrip" Columns="5" Rows="1"/>
+        <UniformGrid x:Name="ModeStrip" Columns="3" Rows="2"/>
       </StackPanel>
     </Border>
 
@@ -37,8 +39,8 @@
                            HorizontalAlignment="Center" VerticalAlignment="Center"
                            Foreground="{DynamicResource BTextMuted}"/>
               </Border>
-              <TextBlock x:Name="StageText" Text="{Binding Name}" FontSize="13" Margin="8,0,0,0"
-                         VerticalAlignment="Center" Foreground="{DynamicResource BTextSoft}"/>
+              <TextBlock x:Name="StageText" Text="{Binding Name}" FontSize="12" Margin="8,0,0,0"
+                         TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{DynamicResource BTextSoft}"/>
             </StackPanel>
           </Border>
           <DataTemplate.Triggers>
@@ -112,8 +114,7 @@
             <Button x:Name="RestartButton" Content="↻  Перезапустить расчёт" Style="{DynamicResource BtnSecondary}"
                     Padding="16,8" Margin="8,0,0,0" IsEnabled="False" Click="OnRestartClick"/>
           </StackPanel>
-          <TextBlock Style="{DynamicResource THint}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"
-                     Text="Лучшее найденное решение сохраняется автоматически — остановку можно нажать в любой момент."/>
+          <TextBlock Text="{Binding RunStateText}" Style="{DynamicResource THint}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
         </DockPanel>
       </StackPanel>
     </Border>
@@ -162,13 +163,19 @@
                   </Style>
                 </TextBlock.Style>
               </TextBlock>
-              <ItemsControl ItemsSource="{Binding QualityLines}" Margin="0,2,0,0">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <TextBlock Text="{Binding}" FontSize="13" Foreground="{DynamicResource BTextSoft}" TextWrapping="Wrap"/>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
+              <!-- Список объяснений бывает на сотни строк (по учителям и дням):
+                   без ограничения он выталкивал кнопки «Открыть/Принять» далеко вниз.
+                   Прокрутка внутри блока держит карточку компактной. -->
+              <ScrollViewer MaxHeight="180" VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled" Margin="0,2,0,0">
+                <ItemsControl ItemsSource="{Binding QualityLines}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding}" FontSize="13" Foreground="{DynamicResource BTextSoft}" TextWrapping="Wrap"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
               <ItemsControl ItemsSource="{Binding DifferenceLines}" Margin="0,4,0,0">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate>
@@ -222,5 +229,6 @@
       </Expander>
     </Border>
   </StackPanel>
+  </Border>
   </ScrollViewer>
 </UserControl>

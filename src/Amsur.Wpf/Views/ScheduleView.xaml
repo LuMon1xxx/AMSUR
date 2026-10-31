@@ -20,11 +20,11 @@
       <StackPanel Orientation="Horizontal" Margin="0,10,0,0" VerticalAlignment="Center">
         <TextBlock Text="Показать:" VerticalAlignment="Center" FontSize="13"/>
         <ComboBox x:Name="ViewBox" Width="250" Margin="6,0,0,0" SelectionChanged="OnViewChanged">
-          <ComboBoxItem Content="0: Все уроки (таблица)" IsSelected="True"/>
-          <ComboBoxItem Content="1: По классу (сетка)"/>
-          <ComboBoxItem Content="2: По учителю (сетка)"/>
-          <ComboBoxItem Content="3: По кабинету (сетка)"/>
-          <ComboBoxItem Content="4: Шахматка по дню (все классы)"/>
+          <ComboBoxItem Content="Все уроки (таблица)"/>
+          <ComboBoxItem Content="По классу (сетка)" IsSelected="True"/>
+          <ComboBoxItem Content="По учителю (сетка)"/>
+          <ComboBoxItem Content="По кабинету (сетка)"/>
+          <ComboBoxItem Content="Шахматка по дню (все классы)"/>
         </ComboBox>
         <ComboBox x:Name="NameBox" Width="200" Margin="8,0,0,0" SelectionChanged="OnViewChanged"/>
         <TextBox x:Name="SearchBox" Width="240" Margin="8,0,0,0"
@@ -53,9 +53,10 @@
           <TextBlock Text="Урок:" VerticalAlignment="Center" FontSize="13"/>
           <TextBox x:Name="SlotBox" Width="48" Padding="6,4" Margin="6,0,12,0" VerticalAlignment="Center"
                    ToolTip="Номер урока в день (строки сетки сверху вниз)"/>
-          <Button x:Name="PreviewBtn" Content="Проверить ход" Style="{DynamicResource BtnSecondary}" Click="OnPreviewClick"/>
+          <Button x:Name="PreviewBtn" Content="Проверить ход" Style="{DynamicResource BtnSecondary}"
+                  IsEnabled="False" Click="OnPreviewClick"/>
           <Button x:Name="CommitBtn" Content="Сохранить ход" Style="{DynamicResource BtnPrimary}"
-                  FontSize="13" Padding="12,7" Margin="8,0,0,0" Click="OnCommitClick"/>
+                  FontSize="13" Padding="12,7" Margin="8,0,0,0" IsEnabled="False" Click="OnCommitClick"/>
           <Button x:Name="ExportBtn" Content="Выгрузить в Excel" Style="{DynamicResource BtnSecondary}"
                   Margin="8,0,0,0" Click="OnExportClick"/>
           <Button x:Name="SanPinBtn" Content="Проверить СанПиН" Style="{DynamicResource BtnSecondary}"

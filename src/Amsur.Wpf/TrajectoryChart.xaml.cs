@@ -24,7 +24,7 @@ public partial class TrajectoryChart : UserControl
     {
         _last = snapshot;
         Plot.Children.Clear();
-        if (snapshot is not { HasData: true } || Plot.ActualWidth < 50)
+        if (snapshot is not { HasData: true })
         {
             EmptyText.Visibility = Visibility.Visible;
             Plot.Visibility = Visibility.Collapsed;
@@ -32,9 +32,14 @@ public partial class TrajectoryChart : UserControl
         }
         EmptyText.Visibility = Visibility.Collapsed;
         Plot.Visibility = Visibility.Visible;
+        // Canvas только что стал видимым и ещё не прошёл layout: ActualWidth = 0.
+        // Берём ширину контрола, иначе первый же рендер навсегда оставляет пустоту.
+        double plotWidth = Plot.ActualWidth >= 50
+            ? Plot.ActualWidth
+            : Math.Max(50, ActualWidth - 26);
 
         const double padL = 44, padR = 8, padT = 18, padB = 20;
-        double w = Math.Max(50, Plot.ActualWidth - padL - padR);
+        double w = Math.Max(50, plotWidth - padL - padR);
         double h = Math.Max(40, Plot.ActualHeight - padT - padB);
 
         var pts = snapshot.Points;

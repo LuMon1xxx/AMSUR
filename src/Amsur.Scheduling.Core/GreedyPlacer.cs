@@ -261,6 +261,9 @@ public static class GreedyPlacer
                 foreach (var k in teacherBusy)
                 {
                     if (k.Item2 != day) continue;
+                    // Смена считается по учителям размещаемого юнита, а не по всей школе:
+                    // иначе CrossShiftLns тянет учителя во «всемирную» мажоритарную смену.
+                    if (!unitTeachers.Contains(k.Item1)) continue;
                     int b = GapUtils.ShiftIndex(k.Item3, problem.ShiftBands);
                     if (b < 0) continue;
                     bandCount[b] = bandCount.GetValueOrDefault(b) + 1;
@@ -664,7 +667,8 @@ public static class GreedyPlacer
             if (groupBusy.Contains(((o.GroupId ?? o.ClassId), day, slot))) return false;
             if (o.GroupId.HasValue && wholeBusy.Contains((o.ClassId, day, slot))) return false;
             if (!o.GroupId.HasValue && subBusy.Contains((o.ClassId, day, slot))) return false;
-            if (problem.Teachers.TryGetValue(o.TeacherId, out var t) &&
+            if (IsCounted(problem, o) &&
+                problem.Teachers.TryGetValue(o.TeacherId, out var t) &&
                 teacherDay.GetValueOrDefault((o.TeacherId, day)) + 1 > t.MaxLessonsPerDay)
                 return false;
             // СанПиН-кэп класса (D-28): distinct-слоты дня; юнит — 1 слот.

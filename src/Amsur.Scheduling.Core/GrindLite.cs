@@ -79,7 +79,10 @@ public static class GrindLite
                 curM = m;
             }
             if (m is { Hard: 0, Pupil: 0 } &&
-                (bestClean is null || (m.Win, m.Soft).CompareTo((bestClean.Value.Win, bestClean.Value.Soft)) < 0))
+                (bestClean is null ||
+                 (m.Soft <= bestClean.Value.Soft &&
+                  (m.Win < bestClean.Value.Win ||
+                   (m.Win == bestClean.Value.Win && m.Soft < bestClean.Value.Soft)))))
             {
                 bestClean = m;
                 log.Add($"{name}: чистое принято (soft={m.Soft} tw={m.Win}).");

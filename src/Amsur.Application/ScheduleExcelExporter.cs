@@ -45,7 +45,8 @@ public static class ScheduleExcelExporter
         var occById = problem.Occurrences.ToDictionary(o => o.Id);
         var byClass = placements
             .GroupBy(p => occById[p.OccurrenceId].ClassId)
-            .OrderBy(g => ClassName(problem, g.Key))
+            .OrderBy(g => problem.Classes.TryGetValue(g.Key, out var c0) ? c0.Grade : 0)
+            .ThenBy(g => ClassName(problem, g.Key), StringComparer.CurrentCulture)
             .ToList();
 
         using var wb = new XLWorkbook();
@@ -69,12 +70,12 @@ public static class ScheduleExcelExporter
             for (int rel = 1; rel <= bandSize; rel++)
             {
                 int slot = anchor + rel - 1;
-                ws.Cell(row, 1).Value = $"Урок {rel}";
+                ws.Cell(row, 1).Value = anchor > 1 ? $"Урок {rel} (№{slot})" : $"Урок {rel}";
                 for (int d = 0; d < problem.DaysCount; d++)
                 {
                     if (byTime.TryGetValue((d, slot), out var cell))
                         ws.Cell(row, 2 + d).Value = string.Join(" / ",
-                            cell.Select(p => CellText(problem, occById[p.OccurrenceId])));
+                            cell.Select(p => CellText(problem, occById[p.OccurrenceId], p.RoomId)));
                 }
                 row++;
             }
@@ -176,6 +177,10 @@ public static class ScheduleExcelExporter
         bool includeRoomSheet = true,
         EffectiveRuleSet? rules = null)
     {
+        // Разнесение физкультуры (НДТП-7): чистый GreedyPlacer правило не знает,
+        // поэтому без ремонта черновик отклонялся на sanpin-pe-spacing.
+        // Ремонт не добавляет новых нарушений (PeSpacingRepair.NoNewHards).
+        placements = PeSpacingRepair.Repair(problem, placements);
         var validation = PlacementValidator.Validate(problem, placements, rules);
         // Набор неблокирующих кодов — общий с DraftPlanner (один источник истины,
         // иначе гейт черновика в окне и гейт выгрузки разъедутся).
@@ -197,7 +202,8 @@ public static class ScheduleExcelExporter
         var occById = problem.Occurrences.ToDictionary(o => o.Id);
         var byClass = placements
             .GroupBy(p => occById[p.OccurrenceId].ClassId)
-            .OrderBy(g => ClassName(problem, g.Key))
+            .OrderBy(g => problem.Classes.TryGetValue(g.Key, out var c1) ? c1.Grade : 0)
+            .ThenBy(g => ClassName(problem, g.Key), StringComparer.CurrentCulture)
             .ToList();
 
         using var wb = new XLWorkbook();
@@ -249,7 +255,7 @@ public static class ScheduleExcelExporter
                 {
                     if (byTime.TryGetValue((d, slot), out var cell))
                         ws.Cell(row, 2 + d).Value = string.Join(" / ",
-                            cell.Select(p => CellText(problem, occById[p.OccurrenceId])));
+                            cell.Select(p => CellText(problem, occById[p.OccurrenceId], p.RoomId)));
                 }
                 row++;
             }
@@ -297,11 +303,19 @@ public static class ScheduleExcelExporter
         return Math.Clamp(max - anchor + 1, 1, Math.Max(1, problem.SlotsPerDay));
     }
 
-    private static string CellText(SchedulingProblem problem, LessonOccurrence occ)
+    private static string CellText(
+        SchedulingProblem problem, LessonOccurrence occ, Guid? roomId)
     {
         string subj = problem.Subjects.TryGetValue(occ.SubjectId, out var s) ? s.Name : "?";
         string teacher = problem.Teachers.TryGetValue(occ.TeacherId, out var t) ? t.Name : "?";
-        return $"{subj} · {teacher}";
+        string group = occ.GroupId.HasValue
+            ? problem.GroupNames.GetValueOrDefault(occ.GroupId.Value, "")
+            : "";
+        string text = group.Length > 0
+            ? $"{subj} ({group}) · {teacher}"
+            : $"{subj} · {teacher}";
+        string room = problem.Rooms.TryGetValue(roomId ?? Guid.Empty, out var r) ? r.Name : "";
+        return room.Length > 0 ? $"{text} · {room}" : text;
     }
 
     private static string ClassName(SchedulingProblem problem, Guid classId) =>

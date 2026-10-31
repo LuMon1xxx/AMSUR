@@ -13,7 +13,7 @@ OR-Tools CP-SAT + собственный локальный поиск (Greedy +
 
 ```powershell
 dotnet build src/Amsur.slnx
-dotnet test src/Amsur.Tests   # ~11 мин (440 тестов)
+dotnet test src/Amsur.Tests   # ~13 мин (484 теста, 11 пропусков)
 # затем запустить src/Amsur.Wpf (или открыть Amsur.slnx в Visual Studio / Rider)
 ```
 

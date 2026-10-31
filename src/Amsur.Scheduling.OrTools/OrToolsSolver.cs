@@ -216,7 +216,7 @@ public sealed class OrToolsSolver : IScheduleSolver
 
         long firstFeasibleMs = sw.ElapsedMilliseconds;
         var bestValues = resA.Values;
-        var bestQuality = SoftQuality(problem, bestValues);
+        var bestQuality = SoftQuality(problem, bestValues, rs);
         int solutionsFound = 1;
 
         if (!options.TwoPhaseSolve || budgetB <= 0.01)
@@ -273,7 +273,9 @@ public sealed class OrToolsSolver : IScheduleSolver
             diagnostics.Add($"GrindLite: soft {bestQuality}->{grind.SoftTotal}, " +
                 $"hard={grind.HardViolations}, tw={grind.TeacherWindows}, budget {grindBudgetSec:F1}s.");
             foreach (var line in grind.Log.TakeLast(6)) diagnostics.Add("GrindLite: " + line);
-            if (grind.SoftTotal < bestQuality)
+            // GrindLite мог улучшить учительские окна при том же soft — такой
+            // результат тоже принимаем (равенство по soft не регрессия).
+            if (grind.SoftTotal <= bestQuality)
             {
                 bestQuality = grind.SoftTotal;
                 bestValues = grind.Placements.ToDictionary(
@@ -383,6 +385,44 @@ public sealed class OrToolsSolver : IScheduleSolver
             sw, phaseMs, diagnostics, firstFeasibleMs,
             wasCancelled: cancelled, optimalProven: (resB?.Optimal ?? false) && !cancelled,
             stats: resB?.Stats ?? resA.Stats, rules: rs);
+
+        // D-28b fallback: валидатор отклонил результат (окна/поздний старт не
+        // вылечены эвристиками). Решаем заново с правилами В МОДЕЛИ: на плотной
+        // задаче нужен междневный пересчёт, которого CompactRepair (внутри дня)
+        // принципиально не делает. Срабатывает только здесь, поэтому основной
+        // путь по скорости не меняется.
+        {
+            bool gapRelaxed = rs.RelaxedStrict.Contains("student-gap");
+            bool lateRelaxed = rs.RelaxedStrict.Contains("student-late-start");
+            double compactBudget = options.MaxTimeSeconds - sw.Elapsed.TotalSeconds;
+            if (accepted.HardViolations > 0 && !cancelled
+                && compactBudget >= 1.0 && !(gapRelaxed && lateRelaxed))
+            {
+                diagnostics.Add($"Compact-fallback: retry CP-SAT с непрерывностью " +
+                    $"классо-дня, бюджет {compactBudget:F1}s.");
+                var retry = SolvePhase(problem, allowedPairs, roomList, roomIndex, options,
+                    useObjective: false, hints: null, timeLimit: compactBudget, ct: ct,
+                    greedy: bestValues,
+                    enforceStudentGap: !gapRelaxed, enforceLateStart: !lateRelaxed);
+                phaseMs["phaseCompact"] = retry.ModelBuildMs;
+                if (retry.Values is not null)
+                {
+                    var accepted2 = Accept(problem, retry.Values,
+                        SoftQuality(problem, retry.Values, rs), solutionsFound + 1,
+                        sw, phaseMs, diagnostics, firstFeasibleMs,
+                        wasCancelled: retry.Cancelled, optimalProven: retry.Optimal,
+                        stats: retry.Stats, rules: rs);
+                    if (accepted2.HardViolations == 0)
+                    {
+                        diagnostics.Add("Compact-fallback: валидное решение найдено.");
+                        Emit(accepted2.Placements, accepted2.ObjectiveValue, force: true);
+                        return accepted2;
+                    }
+                }
+                diagnostics.Add("Compact-fallback: валидного решения не нашлось.");
+            }
+        }
+
         // Финал в sink: даже если промежуточные incumbents не прошли validator-gate,
         // график получает точку итогового расписания.
         Emit(accepted.Placements, accepted.ObjectiveValue, force: true);
@@ -412,7 +452,7 @@ public sealed class OrToolsSolver : IScheduleSolver
         {
             OccurrenceId = kv.Key, DayIndex = kv.Value.Day, SlotIndex = kv.Value.Slot, RoomId = kv.Value.RoomId
         }).ToList();
-        var validation = PlacementValidator.Validate(problem, placements);
+        var validation = PlacementValidator.Validate(problem, placements, rules);
         if (!validation.IsValid)
         {
             diagnostics.Add($"VALIDATOR REJECTED: {validation.HardViolations.Count} hard violations.");
@@ -433,6 +473,12 @@ public sealed class OrToolsSolver : IScheduleSolver
             breakdown.Components.ToDictionary(c => c.Code, c => c.Value),
             diagnostics, phaseMs, wasCancelled, optimalProven, withPeak);
     }
+
+    // Та же семантика, что в GreedyPlacer/PlacementValidator: внеурочка и
+    // неизмеримые предметы в компактность дня не входят (НДТП-7).
+    private static bool IsCounted(SchedulingProblem problem, LessonOccurrence o) =>
+        !o.IsExtra &&
+        !(problem.Subjects.TryGetValue(o.SubjectId, out var s) && s.IsNonLesson);
 
     private static long SoftQuality(
         SchedulingProblem problem, Dictionary<Guid, SlotPick> values, EffectiveRuleSet? rules = null)
@@ -495,7 +541,9 @@ public sealed class OrToolsSolver : IScheduleSolver
         double timeLimit,
         CancellationToken ct,
         Dictionary<Guid, SlotPick>? greedy = null,
-        Action<Dictionary<Guid, SlotPick>, long>? onIncumbent = null)
+        Action<Dictionary<Guid, SlotPick>, long>? onIncumbent = null,
+        bool enforceStudentGap = false,
+        bool enforceLateStart = false)
     {
         var swBuild = Stopwatch.StartNew();
         var model = new CpModel();
@@ -548,6 +596,68 @@ public sealed class OrToolsSolver : IScheduleSolver
             { model.Add(t[idx[0]] == t[idx[k]]); nCt++; }
         }
 
+        // D-28 в модель: непрерывность классо-дня (нет внутренних окон) и старт не
+        // позже anchor+1. Раньше эти правила жили только в валидаторе и эвристиках
+        // (LS/GrindLite/CompactRepair): на плотной задаче ремонт не находит решения,
+        // CP-SAT о правиле не знал и отдавал «полный, но грязный» ответ → Unknown.
+        // Включается только на fallback-проходе (см. SolveAsync), чтобы не менять
+        // поведение и бюджет основного пути.
+        if (enforceStudentGap || enforceLateStart)
+        {
+            int sp = problem.SlotsPerDay;
+            foreach (var cg in occs.Select((o, i) => (Occ: o, Idx: i))
+                         .Where(pair => IsCounted(problem, pair.Occ))
+                         .GroupBy(pair => pair.Occ.ClassId))
+            {
+                var y = new Dictionary<(int Day, int Slot), BoolVar>();
+                var present = new Dictionary<(int Day, int Slot), List<BoolVar>>();
+                // Слоты в задаче 1-based (1..SlotsPerDay) — см. ProblemBuilder.
+                for (int day = 0; day < problem.DaysCount; day++)
+                    for (int slot = 1; slot <= sp; slot++)
+                    {
+                        y[(day, slot)] = model.NewBoolVar($"cy{day}_{slot}"); nBool++;
+                        present[(day, slot)] = [];
+                    }
+                foreach (var (occ, i) in cg.Select(pair => (pair.Occ, pair.Idx)))
+                    foreach (var p in allowedPairs[occ.Id])
+                    {
+                        var b = model.NewBoolVar($"cb{i}_{p.Day}_{p.Slot}"); nBool++;
+                        int g = p.Day * sp + p.Slot;
+                        model.Add(t[i] == g).OnlyEnforceIf(b); nCt++;
+                        model.Add(t[i] != g).OnlyEnforceIf(b.Not()); nCt++;
+                        present[(p.Day, p.Slot)].Add(b);
+                    }
+                foreach (var key in y.Keys)
+                {
+                    if (present[key].Count == 0) model.AddLinearConstraint(y[key], 0, 0);
+                    else model.AddMaxEquality(y[key], present[key]);
+                    nCt++;
+                }
+                int anchor = StudentCompactness.AnchorFor(problem, cg.Key);
+                int freeUntil = Math.Min(anchor + 1, sp);
+                for (int day = 0; day < problem.DaysCount; day++)
+                {
+                    if (enforceStudentGap)
+                        for (int slot = 2; slot <= sp - 1; slot++)
+                        {
+                            model.AddLinearConstraint(
+                                y[(day, slot)] - y[(day, slot - 1)] - y[(day, slot + 1)],
+                                -1, long.MaxValue);
+                            nCt++;
+                        }
+                    if (enforceLateStart)
+                        for (int slot = freeUntil + 1; slot <= sp; slot++)
+                        {
+                            var head = new List<LinearExpr>();
+                            for (int s = 1; s <= freeUntil; s++) head.Add(y[(day, s)]);
+                            model.AddLinearConstraint(
+                                LinearExpr.Sum(head) - y[(day, slot)], 0, long.MaxValue);
+                            nCt++;
+                        }
+                }
+            }
+        }
+
         // E3 perturbation bans (Hard): запрещённые глобальные времена.
         for (int i = 0; i < n; i++)
         {
@@ -565,6 +675,7 @@ public sealed class OrToolsSolver : IScheduleSolver
                 var bools = new List<BoolVar>();
                 foreach (var (_, i) in tg)
                 {
+                    if (!IsCounted(problem, occs[i])) continue;
                     var b = model.NewBoolVar($"m{tg.Key}_{day}_{i}"); nBool++;
                     model.Add(d[i] == day).OnlyEnforceIf(b); nCt++;
                     model.Add(d[i] != day).OnlyEnforceIf(b.Not()); nCt++;

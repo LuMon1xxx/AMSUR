@@ -243,6 +243,7 @@
     <!-- Карточка-режим: RadioButton как выбираемая панель -->
     <Style x:Key="RadioCard" TargetType="RadioButton">
       <Setter Property="Background" Value="{DynamicResource BCard}"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource BBorder}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Padding" Value="12,10"/>

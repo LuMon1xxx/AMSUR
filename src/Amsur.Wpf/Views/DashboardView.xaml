@@ -6,7 +6,7 @@
   <Grid TextElement.Foreground="{DynamicResource BText}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*" MinWidth="0"/>
-      <ColumnDefinition Width="340"/>
+      <ColumnDefinition Width="300"/>
     </Grid.ColumnDefinitions>
 
     <!-- Центр -->
@@ -42,9 +42,9 @@
             <!-- Настройки сетки — только на шаге загрузки (иначе дублируют карточку ниже) -->
             <StackPanel x:Name="NextStepInputs" Orientation="Horizontal" Margin="52,10,0,0">
               <TextBlock Text="Дней:" VerticalAlignment="Center"/>
-              <TextBox x:Name="DaysBox" Text="5" Width="48" Padding="6,4" Margin="6,0,16,0"/>
+              <TextBox x:Name="DaysBox" Text="5" Width="48" Padding="4,2" VerticalContentAlignment="Center" Margin="6,0,16,0"/>
               <TextBlock Text="Уроков в день:" VerticalAlignment="Center"/>
-              <TextBox x:Name="SlotsBox" Text="7" Width="48" Padding="6,4" Margin="6,0,0,0"/>
+              <TextBox x:Name="SlotsBox" Text="7" Width="48" Padding="4,2" VerticalContentAlignment="Center" Margin="6,0,0,0"/>
             </StackPanel>
           </StackPanel>
         </Border>

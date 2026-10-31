@@ -20,6 +20,18 @@ public static class GenerateHost
         var mode = session.GenerateMode;
         var solver = new OrToolsSolver();
         var rs = session.QualityRules;
+        // Большая школа (≈900 уроков-позиций) не успевает за 12 с: на реальной
+        // нагрузке СШ №8 чистый результат находится за ~40 с. Даём адаптивный
+        // бюджет, иначе «Стандарт» честно, но бесполезно пишет «не найдено».
+        double budget = input.Curriculum.Sum(c => c.HoursPerWeek) >= 600
+            ? mode.Code switch
+            {
+                "QUICK" => 20,
+                "STANDARD" => 60,
+                "EXPERT" => 60,
+                _ => Math.Max(60, mode.BudgetSeconds),
+            }
+            : mode.BudgetSeconds;
         // TOP: результат запуска перед архивом проходит grind-lite доводку
         // (~60с). Архив и Top-5 получают уже отполированное (валидация — там же).
         StreamingRun run = async (problem, ct, sink) =>
@@ -46,7 +58,7 @@ public static class GenerateHost
         {
             var (problem, errors) = ProblemBuilder.Build(input,
                 new SolverOptions(
-                    MaxTimeSeconds: mode.BudgetSeconds,
+                    MaxTimeSeconds: budget,
                     NumSearchWorkers: 1,
                     RandomSeed: seed,
                     EnableGrindLite: mode.Code == "TOP"));

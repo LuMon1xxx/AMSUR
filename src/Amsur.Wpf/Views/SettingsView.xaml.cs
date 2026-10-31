@@ -1018,7 +1018,8 @@ public partial class SettingsView : UserControl
     /// <summary>
     /// Переносит дневные лимиты в текущие сущности сессии (по именам) и
     /// перестраивает карточки, чтобы поля показывали актуальные значения.
-    /// В SQLite лимиты пока не пишутся: формат FlexDataset их не знает (см. отчёт).
+    /// Классы и учители уже пришли из FlexDataset при импорте (D-28, персист в SQLite);
+    /// этот проход нужен для предметов — их лимит остаётся сессионным.
     /// </summary>
     private void ApplyLimits(IReadOnlyList<(string Kind, string Name, int Value)> limits)
     {
@@ -1048,11 +1049,30 @@ public partial class SettingsView : UserControl
         BuildEntityPanels();
     }
 
-    private async Task<(bool Ok, string? Error)> TryApplySettingsAsync(FlexSettingsRow settings)
+    private async Task<(bool Ok, string? Error)> TryApplySettingsAsync(
+        FlexSettingsRow settings, IReadOnlyList<(string Kind, string Name, int Value)> limits)
     {
         try
         {
-            await _session.ApplyFlexAsync(_session.Flex with { Settings = settings });
+            // D-28: лимиты классов/учителей едут в FlexDataset и пишутся в SQLite.
+            // Предметные лимиты (MaxPerDay) в формат не входят — они остаются в сессии.
+            var classLimits = (_session.Flex.ClassLimits ?? [])
+                .ToDictionary(x => x.ClassName, x => x.MaxLessonsPerDay, StringComparer.OrdinalIgnoreCase);
+            var teacherLimits = (_session.Flex.TeacherLimits ?? [])
+                .ToDictionary(x => x.TeacherName, x => x.MaxLessonsPerDay, StringComparer.OrdinalIgnoreCase);
+            foreach (var (kind, name, value) in limits)
+            {
+                if (kind == "class") classLimits[name] = value;
+                else if (kind == "teacher") teacherLimits[name] = value;
+            }
+            await _session.ApplyFlexAsync(_session.Flex with
+            {
+                Settings = settings,
+                ClassLimits = classLimits
+                    .Select(kv => new ClassLimitRow(kv.Key, kv.Value)).ToList(),
+                TeacherLimits = teacherLimits
+                    .Select(kv => new TeacherLimitRow(kv.Key, kv.Value)).ToList(),
+            });
             return (true, null);
         }
         catch (Exception ex)
@@ -1123,7 +1143,7 @@ public partial class SettingsView : UserControl
         var limits = CaptureLimits();
         if (!expertOk)
         {
-            var (settingsOk, applyError) = await TryApplySettingsAsync(nextSettings);
+            var (settingsOk, applyError) = await TryApplySettingsAsync(nextSettings, limits);
             ApplyLimits(limits);
             if (settingsOk) RefreshCardValues();
             MarkClean();
@@ -1142,7 +1162,7 @@ public partial class SettingsView : UserControl
             _session.ApplyOverrides(_editor.GetOverrides(), _confirmedDangerous);
         }
         catch (Exception ex) { Say("Не применено: " + ex.Message, true); return; }
-        var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings);
+        var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings, limits);
         ApplyLimits(limits);
         if (!flexOk)
         {
@@ -1153,9 +1173,11 @@ public partial class SettingsView : UserControl
         MarkClean();
         Say(_editor.IsModified
             ? "Применено: веса, приоритет выпускных, черновик, перегрузка и дневные лимиты — " +
-              "действуют на следующие генерации (лимиты — до перезапуска)."
+              "действуют на следующие генерации (лимиты классов и учителей сохранены в базе; " +
+              "дневной лимит предметов — до перезапуска)."
             : "Сохранено: приоритет выпускных, черновик, перегрузка и дневные лимиты " +
-              "(веса не менялись; лимиты — до перезапуска).", false);
+              "(веса не менялись; лимиты классов и учителей сохранены в базе, " +
+              "дневной лимит предметов — до перезапуска).", false);
         CheckPresetAfterApply();
     }
 
@@ -1185,7 +1207,7 @@ public partial class SettingsView : UserControl
             }
             var limits = CaptureLimits();
             await _session.SaveCustomProfileAsync(name, _baseProfile, _editor.GetOverrides(), _confirmedDangerous);
-            var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings);
+            var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings, limits);
             ApplyLimits(limits);
             if (flexOk) RefreshCardValues();
             SavedNameText.Text = $"Сохранён: {name}";
@@ -1193,7 +1215,7 @@ public partial class SettingsView : UserControl
             MarkClean();
             Say(flexOk
                 ? $"Профиль «{name}» сохранён: веса, приоритет выпускных, черновик, перегрузка и дневные лимиты " +
-                  "применены. Лимиты действуют до перезапуска."
+                  "применены. Лимиты классов и учителей сохранены в базе."
                 : $"Профиль «{name}» сохранён, но настройки карточек не применились: {flexErr}", !flexOk);
         }
         catch (Exception ex) { Say("Не сохранено: " + ex.Message, true); }

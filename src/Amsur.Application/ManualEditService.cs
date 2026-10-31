@@ -22,7 +22,8 @@ public sealed class ManualEditService(AcceptScheduleService acceptor)
     public EditPreview Preview(
         SchedulingProblem problem,
         IReadOnlyList<PlacedLesson> current,
-        CandidateMove move)
+        CandidateMove move,
+        EffectiveRuleSet? rules = null)
     {
         var ev = IncrementalEvaluator.Evaluate(problem, current, move);
         var resulting = current
@@ -33,6 +34,18 @@ public sealed class ManualEditService(AcceptScheduleService acceptor)
                 SlotIndex = move.SlotIndex, RoomId = move.RoomId
             }])
             .ToList();
+
+        // Инкрементальная оценка может не знать часть строгих правил (окна ученика,
+        // СанПиН, кабинет только-для-предмета). Финальный гейт — тот же валидатор,
+        // что и при сохранении/экспорте, поэтому предпроверка не врёт.
+        var gate = PlacementValidator.Validate(problem, resulting, rules);
+        if (!gate.IsValid)
+        {
+            string why = gate.HardViolations.Count > 0
+                ? gate.HardViolations[0].Message
+                : "действие нарушает жёсткие правила";
+            return new EditPreview(false, $"Нельзя: {why}", 0, ev.Reasons, resulting);
+        }
 
         if (ev.Severity == EvaluationSeverity.Forbidden)
         {
@@ -53,13 +66,14 @@ public sealed class ManualEditService(AcceptScheduleService acceptor)
         Guid academicYearId,
         SchedulingProblem problem,
         EditPreview preview,
+        EffectiveRuleSet? rules = null,
         CancellationToken ct = default)
     {
         if (!preview.CanCommit)
             return new EditCommitOutcome(false,
                 "Не сохранено: правка запрещена (" +
                 (preview.Reasons.Count > 0 ? preview.Reasons[0] : "см. причину") + ").", null);
-        var validation = PlacementValidator.Validate(problem, preview.ResultingPlacements);
+        var validation = PlacementValidator.Validate(problem, preview.ResultingPlacements, rules);
         if (!validation.IsValid)
             return new EditCommitOutcome(false,
                 $"Не сохранено: {validation.HardViolations.Count} жёстких нарушений.", null);
