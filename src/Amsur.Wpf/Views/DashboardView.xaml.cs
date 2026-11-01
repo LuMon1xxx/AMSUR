@@ -85,8 +85,16 @@ public partial class DashboardView : UserControl
             var titleRow = new StackPanel { Orientation = Orientation.Horizontal };
             titleRow.Children.Add(new TextBlock
             {
-                Text = m.Name, FontSize = 13, FontWeight = FontWeights.SemiBold,
+                Text = m.Code switch
+                {
+                    "MAXIMUM" => "Максимум",
+                    "TOP" => "Топ-вариант",
+                    "EXPERT" => "Эксперт",
+                    _ => m.Name,
+                },
+                FontSize = 12, FontWeight = FontWeights.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
             });
             if (m.Code == "STANDARD")
                 titleRow.Children.Add(new Border

@@ -13,12 +13,12 @@ public sealed class QualityUxTests
         Assert.Equal(3, GenerateModes.ByCode("QUICK").BudgetSeconds);
         Assert.Single(GenerateModes.ByCode("QUICK").Seeds);
         Assert.Equal(12, GenerateModes.ByCode("STANDARD").BudgetSeconds);
-        Assert.Equal(6, GenerateModes.ByCode("STANDARD").Seeds.Count);
+        Assert.Equal(12, GenerateModes.ByCode("STANDARD").Seeds.Count);
         Assert.Equal(30, GenerateModes.ByCode("MAXIMUM").BudgetSeconds);
         Assert.True(GenerateModes.ByCode("MAXIMUM").Seeds.Count >= 5);
-        // ТОП (окт. 2026): 5 запусков по минуте + grind-lite — всего около 10 минут.
+        // ТОП (окт. 2026): параллельные запуски по минуте + grind-lite.
         Assert.Equal(60, GenerateModes.ByCode("TOP").BudgetSeconds);
-        Assert.Equal(5, GenerateModes.ByCode("TOP").Seeds.Count);
+        Assert.Equal(12, GenerateModes.ByCode("TOP").Seeds.Count);
         Assert.Equal("STANDARD", GenerateModes.ByCode("nope").Code); // дефолт
         Assert.DoesNotContain("seed", GenerateModes.ByCode("QUICK").Description,
             StringComparison.OrdinalIgnoreCase);

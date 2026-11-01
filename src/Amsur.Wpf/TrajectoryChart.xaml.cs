@@ -42,6 +42,7 @@ public partial class TrajectoryChart : UserControl
         double w = Math.Max(50, plotWidth - padL - padR);
         double h = Math.Max(40, Plot.ActualHeight - padT - padB);
 
+        _lastLabelX = double.NegativeInfinity;
         var pts = snapshot.Points;
         double tMax = Math.Max(1, pts.Max(p => p.Elapsed.TotalSeconds));
         var valued = pts.Where(p => p.BestSoft.HasValue).ToList();
@@ -105,6 +106,8 @@ public partial class TrajectoryChart : UserControl
         Plot.Children.Add(Text($"{tMax:F0} с", padL + w - 30, padT + h + 4, 60));
     }
 
+    private double _lastLabelX = double.NegativeInfinity;
+
     private void DrawMarker(TrajectoryMarker m, double padL, double w,
         double padT, double h, double tMax)
     {
@@ -117,8 +120,14 @@ public partial class TrajectoryChart : UserControl
             StrokeThickness = terminal ? 2 : 1,
             StrokeDashArray = terminal ? null : [4, 3],
         });
-        var label = Text(m.Label, Math.Min(x + 3, padL + w - 90), 0, 120, terminal);
-        Plot.Children.Add(label);
+        if (x - _lastLabelX >= 46)
+        {
+            string text = m.Label.StartsWith("Запуск ", StringComparison.Ordinal)
+                ? "№" + m.Label["Запуск ".Length..]
+                : m.Label;
+            Plot.Children.Add(Text(text, Math.Min(x + 3, padL + w - 90), 0, 120, terminal));
+            _lastLabelX = x;
+        }
     }
 
     private static TextBlock Text(string s, double x, double y, double width,
