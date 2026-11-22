@@ -1,60 +1,83 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- P-D5: тёмная тема. ТОЛЬКО цвета/кисти/hero — те же x:Key, что светлая.
-       Стили/радиусы/отступы живут в App.xaml и не дублируются.
-       Применение: App.ApplyTheme("dark") копирует записи поверх Resources
-       на лету — кисти окон резолвятся через DynamicResource, смена мгновенная,
-       без перезапуска. -->
+  <!-- Deep Calm Graphite (Dark Theme) — high-contrast accessible tokens matching App.xaml -->
 
-  <Color x:Key="CAccent">#7DD3FC</Color>
-  <Color x:Key="CAccentDark">#38BDF8</Color>
-  <Color x:Key="CAccentPressed">#0EA5E9</Color>
-  <Color x:Key="CAccentSoft">#0C2437</Color>
-  <Color x:Key="CAccentBorder">#155E75</Color>
-  <Color x:Key="CBg">#0B1220</Color>
-  <Color x:Key="CCard">#111C30</Color>
-  <Color x:Key="CSubtle">#1A2740</Color>
-  <Color x:Key="CBorder">#26334D</Color>
-  <Color x:Key="CBorderStrong">#33415C</Color>
-  <Color x:Key="CText">#E8EEF7</Color>
-  <Color x:Key="CTextSoft">#A9B6CB</Color>
-  <Color x:Key="CTextSecondary">#A9B6CB</Color>
-  <Color x:Key="CTextMuted">#64748B</Color>
-  <Color x:Key="CGood">#34D399</Color>
+  <Color x:Key="CAccent">#0F766E</Color>
+  <Color x:Key="CAccentDark">#148F85</Color>
+  <Color x:Key="CAccentPressed">#0D5F59</Color>
+  <Color x:Key="CAccentText">#5EEAD4</Color>
+  <Color x:Key="CAccentForeground">#FFFFFF</Color>
+  <Color x:Key="CAccentSoft">#152928</Color>
+  <Color x:Key="CAccentBorder">#255350</Color>
+
+  <Color x:Key="CBg">#111315</Color>
+  <Color x:Key="CSidebar">#15181B</Color>
+  <Color x:Key="CCard">#191D21</Color>
+  <Color x:Key="CSubtle">#21262B</Color>
+  <Color x:Key="CHover">#272D34</Color>
+  <Color x:Key="CBorder">#2C323A</Color>
+  <Color x:Key="CBorderStrong">#3B434E</Color>
+
+  <Color x:Key="CText">#ECEFF3</Color>
+  <Color x:Key="CTextSoft">#A6B0BD</Color>
+  <Color x:Key="CTextSecondary">#A6B0BD</Color>
+  <Color x:Key="CTextMuted">#7D8794</Color>
+
+  <Color x:Key="CGood">#4ADE80</Color>
   <Color x:Key="CWarn">#FBBF24</Color>
   <Color x:Key="CBad">#F87171</Color>
-  <Color x:Key="CGoodBg">#052E22</Color>
-  <Color x:Key="CWarnBg">#451A03</Color>
-  <Color x:Key="CBadBg">#450A0A</Color>
-  <!-- Тёплый акцент в тёмной теме: глубокий янтарь -->
-  <Color x:Key="CWarm">#451A03</Color>
-  <Color x:Key="CWarmBorder">#92400E</Color>
+  <Color x:Key="CGoodBg">#122B1E</Color>
+  <Color x:Key="CWarnBg">#2E220D</Color>
+  <Color x:Key="CBadBg">#2E1517</Color>
+
+  <Color x:Key="CWarm">#261F14</Color>
+  <Color x:Key="CWarmBorder">#5C4828</Color>
+
+  <Color x:Key="CHeroBtnBg">#E4ECEA</Color>
+  <Color x:Key="CHeroBtnHover">#D2E1DE</Color>
+  <Color x:Key="CHeroBtnPressed">#BED3CF</Color>
+  <Color x:Key="CHeroBtnFg">#0D5F59</Color>
+  <Color x:Key="CHeroBtnBadge">#CCE0DC</Color>
 
   <SolidColorBrush x:Key="BAccent" Color="{StaticResource CAccent}"/>
   <SolidColorBrush x:Key="BAccentDark" Color="{StaticResource CAccentDark}"/>
   <SolidColorBrush x:Key="BAccentPressed" Color="{StaticResource CAccentPressed}"/>
+  <SolidColorBrush x:Key="BAccentText" Color="{StaticResource CAccentText}"/>
+  <SolidColorBrush x:Key="BAccentForeground" Color="{StaticResource CAccentForeground}"/>
   <SolidColorBrush x:Key="BAccentSoft" Color="{StaticResource CAccentSoft}"/>
   <SolidColorBrush x:Key="BAccentBorder" Color="{StaticResource CAccentBorder}"/>
+
   <SolidColorBrush x:Key="BBg" Color="{StaticResource CBg}"/>
+  <SolidColorBrush x:Key="BSidebar" Color="{StaticResource CSidebar}"/>
   <SolidColorBrush x:Key="BCard" Color="{StaticResource CCard}"/>
   <SolidColorBrush x:Key="BSubtle" Color="{StaticResource CSubtle}"/>
+  <SolidColorBrush x:Key="BHover" Color="{StaticResource CHover}"/>
   <SolidColorBrush x:Key="BBorder" Color="{StaticResource CBorder}"/>
   <SolidColorBrush x:Key="BBorderStrong" Color="{StaticResource CBorderStrong}"/>
+
   <SolidColorBrush x:Key="BText" Color="{StaticResource CText}"/>
   <SolidColorBrush x:Key="BTextSoft" Color="{StaticResource CTextSoft}"/>
   <SolidColorBrush x:Key="BTextSecondary" Color="{StaticResource CTextSecondary}"/>
   <SolidColorBrush x:Key="BTextMuted" Color="{StaticResource CTextMuted}"/>
+
   <SolidColorBrush x:Key="BGood" Color="{StaticResource CGood}"/>
   <SolidColorBrush x:Key="BWarn" Color="{StaticResource CWarn}"/>
   <SolidColorBrush x:Key="BBad" Color="{StaticResource CBad}"/>
   <SolidColorBrush x:Key="BGoodBg" Color="{StaticResource CGoodBg}"/>
   <SolidColorBrush x:Key="BWarnBg" Color="{StaticResource CWarnBg}"/>
   <SolidColorBrush x:Key="BBadBg" Color="{StaticResource CBadBg}"/>
+
   <SolidColorBrush x:Key="BWarm" Color="{StaticResource CWarm}"/>
   <SolidColorBrush x:Key="BWarmBorder" Color="{StaticResource CWarmBorder}"/>
 
+  <SolidColorBrush x:Key="BHeroBtnBg" Color="{StaticResource CHeroBtnBg}"/>
+  <SolidColorBrush x:Key="BHeroBtnHover" Color="{StaticResource CHeroBtnHover}"/>
+  <SolidColorBrush x:Key="BHeroBtnPressed" Color="{StaticResource CHeroBtnPressed}"/>
+  <SolidColorBrush x:Key="BHeroBtnFg" Color="{StaticResource CHeroBtnFg}"/>
+  <SolidColorBrush x:Key="BHeroBtnBadge" Color="{StaticResource CHeroBtnBadge}"/>
+
   <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
-    <GradientStop Color="#0EA5E9" Offset="0"/>
-    <GradientStop Color="#4F46E5" Offset="1"/>
+    <GradientStop Color="#153232" Offset="0"/>
+    <GradientStop Color="#1B4241" Offset="1"/>
   </LinearGradientBrush>
 </ResourceDictionary>

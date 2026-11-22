@@ -19,7 +19,7 @@ public sealed class CandidateCardModel
     // E5 — объяснение качества (soft; hard — отдельной строкой HardText выше).
     public string QualitySummary { get; init; } = "";
     public IReadOnlyList<string> QualityLines { get; init; } = [];
-    public bool CanAccept { get; init; } // только лучший
+    public bool CanAccept { get; init; } // все варианты в архиве имеют Hard == 0
     public ScheduleCandidate Candidate { get; init; } = null!;
 }
 
@@ -71,7 +71,7 @@ public sealed class Top5PanelModel
             cards.Add(new CandidateCardModel
             {
                 Rank = i + 1, SoftTotal = m.SoftTotal, HardViolations = 0,
-                Badge = badge, DifferenceLines = lines, CanAccept = i == 0, Candidate = m,
+                Badge = badge, DifferenceLines = lines, CanAccept = true, Candidate = m,
                 QualitySummary = problem is null ? $"Soft {m.SoftTotal}" : QualityExplainer.QualitySummary(m),
                 // Лучший — «почему такая оценка»; остальные — «чем хуже/лучше лучшего».
                 QualityLines = problem is null

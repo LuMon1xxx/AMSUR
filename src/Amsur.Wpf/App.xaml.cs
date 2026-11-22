@@ -33,18 +33,23 @@ public partial class App : System.Windows.Application
     // P-D5: тёмная тема копированием записей поверх Resources.
     // Кисти окон резолвятся через DynamicResource — подмена записей обновляет
     // весь UI сразу, без перезапуска (раньше требовался StaticResource на старте).
-    private void ApplyDarkTheme()
+    private bool ApplyDarkTheme()
     {
         try
         {
             var dict = new ResourceDictionary
             {
-                Source = new Uri("Themes/Dark.xaml", UriKind.Relative),
+                Source = new Uri("/Amsur.Wpf;component/Themes/Dark.xaml", UriKind.Relative),
             };
             foreach (var key in dict.Keys.Cast<object>().ToList())
                 Resources[key] = dict[key];
+            return true;
         }
-        catch { /* тёмная не легла — остаёмся на светлой, честно без падения */ }
+        catch
+        {
+            /* тёмная не легла — остаёмся на светлой, честно без падения */
+            return false;
+        }
     }
 
     // Мгновенная смена темы: "dark" накатывает Themes/Dark.xaml, "light" —
@@ -53,13 +58,16 @@ public partial class App : System.Windows.Application
     // (CWarm/CWarmBorder), при возврате убираются.
     private IReadOnlyDictionary<object, object>? _lightThemeSnapshot;
 
+    public event Action<string>? ThemeChanged;
+
     public void ApplyTheme(string theme)
     {
         _lightThemeSnapshot ??= Resources.Keys.Cast<object>()
             .ToDictionary(k => k, k => Resources[k]);
         if (theme == "dark")
         {
-            ApplyDarkTheme();
+            if (ApplyDarkTheme())
+                ThemeChanged?.Invoke(theme);
             return;
         }
         foreach (var key in _lightThemeSnapshot.Keys)
@@ -67,6 +75,7 @@ public partial class App : System.Windows.Application
         foreach (var key in Resources.Keys.Cast<object>().ToList())
             if (!_lightThemeSnapshot.ContainsKey(key))
                 Resources.Remove(key);
+        ThemeChanged?.Invoke(theme);
     }
 
     // D-48: детект тестраннера (vstest/testhost): прод-старт запрещён.
@@ -84,6 +93,21 @@ public partial class App : System.Windows.Application
         catch { return false; }
     }
 
+    private static string ResolveDataDir(string[] args)
+    {
+        for (int i = 0; i < args.Length - 1; i++)
+        {
+            if (string.Equals(args[i], "--data-dir", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(args[i + 1]))
+                return args[i + 1];
+        }
+        var env = Environment.GetEnvironmentVariable("AMSUR_DATA_DIR");
+        if (!string.IsNullOrWhiteSpace(env)) return env;
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Amsur");
+    }
+
     protected override async void OnStartup(System.Windows.StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -94,9 +118,7 @@ public partial class App : System.Windows.Application
         if (IsTestHost()) return;
         try
         {
-            var dir = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Amsur");
+            var dir = ResolveDataDir(e.Args);
             Directory.CreateDirectory(dir);
             Session = new AppSession(dir);
             await Session.InitAsync();

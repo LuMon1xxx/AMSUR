@@ -39,12 +39,16 @@ public partial class QualityDetailsWindow : Window
         if (rest.Count > 0)
             GroupsPanel.Children.Add(GroupCard("Прочее", rest));
         if (lines.Count == 0)
-            GroupsPanel.Children.Add(new TextBlock
+        {
+            var okText = new TextBlock
             {
                 Text = "Замечаний нет — расписание чистое по всем проверкам.",
                 FontSize = 13, TextWrapping = TextWrapping.Wrap,
-                Foreground = (Brush)FindResource("BGood"),
-            });
+            };
+            if (TryFindResource("BGood") is not null)
+                okText.SetResourceReference(TextBlock.ForegroundProperty, "BGood");
+            GroupsPanel.Children.Add(okText);
+        }
     }
 
     private Border GroupCard(string title, List<string> items)
@@ -57,17 +61,21 @@ public partial class QualityDetailsWindow : Window
             Text = title, FontSize = 14, FontWeight = FontWeights.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
         });
-        head.Children.Add(new Border
+        var countText = new TextBlock
+        {
+            Text = items.Count.ToString(), FontSize = 11,
+        };
+        if (TryFindResource("BTextSoft") is not null)
+            countText.SetResourceReference(TextBlock.ForegroundProperty, "BTextSoft");
+        var countBadge = new Border
         {
             Style = (Style)FindResource("Badge"),
-            Background = (Brush)FindResource("BSubtle"),
             Margin = new Thickness(8, 0, 0, 0),
-            Child = new TextBlock
-            {
-                Text = items.Count.ToString(), FontSize = 11,
-                Foreground = (Brush)FindResource("BTextSoft"),
-            },
-        });
+            Child = countText,
+        };
+        if (TryFindResource("BSubtle") is not null)
+            countBadge.SetResourceReference(Border.BackgroundProperty, "BSubtle");
+        head.Children.Add(countBadge);
         sp.Children.Add(head);
         foreach (var s in items)
             sp.Children.Add(new TextBlock

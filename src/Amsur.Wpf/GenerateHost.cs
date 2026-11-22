@@ -17,6 +17,16 @@ public static class GenerateHost
         AppSession session,
         string modeName = "Стандарт")
     {
+        var (vm, orchestrator) = CreateOrchestrator(input, session, modeName);
+        var view = new Views.GenerateView(vm, orchestrator, session);
+        return (view, orchestrator);
+    }
+
+    public static (GenerateViewModel ViewModel, GenerationOrchestrator Orchestrator) CreateOrchestrator(
+        ProblemInput input,
+        AppSession session,
+        string modeName = "Стандарт")
+    {
         var mode = session.GenerateMode;
         var solver = new OrToolsSolver();
         var rs = session.QualityRules;
@@ -82,8 +92,14 @@ public static class GenerateHost
         }
         var orchestrator = new GenerationOrchestrator(Factory, run, stream, vm, acceptor: acceptor);
         orchestrator.Rules = rs;
+        orchestrator.CandidateAccepted += card =>
+        {
+            session.LastQuality = QualityRating.FromBreakdown(card.Candidate.Breakdown);
+            session.LastQualityLines = orchestrator.LastProblem is { } problem
+                ? QualityExplainer.Explain(problem, card.Candidate)
+                : card.QualityLines.ToList();
+        };
         vm.QualityProfileText = $"Профиль: {QualityHints.ProfileName(rs.ProfileName)} · Режим: {modeName}";
-        var view = new Views.GenerateView(vm, orchestrator, session);
-        return (view, orchestrator);
+        return (vm, orchestrator);
     }
 }

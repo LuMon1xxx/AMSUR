@@ -247,7 +247,7 @@ public sealed class GenerationOrchestrator
     public async Task<AcceptOutcome> AcceptAsync(CandidateCardModel? card, CancellationToken ct = default)
     {
         if (card is not { CanAccept: true })
-            return Fail("Принять можно только лучший вариант.");
+            return Fail("Этот вариант нельзя принять.");
         if (_lastProblem is null)
             return Fail("Нет данных генерации.");
         if (_acceptor is null)
@@ -265,6 +265,7 @@ public sealed class GenerationOrchestrator
             year, _lastProblem, c.Placements, $"Принят вариант {card.Rank} из Top-5",
             settings, ct);
         _vm.ActiveVersionText = $"Активна версия {accepted.Number}";
+        CandidateAccepted?.Invoke(card);
         return Ok($"Принято: версия {accepted.Number}, оценка Soft {breakdown.Total}.", accepted);
 
         AcceptOutcome Fail(string message)
@@ -280,6 +281,9 @@ public sealed class GenerationOrchestrator
     }
 
     public sealed record AcceptOutcome(bool Succeeded, string Message, AcceptedVersion? Accepted);
+
+    /// <summary>Вызывается после успешного принятия любого варианта из Top-5.</summary>
+    public event Action<CandidateCardModel>? CandidateAccepted;
 
     // Fire-and-forget из UI-события: исключение не должно теряться молча
     // (UnobservedTaskException при "исчезнувшем" await) — показываем текст в статусе.

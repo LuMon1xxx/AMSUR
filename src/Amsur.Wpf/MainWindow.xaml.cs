@@ -16,6 +16,7 @@ public partial class MainWindow : Window, IViewNavigator
     public DashboardView Dashboard { get; }
 
     private readonly Dictionary<string, Button> _navButtons = [];
+    private bool _suppressThemeEvent;
 
     public MainWindow()
     {
@@ -43,11 +44,17 @@ public partial class MainWindow : Window, IViewNavigator
     // ApplyTheme подменяет записи в Resources на лету — без перезапуска.
     private async void OnThemeChanged(object sender, RoutedEventArgs e)
     {
-        if (sender is not CheckBox box || !IsLoaded) return;
+        if (sender is not CheckBox box || !IsLoaded || _suppressThemeEvent) return;
         string want = box.IsChecked == true ? "dark" : "light";
         if (want == Session.ThemeName) return;
         try { await Session.SetThemeAsync(want); }
-        catch { return; }
+        catch
+        {
+            _suppressThemeEvent = true;
+            try { box.IsChecked = Session.ThemeName == "dark"; }
+            finally { _suppressThemeEvent = false; }
+            return;
+        }
         ((App)System.Windows.Application.Current).ApplyTheme(want);
     }
 

@@ -108,8 +108,46 @@ public sealed class AcceptFlowTests : IAsyncDisposable
         };
         var outcome = await orch.AcceptAsync(fake);
         Assert.False(outcome.Succeeded);
-        Assert.Contains("только лучший", outcome.Message);
+        Assert.Contains("нельзя принять", outcome.Message);
         Assert.Equal(0, await store.CountActiveVersionsAsync(year));
+    }
+
+    [Fact]
+    public async Task AcceptRank2Candidate_PersistsActive()
+    {
+        var year = Guid.NewGuid();
+        var store = new SqliteScheduleStore(Cs);
+        await store.InitializeAsync();
+        StreamingRun run = (p, ct, sink) =>
+        {
+            var pl1 = p.Occurrences.Select((o, i) => new PlacedLesson
+            {
+                OccurrenceId = o.Id, DayIndex = 0, SlotIndex = i + 1
+            }).ToList();
+            var pl2 = p.Occurrences.Select((o, i) => new PlacedLesson
+            {
+                OccurrenceId = o.Id, DayIndex = 1, SlotIndex = i + 1
+            }).ToList();
+            sink(new SolverIncumbent(pl1, 5, 1, 5, "B", 1));
+            sink(new SolverIncumbent(pl2, 10, 2, 10, "B", 2));
+            return Task.FromResult(new SolverResult(SolverStatus.Feasible, pl1, 0, 1, 10, 5, 0,
+                new Dictionary<string, long>(), [], new Dictionary<string, long>()));
+        };
+        var orch = new GenerationOrchestrator(_ => Tiny(year), run,
+            acceptor: new AcceptScheduleService(store));
+        await orch.RunAsync([11]);
+
+        Assert.True(orch.ViewModel.Top5.Cards.Count >= 2);
+        var rank2 = orch.ViewModel.Top5.Cards[1];
+        Assert.Equal(2, rank2.Rank);
+        Assert.True(rank2.CanAccept);
+
+        var outcome = await orch.AcceptAsync(rank2);
+        Assert.True(outcome.Succeeded);
+        Assert.Equal(1, await store.CountActiveVersionsAsync(year));
+        var active = await store.GetActiveAsync(year);
+        Assert.NotNull(active);
+        Assert.Contains("вариант 2", active!.Reason);
     }
 
     // --- 4. Битый вариант: validator-before-write, отказано ---

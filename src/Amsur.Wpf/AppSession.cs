@@ -347,6 +347,17 @@ public sealed class AppSession
         ScheduleHtmlExporter.ExportHtml(problem, active.Placements, fs);
     }
 
+    /// <summary>CSV-выгрузка активного расписания (UTF-8 с BOM, «;»).</summary>
+    public async Task ExportActiveCsvAsync(string path, CancellationToken ct = default)
+    {
+        var active = await GetActiveAsync(ct);
+        if (active is null)
+            throw new InvalidOperationException("Нет активного расписания — нечего выгружать.");
+        var problem = BuildProblem();
+        await using var fs = File.Create(path);
+        ScheduleCsvExporter.ExportCsv(problem, active.Placements, fs);
+    }
+
     /// <summary>A2: быстрый черновик из текущих данных (жадный старт, ~секунды,
     /// без генерации). Честные дыры — листом «Неназначенные», gate ослаблен (D-42).</summary>
     public async Task<(int Placed, int Total)> ExportDraftAsync(string path, CancellationToken ct = default)

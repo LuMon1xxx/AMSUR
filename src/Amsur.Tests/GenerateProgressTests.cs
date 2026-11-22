@@ -220,7 +220,7 @@ public sealed class GenerateProgressTests
         long min = archive.Members.Min(m => m.SoftTotal);
         Assert.Equal(min, panel.Best!.SoftTotal);
         Assert.True(panel.Cards[0].CanAccept);
-        Assert.All(panel.Cards.Skip(1), c => Assert.False(c.CanAccept));
+        Assert.All(panel.Cards, c => Assert.True(c.CanAccept));
     }
 
     // --- §13.10 StableKey across multi-seed: одинаковые размещения → один fingerprint ---

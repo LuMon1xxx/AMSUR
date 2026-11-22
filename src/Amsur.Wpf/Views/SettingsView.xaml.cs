@@ -26,6 +26,12 @@ public partial class SettingsView : UserControl
     private readonly List<(Guid Id, TextBox Box, int Min, int Max, string Label)> _entityBoxes = [];
     private readonly List<(string Code, TextBox Box)> _expertBoxes = [];
 
+    private static void Bind(FrameworkElement el, DependencyProperty prop, string key)
+    {
+        if (el.TryFindResource(key) is not null)
+            el.SetResourceReference(prop, key);
+    }
+
     public SettingsView(AppSession session)
     {
         _session = session;
@@ -102,29 +108,27 @@ public partial class SettingsView : UserControl
                 Text = o.Title, FontSize = 15, FontWeight = FontWeights.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
             });
-            head.Children.Add(new Border
+            var badgeText = new TextBlock
+            {
+                // B2: опасные — бейдж «СТРОГОЕ (по шаблону)», но настраиваются через подтверждение.
+                Text = o.IsStrict ? "СТРОГОЕ (по шаблону)" : "ПОЖЕЛАНИЕ", FontSize = 11,
+            };
+            Bind(badgeText, TextBlock.ForegroundProperty, o.IsStrict ? "BBad" : "BAccentText");
+            var badge = new Border
             {
                 Style = (Style)FindResource("Badge"),
-                Background = o.IsStrict
-                    ? new SolidColorBrush((Color)FindResource("CBadBg"))
-                    : (Brush)FindResource("BAccentSoft"),
                 Margin = new Thickness(8, 0, 0, 0),
-                Child = new TextBlock
-                {
-                    // B2: опасные — бейдж «СТРОГОЕ (по шаблону)», но настраиваются через подтверждение.
-                    Text = o.IsStrict ? "СТРОГОЕ (по шаблону)" : "ПОЖЕЛАНИЕ", FontSize = 11,
-                    Foreground = o.IsStrict
-                        ? new SolidColorBrush((Color)FindResource("CBad"))
-                        : new SolidColorBrush((Color)FindResource("CAccent")),
-                },
-            });
+                Child = badgeText,
+            };
+            Bind(badge, Border.BackgroundProperty, o.IsStrict ? "BBadBg" : "BAccentSoft");
+            head.Children.Add(badge);
             sp.Children.Add(head);
             var hint = new TextBlock
             {
                 Text = o.Hint, FontSize = 12,
-                Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
                 TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
             };
+            Bind(hint, TextBlock.ForegroundProperty, "BTextSoft");
             sp.Children.Add(hint);
             if (o.Tunable)
             {
@@ -163,10 +167,10 @@ public partial class SettingsView : UserControl
                 var num = new TextBlock
                 {
                     Text = $"({o.Weight})", FontSize = 12,
-                    Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
                     VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 0, 0),
                     Tag = o.Code + "|num",
                 };
+                Bind(num, TextBlock.ForegroundProperty, "BTextSoft");
                 row.Children.Add(slider);
                 row.Children.Add(level);
                 row.Children.Add(num);
@@ -178,15 +182,16 @@ public partial class SettingsView : UserControl
             }
             else
             {
-                sp.Children.Add(new TextBlock
+                var strictNote = new TextBlock
                 {
                     Text = o.IsStrict
                         ? "Обязательное правило: нарушение недопустимо. Настройкой не меняется."
                         : "",
                     FontSize = 12,
-                    Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
                     Margin = new Thickness(0, 6, 0, 0),
-                });
+                };
+                Bind(strictNote, TextBlock.ForegroundProperty, "BTextSoft");
+                sp.Children.Add(strictNote);
             }
             card.Child = sp;
             QualityPanel.Children.Add(card);
@@ -217,14 +222,16 @@ public partial class SettingsView : UserControl
         {
             Text = "Если идеал не найден", FontSize = 15, FontWeight = FontWeights.SemiBold,
         });
-        sp.Children.Add(new TextBlock
+        var draftDesc = new TextBlock
         {
             Text = "Строгий поиск может не уложиться в лимит времени. Тогда программа покажет черновик: " +
                 "лучшее, что удалось собрать, и добьёт остаток с послаблениями, отмеченными ниже. " +
                 "Черновик нельзя принять в базу, его можно только выгрузить и доделать руками.",
-            FontSize = 12, Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
+            FontSize = 12,
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
-        });
+        };
+        Bind(draftDesc, TextBlock.ForegroundProperty, "BTextSoft");
+        sp.Children.Add(draftDesc);
         _draftFallbackBox = new CheckBox
         {
             Content = "Собирать черновик автоматически",
@@ -425,12 +432,14 @@ public partial class SettingsView : UserControl
         {
             Text = "Приоритет выпускных", FontSize = 15, FontWeight = FontWeights.SemiBold,
         });
-        sp.Children.Add(new TextBlock
+        var prioDesc = new TextBlock
         {
             Text = "Мягкие штрафы 11-х и 9-х классов умножаются на вес — генератор бережёт их первыми. Выключено = все равны.",
-            FontSize = 12, Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
+            FontSize = 12,
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
-        });
+        };
+        Bind(prioDesc, TextBlock.ForegroundProperty, "BTextSoft");
+        sp.Children.Add(prioDesc);
         _gradePrioBox = new CheckBox
         {
             Content = "Учитывать приоритет выпускных", IsChecked = st.GradePriorityEnabled,
@@ -513,12 +522,14 @@ public partial class SettingsView : UserControl
         {
             Text = "Предупреждения", FontSize = 15, FontWeight = FontWeights.SemiBold,
         });
-        sp.Children.Add(new TextBlock
+        var warnDesc = new TextBlock
         {
             Text = "Перед ослаблением строгих правил и другими опасными изменениями программа спрашивает подтверждение. Шаблонная школа так не делает.",
-            FontSize = 12, Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
+            FontSize = 12,
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
-        });
+        };
+        Bind(warnDesc, TextBlock.ForegroundProperty, "BTextSoft");
+        sp.Children.Add(warnDesc);
         var box = new CheckBox
         {
             Content = "Показывать предупреждения об опасных изменениях",
@@ -622,14 +633,16 @@ public partial class SettingsView : UserControl
         {
             Text = "Перегрузка учителей", FontSize = 15, FontWeight = FontWeights.SemiBold,
         });
-        sp.Children.Add(new TextBlock
+        var overloadDesc = new TextBlock
         {
             Text = "Если учителям не хватает слотов (нехватка штата), движок поднимет дневной лимит " +
                 "ТОЛЬКО тем, чья недельная нагрузка не влезает в норму. Остальных не трогает. " +
                 "Действует на следующие генерации.",
-            FontSize = 12, Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
+            FontSize = 12,
             TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
-        });
+        };
+        Bind(overloadDesc, TextBlock.ForegroundProperty, "BTextSoft");
+        sp.Children.Add(overloadDesc);
         _overloadBox = new CheckBox
         {
             Content = "Разрешить перегрузку", IsChecked = st.AllowTeacherOverload,
@@ -674,9 +687,9 @@ public partial class SettingsView : UserControl
         _overloadStatus = new TextBlock
         {
             Text = OverloadStatusText(), FontSize = 12,
-            Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
             Margin = new Thickness(0, 6, 0, 0),
         };
+        Bind(_overloadStatus, TextBlock.ForegroundProperty, "BTextSoft");
         sp.Children.Add(_overloadStatus);
         card.Child = sp;
         TeachersPanel.Children.Add(card);
@@ -726,19 +739,26 @@ public partial class SettingsView : UserControl
         }
     }
 
-    private static TextBlock EmptyText(string s) => new()
+    private static TextBlock EmptyText(string s)
     {
-        Text = s, FontSize = 13,
-        Foreground = new SolidColorBrush(Color.FromRgb(0x6B, 0x72, 0x80)),
-        TextWrapping = TextWrapping.Wrap,
-    };
+        var tb = new TextBlock
+        {
+            Text = s, FontSize = 13, TextWrapping = TextWrapping.Wrap,
+        };
+        Bind(tb, TextBlock.ForegroundProperty, "BTextSoft");
+        return tb;
+    }
 
-    private static TextBlock SectionHint(string s) => new()
+    private static TextBlock SectionHint(string s)
     {
-        Text = s, FontSize = 12,
-        Foreground = new SolidColorBrush(Color.FromRgb(0x6B, 0x72, 0x80)),
-        TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
-    };
+        var tb = new TextBlock
+        {
+            Text = s, FontSize = 12,
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8),
+        };
+        Bind(tb, TextBlock.ForegroundProperty, "BTextSoft");
+        return tb;
+    }
 
     private void AddEntityRow(StackPanel panel, string title, string what, Guid id,
         int cur, int min, int max, Action<int> apply)
@@ -795,12 +815,13 @@ public partial class SettingsView : UserControl
         btns.Children.Add(imp);
         ExpertPanel.Children.Add(btns);
         // P0-5: JSON-превью текущих правок текстом (UI-only, честно: пусто = пресет без правок).
-        ExpertPanel.Children.Add(new TextBlock
+        var jsonTitle = new TextBlock
         {
             Text = "Текущие правки (JSON):", FontSize = 12,
-            Foreground = new SolidColorBrush((Color)FindResource("CTextSoft")),
             Margin = new Thickness(0, 12, 0, 4),
-        });
+        };
+        Bind(jsonTitle, TextBlock.ForegroundProperty, "BTextSoft");
+        ExpertPanel.Children.Add(jsonTitle);
         _jsonPreview = new TextBox
         {
             IsReadOnly = true, AcceptsReturn = true, MaxLines = 8,
@@ -1291,8 +1312,6 @@ public partial class SettingsView : UserControl
     private void Say(string text, bool isError)
     {
         MessageText.Text = text;
-        MessageText.Foreground = isError
-            ? new SolidColorBrush((Color)FindResource("CBad"))
-            : new SolidColorBrush((Color)FindResource("CGood"));
+        Bind(MessageText, TextBlock.ForegroundProperty, isError ? "BBad" : "BGood");
     }
 }

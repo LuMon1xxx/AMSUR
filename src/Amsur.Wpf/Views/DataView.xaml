@@ -3,12 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:wpf="clr-namespace:Amsur.Wpf"
              Background="{DynamicResource BBg}">
-  <!-- P-D3: данные как view (контент из SchoolDataWindow 1-в-1, кнопка «Закрыть» убрана). -->
-  <DockPanel Margin="20" TextElement.Foreground="{DynamicResource BText}">
+  <DockPanel Margin="24" TextElement.Foreground="{DynamicResource BText}">
     <StackPanel DockPanel.Dock="Top">
       <DockPanel>
         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-          <TextBlock Style="{StaticResource TH1}" FontSize="20" Text="Школа и данные"/>
+          <TextBlock Style="{StaticResource TH1}" Text="Школа и данные"/>
           <TextBlock x:Name="SummaryText" Style="{StaticResource THint}" Margin="0,4,0,0" Text="Не загружены"/>
         </StackPanel>
         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
@@ -17,15 +16,15 @@
           <TextBlock Text="Уроков:" VerticalAlignment="Center"/>
           <TextBox x:Name="SlotsBox" Text="8" Width="48" Padding="4,2" VerticalContentAlignment="Center" Margin="6,0,10,0"/>
           <Button Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Click="OnTemplateClick"/>
-          <Button Content="Загрузить Excel" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0" Padding="12,7" FontSize="13" Click="OnImportClick"/>
-          <Button x:Name="DemoBtn" x:FieldModifier="public" Content="Демо" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Padding="10,4"
+          <Button Content="Загрузить Excel" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0" Click="OnImportClick"/>
+          <Button x:Name="DemoBtn" x:FieldModifier="public" Content="Демо" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0"
                   ToolTip="Загрузить маленькую демо-школу (6 классов) — попробовать без своего файла" Click="OnDemoClick"/>
-          <Button Content="Применить сетку" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Padding="10,4"
+          <Button Content="Применить сетку" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0"
                   ToolTip="Применить дни и уроки к текущим данным (без Excel)" Click="OnGridApplyClick"/>
         </StackPanel>
       </DockPanel>
       <Border x:Name="ErrorCard" x:FieldModifier="public" Style="{StaticResource Card}" Margin="0,12,0,0"
-              Background="{DynamicResource BBadBg}" Visibility="Collapsed">
+              Background="{DynamicResource BBadBg}" BorderBrush="{DynamicResource BBad}" Visibility="Collapsed">
         <StackPanel>
           <TextBlock Text="Данные не приняты — что исправить:" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource BBad}"/>
           <ItemsControl x:Name="ErrorList" x:FieldModifier="public" Margin="0,6,0,0">
@@ -39,49 +38,53 @@
       </Border>
     </StackPanel>
 
-    <Grid Margin="0,12,0,0">
+    <Grid Margin="0,14,0,0">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="200"/>
+        <ColumnDefinition Width="232"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
-      <Border Style="{StaticResource Card}" Padding="8" Margin="0,0,12,0">
-        <StackPanel>
-          <TextBlock Text="СПРАВОЧНИКИ" Style="{StaticResource THCaption}" Margin="8,4,8,6"/>
-          <ListBox x:Name="TabList" SelectionChanged="OnTabChanged" BorderThickness="0" Background="Transparent">
-            <ListBoxItem x:Name="TabLoad" Content="Нагрузка" IsSelected="True"/>
-            <ListBoxItem x:Name="TabHours" Content="Часы"/>
-            <ListBoxItem x:Name="TabClasses" Content="Классы"/>
-            <ListBoxItem x:Name="TabTeachers" Content="Учителя"/>
-            <ListBoxItem x:Name="TabSubjects" Content="Предметы"/>
-            <ListBoxItem x:Name="TabRooms" Content="Кабинеты"/>
-            <ListBoxItem x:Name="TabGroups" Content="Подгруппы"/>
-            <ListBoxItem x:Name="TabCommon" Content="Общие уроки"/>
-          </ListBox>
-          <Border Style="{StaticResource Badge}" Background="{DynamicResource BAccentSoft}" Margin="8,12,8,4">
-            <TextBlock Style="{StaticResource THCaption}" TextWrapping="Wrap"
-                       Text="Можно и без Excel: добавьте/измените строки здесь или загрузите Excel пачкой. Правки всех вкладок сохраняет одна кнопка «Сохранить изменения»."/>
-          </Border>
-          <Button x:Name="SaveAllBtn" x:FieldModifier="public" Content="Сохранить изменения" Style="{StaticResource BtnPrimary}" Margin="8,8,8,0"
-                  Padding="10,6" Click="OnSaveAllClick"
-                  ToolTip="Сохранить правки всех вкладок сразу: классы, часы, учителя, предметы, кабинеты, общий урок"/>
-        </StackPanel>
+      <Border Style="{StaticResource Card}" Padding="10" Margin="0,0,14,0">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Bottom">
+            <Border Style="{StaticResource Badge}" Background="{DynamicResource BAccentSoft}"
+                    BorderBrush="{DynamicResource BAccentBorder}" BorderThickness="1"
+                    Padding="10,8" Margin="4,10,4,8">
+              <TextBlock Style="{StaticResource THCaption}" TextWrapping="Wrap"
+                         Text="Можно и без Excel: добавляйте строки здесь. Правки всех вкладок сохраняет кнопка ниже."/>
+            </Border>
+            <Button x:Name="SaveAllBtn" x:FieldModifier="public" Content="Сохранить изменения" Style="{StaticResource BtnPrimary}"
+                    Margin="4,0,4,2" Padding="12,8" Click="OnSaveAllClick"
+                    ToolTip="Сохранить правки всех вкладок сразу: классы, часы, учителя, предметы, кабинеты, общий урок"/>
+          </StackPanel>
+          <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="СПРАВОЧНИКИ" Style="{StaticResource THCaption}" FontWeight="SemiBold" Margin="8,4,8,6"/>
+            <ListBox x:Name="TabList" SelectionChanged="OnTabChanged" BorderThickness="0" Background="Transparent">
+              <ListBoxItem x:Name="TabLoad" Content="Нагрузка" IsSelected="True"/>
+              <ListBoxItem x:Name="TabHours" Content="Часы"/>
+              <ListBoxItem x:Name="TabClasses" Content="Классы"/>
+              <ListBoxItem x:Name="TabTeachers" Content="Учителя"/>
+              <ListBoxItem x:Name="TabSubjects" Content="Предметы"/>
+              <ListBoxItem x:Name="TabRooms" Content="Кабинеты"/>
+              <ListBoxItem x:Name="TabGroups" Content="Подгруппы"/>
+              <ListBoxItem x:Name="TabCommon" Content="Общие уроки"/>
+            </ListBox>
+          </StackPanel>
+        </DockPanel>
       </Border>
 
       <DockPanel Grid.Column="1">
-        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8" x:Name="LoadToolbar" LastChildFill="False">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10" x:Name="LoadToolbar" LastChildFill="False">
           <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-            <TextBlock Text="Поиск:" VerticalAlignment="Center" Margin="0,0,6,0"
-                       ToolTip="Фильтр по классу, предмету или учителю"/>
-            <TextBox x:Name="SearchBox" Width="280" Margin="0,0,8,0" TextChanged="OnFilterChanged"
+            <TextBox x:Name="SearchBox" Width="290" Margin="0,0,8,0" TextChanged="OnFilterChanged"
+                     wpf:InputHints.Placeholder="Поиск по классу, предмету или учителю…"
                      ToolTip="Поиск по классу, предмету или учителю"/>
-            <ComboBox x:Name="ClassFilterBox" Width="160" SelectionChanged="OnFilterChanged"
+            <ComboBox x:Name="ClassFilterBox" Width="170" SelectionChanged="OnFilterChanged"
                       ToolTip="Показать только один класс"/>
           </StackPanel>
-          <!-- P3: ручной ввод строк нагрузки -->
           <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-            <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnAddClick"/>
-            <Button Content="Изменить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnEditClick"/>
-            <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnDeleteClick"/>
+            <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Click="OnAddClick"/>
+            <Button Content="Изменить" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Click="OnEditClick"/>
+            <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Click="OnDeleteClick"/>
           </StackPanel>
         </DockPanel>
 

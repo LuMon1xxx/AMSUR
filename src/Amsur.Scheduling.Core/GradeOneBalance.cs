@@ -132,8 +132,8 @@ public static class GradeOneBalance
             if (q.ClassId == occ.ClassId) { why = "класс занят"; return false; } // whole/sub одного класса
         }
         // Кабинет: свой если свободен, иначе любой свободный (по имени, детерминировано).
-        Guid? room = PickFreeRoom(problem, occById, pos, occ, dstDay, append, cand.RoomId, out why);
-        if (why is not null) return false;
+        Guid? room = PickFreeRoom(problem, occById, pos, occ, dstDay, append, cand.RoomId, out string? roomWhy);
+        if (roomWhy is not null) { why = roomWhy; return false; }
         // Дневной лимит учителя.
         if (problem.Teachers.TryGetValue(occ.TeacherId, out var t))
         {

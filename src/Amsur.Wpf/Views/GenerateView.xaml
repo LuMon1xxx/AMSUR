@@ -2,33 +2,41 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Amsur.Wpf">
-  <!-- P-D3: генерация как view (контент из GenerateWindow 1-в-1).
-       Жизненный цикл оркестратора — в code-behind (старт на Loaded, стоп на Unloaded). -->
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
   <StackPanel Margin="24" MaxWidth="1200" TextElement.Foreground="{DynamicResource BText}">
-    <!-- Верх: заголовок + честный статус (без ложного процента) -->
+    <!-- Верх: заголовок + статус + режимы -->
     <Border Style="{DynamicResource Card}">
       <StackPanel>
         <StackPanel Orientation="Horizontal">
-          <TextBlock Text="{Binding Title}" Style="{DynamicResource TH1}" FontSize="20" VerticalAlignment="Center"/>
+          <TextBlock Text="{Binding Title}" Style="{DynamicResource TH1}" VerticalAlignment="Center"/>
           <Border Style="{DynamicResource Badge}" Background="{DynamicResource BAccentSoft}"
                   Margin="10,0,0,0" VerticalAlignment="Center">
-            <TextBlock Text="поиск решения" FontSize="11" Foreground="{DynamicResource BAccent}"/>
+            <TextBlock FontSize="11" Foreground="{DynamicResource BAccentText}">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                  <Setter Property="Text" Value="поиск завершён"/>
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding CanStop}" Value="True">
+                      <Setter Property="Text" Value="идёт поиск"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
           </Border>
         </StackPanel>
         <TextBlock Text="{Binding StatusText}" FontSize="15" Margin="0,8,0,0" TextWrapping="Wrap"/>
         <TextBlock Text="{Binding QualityProfileText}" FontSize="13" Foreground="{DynamicResource BTextSoft}" Margin="0,4,0,0"/>
-        <!-- Режимы: клик по карточке выбирает режим для перезапуска, честная производная BudgetSeconds -->
         <TextBlock Text="Режимы (клик по карточке — выбрать):" Style="{DynamicResource THCaption}" Margin="0,12,0,6"/>
         <UniformGrid x:Name="ModeStrip" Columns="5" Rows="1"/>
       </StackPanel>
     </Border>
 
-    <!-- Стадии VM: 4 шага, текущая выделяется (логика имён — из VM, не переименовываем) -->
-    <ItemsControl ItemsSource="{Binding Stages}" Margin="0,12,0,0">
+    <!-- Стадии VM: 4 шага -->
+    <ItemsControl ItemsSource="{Binding Stages}" Margin="-4,12,-4,0">
       <ItemsControl.ItemTemplate>
         <DataTemplate>
-          <Border x:Name="StageFrame" CornerRadius="8" Padding="12,8" Margin="0,0,8,0"
+          <Border x:Name="StageFrame" CornerRadius="8" Padding="12,8" Margin="4,0,4,0"
                   Background="{DynamicResource BCard}" BorderBrush="{DynamicResource BBorder}" BorderThickness="1">
             <StackPanel Orientation="Horizontal">
               <Border x:Name="StageDot" CornerRadius="10" Width="20" Height="20"
@@ -44,18 +52,18 @@
           <DataTemplate.Triggers>
             <DataTrigger Binding="{Binding IsCurrent}" Value="True">
               <Setter TargetName="StageFrame" Property="BorderBrush" Value="{DynamicResource BAccent}"/>
-              <Setter TargetName="StageFrame" Property="BorderThickness" Value="2"/>
+              <Setter TargetName="StageFrame" Property="BorderThickness" Value="1.5"/>
               <Setter TargetName="StageFrame" Property="Background" Value="{DynamicResource BAccentSoft}"/>
-              <Setter TargetName="StageText" Property="FontWeight" Value="Bold"/>
-              <Setter TargetName="StageText" Property="Foreground" Value="{DynamicResource BAccent}"/>
+              <Setter TargetName="StageText" Property="FontWeight" Value="SemiBold"/>
+              <Setter TargetName="StageText" Property="Foreground" Value="{DynamicResource BAccentText}"/>
               <Setter TargetName="StageDot" Property="Background" Value="{DynamicResource BAccent}"/>
               <Setter TargetName="StageMark" Property="Text" Value="→"/>
-              <Setter TargetName="StageMark" Property="Foreground" Value="White"/>
+              <Setter TargetName="StageMark" Property="Foreground" Value="{DynamicResource BAccentForeground}"/>
             </DataTrigger>
             <DataTrigger Binding="{Binding IsDone}" Value="True">
               <Setter TargetName="StageDot" Property="Background" Value="{DynamicResource BGood}"/>
               <Setter TargetName="StageMark" Property="Text" Value="✓"/>
-              <Setter TargetName="StageMark" Property="Foreground" Value="White"/>
+              <Setter TargetName="StageMark" Property="Foreground" Value="{DynamicResource BAccentForeground}"/>
               <Setter TargetName="StageText" Property="Foreground" Value="{DynamicResource BText}"/>
             </DataTrigger>
           </DataTemplate.Triggers>
@@ -68,7 +76,7 @@
       </ItemsControl.ItemsPanel>
     </ItemsControl>
 
-    <!-- Метрики: только то, что отдаёт VM (без итераций/ID/памяти) -->
+    <!-- Метрики -->
     <UniformGrid Columns="4" Rows="1" Margin="0,12,0,0">
       <Border Style="{DynamicResource Card}" Margin="0,0,6,0">
         <StackPanel>
@@ -80,7 +88,7 @@
         <StackPanel>
           <TextBlock Text="ЛУЧШЕЕ СЕЙЧАС" Style="{DynamicResource THCaption}"/>
           <TextBlock Text="{Binding BestText}" FontSize="14" FontWeight="SemiBold" Margin="0,4,0,0"
-                     Foreground="{DynamicResource BAccent}" TextWrapping="Wrap"/>
+                     Foreground="{DynamicResource BAccentText}" TextWrapping="Wrap"/>
         </StackPanel>
       </Border>
       <Border Style="{DynamicResource Card}" Margin="3,0,3,0">
@@ -97,95 +105,130 @@
       </Border>
     </UniformGrid>
 
-    <!-- Прогресс (честный: неопределённый, пока идёт) + Остановить -->
+    <!-- Прогресс + Стоп/Перезапуск -->
     <Border Style="{DynamicResource Card}" Margin="0,12,0,0">
       <StackPanel>
-        <ProgressBar x:Name="RunProgress" Height="8" Minimum="0" Maximum="1"
+        <ProgressBar x:Name="RunProgress" Height="6" Minimum="0" Maximum="1"
                      IsIndeterminate="{Binding CanStop}" Foreground="{DynamicResource BAccent}"
                      Background="{DynamicResource BSubtle}" BorderThickness="0"/>
         <DockPanel Margin="0,10,0,0">
           <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="12,0,0,0" VerticalAlignment="Center">
-            <Button x:Name="StopButton" Content="⦸  Остановить расчёт" Style="{DynamicResource BtnSecondary}"
-                    Padding="16,8" Foreground="{DynamicResource BBad}"
-                    IsEnabled="{Binding CanStop}" Click="OnStopClick"/>
-            <!-- Перезапуск доступен, когда расчёт не идёт (CanStop == false) -->
+            <Button x:Name="StopButton" Style="{DynamicResource BtnSecondary}"
+                    Padding="14,7" IsEnabled="{Binding CanStop}" Click="OnStopClick">
+              <TextBlock Text="⦸  Остановить расчёт">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Foreground" Value="{DynamicResource BTextMuted}"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding CanStop}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource BBad}"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </Button>
             <Button x:Name="RestartButton" Content="↻  Перезапустить расчёт" Style="{DynamicResource BtnSecondary}"
-                    Padding="16,8" Margin="8,0,0,0" IsEnabled="False" Click="OnRestartClick"/>
+                    Padding="14,7" Margin="8,0,0,0" IsEnabled="False" Click="OnRestartClick"/>
           </StackPanel>
           <TextBlock Text="{Binding RunStateText}" Style="{DynamicResource THint}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap"/>
         </DockPanel>
       </StackPanel>
     </Border>
 
-    <!-- Ход улучшения — только полученные события -->
-    <TextBlock Text="Ход улучшения" Style="{DynamicResource TH2}" Margin="0,20,0,8"/>
+    <!-- График -->
+    <TextBlock Text="Ход улучшения" Style="{DynamicResource TH2}" Margin="0,18,0,8"/>
     <Border Style="{DynamicResource Card}">
       <local:TrajectoryChart x:Name="Chart"/>
     </Border>
 
-    <!-- Top-5: только реальные карточки, без пустых -->
-    <DockPanel Margin="0,20,0,8">
+    <!-- Top-5 вариантов: любой можно принять или открыть в редакторе -->
+    <DockPanel Margin="0,18,0,8">
       <TextBlock Text="{Binding Top5.HeaderText}" Style="{DynamicResource TH2}" VerticalAlignment="Center"/>
       <TextBlock Style="{DynamicResource THCaption}" DockPanel.Dock="Right" VerticalAlignment="Center"
-                 Margin="16,0,0,0" Text="сортировка — по качеству (Soft)"/>
+                 Margin="16,0,0,0" Text="сортировка — по минимуму окон и качеству (Soft)"/>
     </DockPanel>
     <ItemsControl ItemsSource="{Binding Top5.Cards}">
       <ItemsControl.ItemTemplate>
         <DataTemplate>
-          <Border Style="{DynamicResource Card}" Margin="0,0,0,8">
+          <Border Style="{DynamicResource Card}" Margin="0,0,0,10">
             <StackPanel>
               <DockPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
-                  <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                  <TextBlock Text="{Binding Title}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
                   <Border Style="{DynamicResource Badge}" Background="{DynamicResource BAccentSoft}"
                           Margin="8,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding Badge}" FontSize="11" Foreground="{DynamicResource BAccent}"/>
+                    <TextBlock Text="{Binding Badge}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource BAccentText}"/>
                   </Border>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                   <TextBlock Text="{Binding SoftText}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                  <TextBlock Text="{Binding HardText}" FontSize="12" Foreground="{DynamicResource BTextSoft}"
-                             Margin="8,0,0,0" VerticalAlignment="Center"/>
+                  <Border Style="{DynamicResource Badge}" Background="{DynamicResource BGoodBg}"
+                          Margin="8,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding HardText}" FontSize="11" Foreground="{DynamicResource BGood}"/>
+                  </Border>
                 </StackPanel>
               </DockPanel>
-              <TextBlock Text="{Binding QualitySummary}" FontSize="13" FontStyle="Italic" Margin="0,6,0,0" TextWrapping="Wrap"/>
-              <TextBlock Text="Почему такая оценка:" FontSize="12" Foreground="{DynamicResource BTextSoft}" Margin="0,6,0,0">
-                <TextBlock.Style>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="Visibility" Value="Visible"/>
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding QualityLines.Count}" Value="0">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </TextBlock.Style>
-              </TextBlock>
-              <!-- Список объяснений бывает на сотни строк (по учителям и дням):
-                   без ограничения он выталкивал кнопки «Открыть/Принять» далеко вниз.
-                   Прокрутка внутри блока держит карточку компактной. -->
-              <ScrollViewer MaxHeight="180" VerticalScrollBarVisibility="Auto"
-                            HorizontalScrollBarVisibility="Disabled" Margin="0,2,0,0">
-                <ItemsControl ItemsSource="{Binding QualityLines}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                      <TextBlock Text="{Binding}" FontSize="13" Foreground="{DynamicResource BTextSoft}" TextWrapping="Wrap"/>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </ScrollViewer>
-              <ItemsControl ItemsSource="{Binding DifferenceLines}" Margin="0,4,0,0">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <TextBlock Text="{Binding}" FontSize="13" TextWrapping="Wrap"/>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
+
+              <TextBlock Text="{Binding QualitySummary}" FontSize="13" FontWeight="Medium"
+                         Foreground="{DynamicResource BText}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+
+              <Border Background="{DynamicResource BSubtle}" BorderBrush="{DynamicResource BBorder}"
+                      BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,8,0,0">
+                <StackPanel>
+                  <TextBlock Text="Почему такая оценка:" FontSize="11" FontWeight="SemiBold"
+                             Foreground="{DynamicResource BTextSoft}" Margin="0,0,0,4">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding QualityLines.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                  <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto"
+                                HorizontalScrollBarVisibility="Disabled" Margin="0,0,0,2">
+                    <ItemsControl ItemsSource="{Binding QualityLines}" Padding="0,0,0,4">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding}" FontSize="12" Foreground="{DynamicResource BTextSoft}"
+                                     Margin="0,1,0,1" TextWrapping="Wrap"/>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </ScrollViewer>
+                  <Border Height="1" Background="{DynamicResource BBorder}" Margin="0,4,0,6">
+                    <Border.Style>
+                      <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Visible"/>
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding QualityLines.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                          </DataTrigger>
+                          <DataTrigger Binding="{Binding DifferenceLines.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </Border.Style>
+                  </Border>
+                  <ItemsControl ItemsSource="{Binding DifferenceLines}" Margin="0,2,0,0">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding}" FontSize="12" Foreground="{DynamicResource BText}"
+                                   Margin="0,1,0,1" TextWrapping="Wrap"/>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+
               <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                <Button Content="Открыть в редакторе" Style="{DynamicResource BtnSecondary}" Tag="{Binding}"
-                        Click="OnOpenClick"/>
                 <Button Content="✓  Принять этот вариант" FontSize="13"
-                        Padding="12,7" Margin="8,0,0,0" Tag="{Binding}" Click="OnAcceptClick">
+                        Margin="0,0,8,0" Tag="{Binding}" Click="OnAcceptClick">
                   <Button.Style>
                     <Style TargetType="Button" BasedOn="{StaticResource BtnPrimary}">
                       <Setter Property="Visibility" Value="Collapsed"/>
@@ -197,6 +240,8 @@
                     </Style>
                   </Button.Style>
                 </Button>
+                <Button Content="Открыть в редакторе" Style="{DynamicResource BtnSecondary}" Tag="{Binding}"
+                        Click="OnOpenClick"/>
               </StackPanel>
             </StackPanel>
           </Border>
@@ -204,14 +249,14 @@
       </ItemsControl.ItemTemplate>
     </ItemsControl>
 
-    <!-- Черновик-фолбэк (16.10.2026): карточка строится в code-behind по VM.HasDraft -->
+    <!-- Черновик-фолбэк -->
     <StackPanel x:Name="DraftPanel" Margin="0,12,0,0"/>
 
     <!-- Итог приёмки + активная версия -->
     <TextBlock Text="{Binding AcceptResultText}" FontSize="14" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
     <TextBlock Text="{Binding ActiveVersionText}" FontSize="13" Foreground="{DynamicResource BTextSoft}"/>
 
-    <!-- Diagnostics: свернута по умолчанию, имена сохранены -->
+    <!-- Diagnostics -->
     <Border Style="{DynamicResource Card}" Margin="0,12,0,0">
       <Expander Header="Подробности генерации" IsExpanded="{Binding DiagnosticsExpanded}" FontSize="13">
         <StackPanel Margin="8,8,0,0">

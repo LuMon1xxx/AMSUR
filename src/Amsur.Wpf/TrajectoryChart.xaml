@@ -2,11 +2,10 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Height="190">
-  <Border BorderThickness="1" BorderBrush="#CCC" CornerRadius="6" Padding="8">
+  <Border BorderThickness="1" BorderBrush="{DynamicResource BBorder}" Background="{DynamicResource BSubtle}" CornerRadius="6" Padding="8">
     <Grid>
-      <!-- Пустое состояние (§: мало данных — показываем честно) -->
       <TextBlock x:Name="EmptyText" Text="Пока нет данных — идёт сбор событий…"
-                 FontSize="12" Opacity="0.6" VerticalAlignment="Center" HorizontalAlignment="Center"
+                 FontSize="12" Foreground="{DynamicResource BTextMuted}" VerticalAlignment="Center" HorizontalAlignment="Center"
                  TextWrapping="Wrap" TextAlignment="Center"/>
       <Canvas x:Name="Plot" Visibility="Collapsed" ClipToBounds="True"/>
     </Grid>

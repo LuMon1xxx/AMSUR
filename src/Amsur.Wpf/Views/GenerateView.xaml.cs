@@ -93,19 +93,20 @@ public partial class GenerateView : UserControl
         catch (Exception ex)
         {
             _vm.CanStop = false; // расчёт не идёт — «Остановить» не должна висеть активной
-            await Dispatcher.InvokeAsync(() => MessageBox.Show(
+            await Dispatcher.InvokeAsync(() => ShowMsg(
                 "Генерация прервана ошибкой: " + ex.Message,
                 "АМСУР", MessageBoxButton.OK, MessageBoxImage.Error));
         }
         finally
         {
             _running = false;
-            _ticker.Stop();
-            _vm.ElapsedText = $"Прошло: {(int)_wall.Elapsed.TotalSeconds} с";
-            Chart.Render(BuildLiveSnapshot());
-            // Расчёт + черновик закончены — перезапуск снова доступен.
-            // Через Dispatcher: finally может выполниться не на UI-потоке.
-            _ = Dispatcher.InvokeAsync(() => RestartButton.IsEnabled = !_vm.CanStop);
+            _ = Dispatcher.InvokeAsync(() =>
+            {
+                _ticker.Stop();
+                _vm.ElapsedText = $"Прошло: {(int)_wall.Elapsed.TotalSeconds} с";
+                Chart.Render(BuildLiveSnapshot());
+                RestartButton.IsEnabled = !_vm.CanStop;
+            });
         }
     }
 
@@ -143,6 +144,12 @@ public partial class GenerateView : UserControl
             Dispatcher.InvokeAsync(RefreshDraft);
     }
 
+    private static void Bind(FrameworkElement el, DependencyProperty prop, string key)
+    {
+        if (el.TryFindResource(key) is not null)
+            el.SetResourceReference(prop, key);
+    }
+
     // Черновик: честная карточка «идеал не найден, вот лучшее» + выгрузка.
     // Строится в code-behind (в проекте нет value-конвертеров) — видно только при HasDraft.
     private void RefreshDraft()
@@ -160,25 +167,28 @@ public partial class GenerateView : UserControl
             Text = "Черновик: идеальное расписание не найдено",
             FontSize = 15, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center,
         });
-        var badge = new System.Windows.Controls.Border { Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-        if (TryFindResource("Badge") is Style badgeStyle) badge.Style = badgeStyle;
-        badge.Background = TryFindResource("BAccentSoft") as Brush;
-        badge.Child = new System.Windows.Controls.TextBlock
+        var badgeText = new System.Windows.Controls.TextBlock { Text = "не для приёмки", FontSize = 11 };
+        Bind(badgeText, TextBlock.ForegroundProperty, "BAccentText");
+        var badge = new System.Windows.Controls.Border
         {
-            Text = "не для приёмки", FontSize = 11,
-            Foreground = TryFindResource("BAccent") as Brush,
+            Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center,
+            Child = badgeText,
         };
+        if (TryFindResource("Badge") is Style badgeStyle) badge.Style = badgeStyle;
+        Bind(badge, System.Windows.Controls.Border.BackgroundProperty, "BAccentSoft");
         head.Children.Add(badge);
         sp.Children.Add(head);
 
-        sp.Children.Add(new System.Windows.Controls.TextBlock
+        var descText = new System.Windows.Controls.TextBlock
         {
             Text = "Это не принятое расписание: строгий поиск не нашёл полного варианта, " +
                 "показано лучшее, что удалось собрать. Нарушения перечислены ниже, " +
                 "такое расписание можно только выгрузить и доделать руками.",
-            FontSize = 12, Foreground = TryFindResource("BTextSoft") as Brush,
-            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
-        });
+            FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0),
+        };
+        Bind(descText, TextBlock.ForegroundProperty, "BTextSoft");
+        sp.Children.Add(descText);
+
         sp.Children.Add(new System.Windows.Controls.TextBlock
         {
             Text = _vm.DraftText, FontSize = 13, TextWrapping = TextWrapping.Wrap,
@@ -196,13 +206,16 @@ public partial class GenerateView : UserControl
         btn.Click += OnExportDraftClick;
         sp.Children.Add(btn);
         if (!_vm.DraftExportable)
-            sp.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            var errNote = new System.Windows.Controls.TextBlock
             {
                 Text = "Выгрузка недоступна: в черновике есть нарушения, которые школа не разрешала. " +
                     "Разрешить их можно в «Настройках» → «Если идеал не найден».",
-                FontSize = 12, Foreground = TryFindResource("CBad") as Brush,
-                TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0),
-            });
+                FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0),
+            };
+            Bind(errNote, TextBlock.ForegroundProperty, "BBad");
+            sp.Children.Add(errNote);
+        }
 
         card.Child = sp;
         DraftPanel.Children.Add(card);
@@ -219,12 +232,12 @@ public partial class GenerateView : UserControl
         try
         {
             await _session.ExportDraftAsync(dlg.FileName, _orch.LastProblem, _orch.LastDraft);
-            MessageBox.Show($"Черновик выгружен: {dlg.FileName}", "АМСУР",
+            ShowMsg($"Черновик выгружен: {dlg.FileName}", "АМСУР",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Черновик не выгружен: " + ex.Message, "АМСУР",
+            ShowMsg("Черновик не выгружен: " + ex.Message, "АМСУР",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -235,14 +248,7 @@ public partial class GenerateView : UserControl
         _modeCards.Clear();
         foreach (var m in GenerateModes.All)
         {
-            string limit = m.Code switch
-            {
-                "STANDARD" => "12 с · большая школа до 30",
-                "EXPERT" => "12 с · большая школа до 30",
-                _ => m.BudgetSeconds >= 60
-                    ? $"лимит ~{m.BudgetSeconds / 60:0} мин"
-                    : $"лимит ~{m.BudgetSeconds:0} сек",
-            };
+            var ui = UiFormat.ModeDisplay(m.Code);
             var card = new System.Windows.Controls.Border
             {
                 Padding = new Thickness(10),
@@ -253,17 +259,38 @@ public partial class GenerateView : UserControl
             };
             if (TryFindResource("Card") is Style cardStyle) card.Style = cardStyle;
             var sp = new System.Windows.Controls.StackPanel();
-            sp.Children.Add(new System.Windows.Controls.TextBlock
+            var titleRow = new WrapPanel { Orientation = Orientation.Horizontal };
+            titleRow.Children.Add(new System.Windows.Controls.TextBlock
             {
-                Text = m.Name, FontSize = 12, FontWeight = FontWeights.SemiBold,
+                Text = ui.Title, FontSize = 12, FontWeight = FontWeights.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            if (ui.IsRecommended)
+            {
+                var badgeText = new System.Windows.Controls.TextBlock
+                {
+                    Text = "Рекомендуем", FontSize = 10, FontWeight = FontWeights.SemiBold,
+                };
+                Bind(badgeText, TextBlock.ForegroundProperty, "BAccentForeground");
+                var badge = new System.Windows.Controls.Border
+                {
+                    Style = TryFindResource("Badge") as Style,
+                    Padding = new Thickness(6, 1, 6, 1),
+                    Margin = new Thickness(6, 0, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Child = badgeText,
+                };
+                Bind(badge, Border.BackgroundProperty, "BAccent");
+                titleRow.Children.Add(badge);
+            }
+            sp.Children.Add(titleRow);
+            var limitText = new System.Windows.Controls.TextBlock
+            {
+                Text = ui.GenerateTimeLabel, FontSize = 11, Margin = new Thickness(0, 2, 0, 0),
                 TextWrapping = TextWrapping.Wrap,
-            });
-            sp.Children.Add(new System.Windows.Controls.TextBlock
-            {
-                Text = limit, FontSize = 11,
-                Foreground = TryFindResource("BTextSoft") as Brush,
-                Margin = new Thickness(0, 2, 0, 0),
-            });
+            };
+            Bind(limitText, TextBlock.ForegroundProperty, "BTextSoft");
+            sp.Children.Add(limitText);
             card.Child = sp;
             // Клик по карточке — смена режима без возврата на главную.
             card.MouseLeftButtonUp += (_, _) => SelectMode(m.Code);
@@ -287,10 +314,16 @@ public partial class GenerateView : UserControl
         foreach (var (code, card) in _modeCards)
         {
             bool on = code == current;
-            card.BorderBrush = (TryFindResource(on ? "BAccent" : "BBorder") as Brush) ?? Brushes.Transparent;
-            card.BorderThickness = new Thickness(on ? 2 : 1);
-            card.Background = (TryFindResource(on ? "BAccentSoft" : "BCard") as Brush)
-                ?? (on ? Brushes.WhiteSmoke : Brushes.Transparent);
+            card.BorderThickness = new Thickness(on ? 1.5 : 1);
+            if (card.TryFindResource(on ? "BAccent" : "BBorder") is not null)
+                card.SetResourceReference(System.Windows.Controls.Border.BorderBrushProperty, on ? "BAccent" : "BBorder");
+            else
+                card.BorderBrush = Brushes.Transparent;
+
+            if (card.TryFindResource(on ? "BAccentSoft" : "BCard") is not null)
+                card.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, on ? "BAccentSoft" : "BCard");
+            else
+                card.Background = on ? Brushes.WhiteSmoke : Brushes.Transparent;
         }
     }
 
@@ -326,10 +359,8 @@ public partial class GenerateView : UserControl
             return;
         }
 
-        var (discarded, orch) = GenerateHost.CreateView(
+        var (vm, orch) = GenerateHost.CreateOrchestrator(
             _session.Data.ToProblemInput(true), _session, _session.GenerateMode.Name);
-        _ = discarded; // нужен только оркестратор нового режима; view не показываем
-        var vm = orch.ViewModel;
         _vm.PropertyChanged -= OnVmChanged;
         _orch = orch;
         _vm = vm;
@@ -342,24 +373,26 @@ public partial class GenerateView : UserControl
         await RunGuardedAsync();
     }
 
+    private MessageBoxResult ShowMsg(string text, string caption, MessageBoxButton btn, MessageBoxImage img) =>
+        System.Windows.Window.GetWindow(this) is { } owner
+            ? MessageBox.Show(owner, text, caption, btn, img)
+            : MessageBox.Show(text, caption, btn, img);
+
     private async void OnOpenClick(object sender, RoutedEventArgs e)
     {
         if (sender is not System.Windows.Controls.Button b || b.Tag is not CandidateCardModel card) return;
         if (!card.CanAccept)
         {
-            MessageBox.Show(System.Windows.Window.GetWindow(this),
-                "Этот вариант нельзя принять: в нём есть жёсткие нарушения.",
+            ShowMsg("Этот вариант нельзя принять: в нём есть жёсткие нарушения.",
                 "Редактор", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        if (MessageBox.Show(System.Windows.Window.GetWindow(this),
-                $"Открыть вариант {card.Rank} в редакторе? Он будет сохранён как активное расписание.",
+        if (ShowMsg($"Открыть вариант {card.Rank} в редакторе? Он будет сохранён как активное расписание.",
                 "Открыть в редакторе", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
         if (_orch is null)
         {
-            MessageBox.Show(System.Windows.Window.GetWindow(this),
-                "Хранилище не подключено — открыть редактор нельзя.",
+            ShowMsg("Хранилище не подключено — открыть редактор нельзя.",
                 "Редактор", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -369,13 +402,12 @@ public partial class GenerateView : UserControl
             if (outcome.Succeeded)
                 Navigator?.NavigateTo("Schedule");
             else
-                MessageBox.Show(System.Windows.Window.GetWindow(this), outcome.Message,
+                ShowMsg(outcome.Message,
                     "Не удалось открыть", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
-            MessageBox.Show(System.Windows.Window.GetWindow(this),
-                "Не удалось открыть редактор: " + ex.Message,
+            ShowMsg("Не удалось открыть редактор: " + ex.Message,
                 "Редактор", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -383,8 +415,7 @@ public partial class GenerateView : UserControl
     private void OnAcceptClick(object sender, RoutedEventArgs e)
     {
         if (sender is not System.Windows.Controls.Button b || b.Tag is not CandidateCardModel card) return;
-        if (MessageBox.Show(System.Windows.Window.GetWindow(this),
-                $"Принять вариант {card.Rank} как активное расписание? Текущее активное расписание будет заменено.",
+        if (ShowMsg($"Принять вариант {card.Rank} как активное расписание? Текущее активное расписание будет заменено.",
                 "Приёмка варианта", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
         _vm.RequestAccept(card);

@@ -70,10 +70,11 @@ public partial class LoadRowWindow : Window
 
         string? err = null;
         int? shift = null;
+        int hours = 0;
         if (cls.Length == 0) err = "Укажите класс.";
         else if (subj.Length == 0) err = "Укажите предмет.";
         else if (teacher.Length == 0) err = "Укажите учителя.";
-        else if (!int.TryParse((HoursBox.Text ?? "").Trim(), out int hours) || hours < 1 || hours > 50)
+        else if (!int.TryParse((HoursBox.Text ?? "").Trim(), out hours) || hours < 1 || hours > 50)
             err = "Часов в неделю — целое число 1..50.";
         else if (split && teacherB.Length == 0) err = "Для деления нужен второй учитель (подгруппа B).";
         else if (split && string.Equals(teacherB, teacher, StringComparison.OrdinalIgnoreCase))
@@ -88,7 +89,7 @@ public partial class LoadRowWindow : Window
         // Наследование смены: пустое поле + известный класс со сменой → смена класса.
         shift = shiftRaw switch { "1" => 1, "2" => 2, _ => _inheritShift?.Invoke(cls) };
 
-        Result = new LoadRow(cls, subj, int.Parse(HoursBox.Text.Trim()), teacher, split,
+        Result = new LoadRow(cls, subj, hours, teacher, split,
             split ? teacherB : null, room.Length == 0 ? null : room,
             _existing?.UnavailDays, _existing?.UnavailSlots, _existing?.PairName, shift);
         DialogResult = true;

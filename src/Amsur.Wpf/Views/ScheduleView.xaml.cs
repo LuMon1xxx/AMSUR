@@ -37,13 +37,44 @@ public partial class ScheduleView : UserControl
     private bool _defaultViewApplied;
     private Point _dragStart;
     private Border? _dragSource;
+    private CancellationTokenSource? _evalCts;
 
     public ScheduleView(AppSession session)
     {
         _session = session;
         InitializeComponent();
         SearchBox.ToolTip = "Поиск по предмету, учителю, классу или кабинету (фильтр на экране)";
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
         _ = ReloadAsync();
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (System.Windows.Application.Current is App app)
+        {
+            app.ThemeChanged -= OnAppThemeChanged;
+            app.ThemeChanged += OnAppThemeChanged;
+        }
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        CancelCellEvaluations();
+        if (System.Windows.Application.Current is App app)
+            app.ThemeChanged -= OnAppThemeChanged;
+    }
+
+    private void OnAppThemeChanged(string _)
+    {
+        StyleVerdict(VerdictText.Text);
+        RebuildMatrix();
+    }
+
+    private static void Bind(FrameworkElement el, DependencyProperty prop, string key)
+    {
+        if (el.TryFindResource(key) is not null)
+            el.SetResourceReference(prop, key);
     }
 
     private async Task ReloadAsync()
@@ -122,6 +153,7 @@ public partial class ScheduleView : UserControl
 
     private void ResetEditState()
     {
+        CancelCellEvaluations();
         _preview = null;
         _selectedRow = null;
         _targetCell = null;
@@ -236,7 +268,7 @@ public partial class ScheduleView : UserControl
         {
             Grid.Visibility = Visibility.Collapsed;
             MatrixScroll.Visibility = Visibility.Visible;
-            EnsureCellEvaluations();
+            RefreshCellEvaluations();
             if (chess) BuildChessboard(rows);
             else BuildMatrix(rows, teacherMode: mode == 2);
         }
@@ -268,8 +300,9 @@ public partial class ScheduleView : UserControl
         for (int r = 0; r <= slots; r++)
             MatrixGrid.RowDefinitions.Add(new RowDefinition
             {
-                // P5: двухсменка — до 16 уроков; 62px хватает на предмет+учителя+кабинет.
-                Height = r == 0 ? GridLength.Auto : new GridLength(62),
+                // Auto-высота с запасом (MinHeight=76) исключает обрезание пилюль кабинета и длинных предметов.
+                Height = GridLength.Auto,
+                MinHeight = r == 0 ? 0 : 76,
             });
 
         // Сплит-урок (A/B) и вид «кабинет» штатно дают несколько записей на одну клетку —
@@ -429,18 +462,21 @@ public partial class ScheduleView : UserControl
         UIElement inner;
         if (cellRows.Count == 1)
         {
+            var chipText = new TextBlock
+            {
+                Text = UiFormat.Room(row.RoomName), FontSize = 11,
+                Foreground = textSoft,
+            };
             var chip = new Border
             {
-                Background = accentSoft, Margin = new Thickness(0, 2, 0, 0),
+                Background = Br("BSubtle", Brushes.WhiteSmoke),
+                BorderBrush = Br("BBorder", Brushes.LightGray),
+                BorderThickness = new Thickness(1),
+                Margin = new Thickness(0, 2, 0, 0),
                 HorizontalAlignment = HorizontalAlignment.Left,
-                CornerRadius = new CornerRadius(6), Padding = new Thickness(8, 1, 8, 1),
-                Child = new TextBlock
-                {
-                    Text = $"каб. {row.RoomName}", FontSize = 11,
-                    Foreground = accent,
-                },
+                CornerRadius = new CornerRadius(5), Padding = new Thickness(7, 1, 7, 1),
+                Child = chipText,
             };
-            if (TryFindResource("Badge") is Style badgeStyle) chip.Style = badgeStyle;
             inner = new StackPanel
             {
                 Margin = new Thickness(8, 0, 0, 0),
@@ -486,7 +522,7 @@ public partial class ScheduleView : UserControl
             Child = dock,
         };
         cell.ToolTip = string.Join("\n", cellRows.Select(r =>
-            $"{r.ClassName} · {r.SubjectName} · {r.TeacherName} · каб. {r.RoomName}" +
+            $"{r.ClassName} · {r.SubjectName} · {r.TeacherName} · {UiFormat.Room(r.RoomName)}" +
             (_cellEvals.TryGetValue((tag.DayIndex, tag.Slot), out var ev0) ? "\n" + ev0.ToolTip : "")));
         return cell;
     }
@@ -494,10 +530,11 @@ public partial class ScheduleView : UserControl
     // P5: текст клетки со всеми подгруппами (обе половины сплита видны сразу).
     private static string MultiRowText(List<ScheduleRowVm> cellRows)
     {
-        static string Room(ScheduleRowVm r) =>
-            string.IsNullOrWhiteSpace(r.RoomName) || r.RoomName == "—"
-                ? r.TeacherName
-                : $"{r.TeacherName} (каб. {r.RoomName})";
+        static string Room(ScheduleRowVm r)
+        {
+            string room = UiFormat.Room(r.RoomName);
+            return room == "—" ? r.TeacherName : $"{r.TeacherName} ({room})";
+        }
         if (cellRows.Select(r => r.SubjectName).Distinct().Count() == 1)
             return $"{cellRows[0].SubjectName} · " + string.Join(" / ", cellRows.Select(Room));
         return string.Join(" / ", cellRows.Select(Room).Select((t, i) =>
@@ -614,7 +651,7 @@ public partial class ScheduleView : UserControl
                     foreach (var r in cellRows)
                         lines.Children.Add(new TextBlock
                         {
-                            Text = $"{r.SubjectName} / {r.TeacherName} / каб. {r.RoomName}",
+                            Text = $"{r.SubjectName} / {r.TeacherName} / {UiFormat.Room(r.RoomName)}",
                             FontSize = 11, Foreground = text, TextWrapping = TextWrapping.Wrap,
                             TextTrimming = TextTrimming.CharacterEllipsis,
                         });
@@ -625,7 +662,7 @@ public partial class ScheduleView : UserControl
                         CornerRadius = new CornerRadius(6), Child = lines,
                     };
                     cell.ToolTip = string.Join("\n", cellRows.Select(r =>
-                        $"{r.ClassName} · {r.SubjectName} · {r.TeacherName} · каб. {r.RoomName}"));
+                        $"{r.ClassName} · {r.SubjectName} · {r.TeacherName} · {UiFormat.Room(r.RoomName)}"));
                 }
 
                 var (bg, bd, th) = CellPaint(cell.Tag, card, border, accent, accentSoft);
@@ -681,34 +718,88 @@ public partial class ScheduleView : UserControl
         cell.Drop += OnMatrixCellDrop;
     }
 
-    // P5: для всех клеток открытой матрицы считаем реальный Preview выбранного урока.
-    private void EnsureCellEvaluations()
+    private void CancelCellEvaluations()
     {
-        if (_selectedRow is null || _problem is null || _active is null) return;
-        if (_cellEvals.Count > 0) return;
-        foreach (int d in Enumerable.Range(0, _problem.DaysCount))
-            foreach (int s in Enumerable.Range(1, _problem.SlotsPerDay))
-            {
-                try
-                {
-                    var ev = _session.EditService.Preview(_problem, _active.Placements,
-                        new CandidateMove(_selectedRow.OccurrenceId, d, s, _selectedRow.RoomId), _session.QualityRules);
-                    _cellEvals[(d, s)] = new CellEval(ev.CanCommit, ev.SoftDelta, ev.VerdictText);
-                }
-                catch (Exception ex)
-                {
-                    _cellEvals[(d, s)] = new CellEval(false, 0, "Ошибка проверки хода: " + ex.Message);
-                }
-            }
+        var prev = _evalCts;
+        _evalCts = null;
+        if (prev is null) return;
+        try { prev.Cancel(); }
+        catch (ObjectDisposedException) { }
     }
 
+    // P5: для всех клеток открытой матрицы считаем реальный Preview выбранного урока в фоне.
     private void RefreshCellEvaluations()
     {
+        CancelCellEvaluations();
         _cellEvals.Clear();
-        // Подсветка нужна только на открытой сетке: иначе выбор строки в таблице
-        // запускал бы сотню превью на каждый клик.
         if (MatrixScroll.Visibility != Visibility.Visible) return;
-        EnsureCellEvaluations();
+        if (_selectedRow is not { } row || _problem is not { } problem || _active is not { } active) return;
+
+        var cts = new CancellationTokenSource();
+        _evalCts = cts;
+        _ = StartCellEvaluationsAsync(row, problem, active.Placements, _session.QualityRules, cts);
+    }
+
+    private async Task StartCellEvaluationsAsync(
+        ScheduleRowVm row,
+        SchedulingProblem problem,
+        IReadOnlyList<PlacedLesson> placements,
+        EffectiveRuleSet rules,
+        CancellationTokenSource cts)
+    {
+        var token = cts.Token;
+        try
+        {
+            var computed = await Task.Run(() =>
+            {
+                var map = new Dictionary<(int Day, int Slot), CellEval>();
+                for (int d = 0; d < problem.DaysCount; d++)
+                {
+                    for (int s = 1; s <= problem.SlotsPerDay; s++)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        try
+                        {
+                            var ev = _session.EditService.Preview(problem, placements,
+                                new CandidateMove(row.OccurrenceId, d, s, row.RoomId), rules);
+                            map[(d, s)] = new CellEval(ev.CanCommit, ev.SoftDelta, ev.VerdictText);
+                        }
+                        catch (Exception ex)
+                        {
+                            map[(d, s)] = new CellEval(false, 0, "Ошибка проверки хода: " + ex.Message);
+                        }
+                    }
+                }
+                return map;
+            }, token);
+
+            if (token.IsCancellationRequested ||
+                _evalCts != cts ||
+                _selectedRow?.OccurrenceId != row.OccurrenceId ||
+                MatrixScroll.Visibility != Visibility.Visible)
+                return;
+
+            _cellEvals.Clear();
+            foreach (var kv in computed)
+                _cellEvals[kv.Key] = kv.Value;
+            RebuildMatrix();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            if (_evalCts == cts)
+            {
+                VerdictText.Text = "Ошибка оценки клеток: " + ex.Message;
+                StyleVerdict(VerdictText.Text);
+            }
+        }
+        finally
+        {
+            if (_evalCts == cts) _evalCts = null;
+            cts.Dispose();
+        }
     }
 
     private void SelectRow(ScheduleRowVm row)
@@ -721,13 +812,14 @@ public partial class ScheduleView : UserControl
         SlotBox.Text = row.Slot.ToString();
         CommitBtn.Content = "Сохранить ход";
         CommitBtn.IsEnabled = true;
-        SelectedInfoText.Text = $"{row.ClassName} · {row.SubjectName} · {row.TeacherName} · каб. {row.RoomName} (день {row.Day}, урок {row.Slot})";
+        SelectedInfoText.Text = $"{row.ClassName} · {row.SubjectName} · {row.TeacherName} · {UiFormat.Room(row.RoomName)} (день {row.Day}, урок {row.Slot})";
         RefreshCellEvaluations();
         RebuildMatrix();
     }
 
     private void ClearLessonSelection()
     {
+        CancelCellEvaluations();
         _selectedRow = null;
         _targetCell = null;
         _preview = null;
@@ -883,32 +975,35 @@ public partial class ScheduleView : UserControl
     // Мягкая стилизация вердикта по префиксу (текст приходит из Preview как есть).
     private void StyleVerdict(string text)
     {
-        // Без ресурсов App (STA-тест) — только текст, без стилизации.
-        if (TryFindResource("BSubtle") is not Brush subtleRes) return;
-        string t = (text ?? "").ToLowerInvariant();
-        Brush bg = subtleRes;
-        Brush bd = (Brush)FindResource("BBorder");
-        Brush fg = (Brush)FindResource("BText");
-        if (t.Length == 0) { /* нейтрально */ }
-        else if (t.Contains("запрещ") || t.Contains("нельзя") || t.Contains("жёстк") ||
-                 t.Contains("конфликт") || t.Contains("ошибка") || t.Contains("недопуст"))
+        if (string.IsNullOrWhiteSpace(text))
         {
-            bg = (Brush)FindResource("BBadBg"); bd = (Brush)FindResource("BBad"); fg = (Brush)FindResource("BBad");
+            VerdictBorder.Visibility = Visibility.Collapsed;
+            return;
+        }
+        VerdictBorder.Visibility = Visibility.Visible;
+        // Без ресурсов App (STA-тест) — только текст, без стилизации.
+        if (TryFindResource("BSubtle") is not Brush) return;
+        string t = text.ToLowerInvariant();
+        string bgKey = "BSubtle", bdKey = "BBorder", fgKey = "BText";
+        if (t.Contains("запрещ") || t.Contains("нельзя") || t.Contains("жёстк") ||
+            t.Contains("конфликт") || t.Contains("ошибка") || t.Contains("недопуст"))
+        {
+            bgKey = "BBadBg"; bdKey = "BBad"; fgKey = "BBad";
         }
         else if (t.Contains("ухудш") || t.Contains("замечан") || t.Contains("штраф") ||
                  t.Contains("окно") || t.Contains("допуст"))
         {
-            bg = (Brush)FindResource("BWarnBg"); bd = (Brush)FindResource("BWarn"); fg = (Brush)FindResource("BWarn");
+            bgKey = "BWarnBg"; bdKey = "BWarn"; fgKey = "BWarn";
         }
         else if (t.Contains("можно") || t.Contains("разреш") || t.Contains("оптимал") ||
                  t.Contains("свободен") || t.Contains("успеш") || t.Contains("выгружено") ||
                  t.Contains("сохран") || t.Contains("принят"))
         {
-            bg = (Brush)FindResource("BGoodBg"); bd = (Brush)FindResource("BGood"); fg = (Brush)FindResource("BGood");
+            bgKey = "BGoodBg"; bdKey = "BGood"; fgKey = "BGood";
         }
-        VerdictBorder.Background = bg;
-        VerdictBorder.BorderBrush = bd;
-        VerdictText.Foreground = fg;
+        Bind(VerdictBorder, Border.BackgroundProperty, bgKey);
+        Bind(VerdictBorder, Border.BorderBrushProperty, bdKey);
+        Bind(VerdictText, TextBlock.ForegroundProperty, fgKey);
     }
 
     private void SetViewMode(int mode)
@@ -961,7 +1056,7 @@ public partial class ScheduleView : UserControl
             SlotBox.Text = row.Slot.ToString();
             CommitBtn.Content = "Сохранить ход";
             CommitBtn.IsEnabled = true;
-            SelectedInfoText.Text = $"{row.ClassName} · {row.SubjectName} · {row.TeacherName} · каб. {row.RoomName} (день {row.Day}, урок {row.Slot})";
+            SelectedInfoText.Text = $"{row.ClassName} · {row.SubjectName} · {row.TeacherName} · {UiFormat.Room(row.RoomName)} (день {row.Day}, урок {row.Slot})";
             RefreshCellEvaluations();
             RebuildMatrix();
         }

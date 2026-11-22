@@ -24,6 +24,36 @@ public partial class ExportView : UserControl
         _ = LoadPreviewAsync();
     }
 
+    private static void Bind(FrameworkElement el, DependencyProperty prop, string key)
+    {
+        if (el.TryFindResource(key) is not null)
+            el.SetResourceReference(prop, key);
+    }
+
+    private string SelectedExtension() =>
+        FormatHtmlRadio?.IsChecked == true ? ".html"
+        : FormatCsvRadio?.IsChecked == true ? ".csv"
+        : ".xlsx";
+
+    private void OnFormatChanged(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded) return;
+        string ext = SelectedExtension();
+        bool isExcel = ext == ".xlsx";
+        if (TeacherSheetBox is not null) TeacherSheetBox.IsEnabled = isExcel;
+        if (RoomSheetBox is not null) RoomSheetBox.IsEnabled = isExcel;
+        if (ExportBtnLabel is not null)
+            ExportBtnLabel.Text = ext switch
+            {
+                ".html" => "Выгрузить HTML для печати",
+                ".csv" => "Выгрузить таблицу CSV",
+                _ => "Выгрузить в Excel (.xlsx)",
+            };
+        string current = PathBox.Text.Trim();
+        if (current.Length > 0)
+            PathBox.Text = Path.ChangeExtension(current, ext);
+    }
+
     private async Task LoadPreviewAsync()
     {
         try
@@ -36,13 +66,13 @@ public partial class ExportView : UserControl
             if (active is null)
             {
                 ClearReveal();
-                ResultText.Text = "Нет активного расписания — сгенерируйте варианты и нажмите «Принять расписание».";
-                ResultText.Foreground = (Brush)FindResource("BBad");
+                ResultText.Text = "Нет активного расписания — сгенерируйте варианты и нажмите «Принять этот вариант».";
+                Bind(ResultText, TextBlock.ForegroundProperty, "BBad");
                 ExportBtn.IsEnabled = false;
-                ExportBtn.ToolTip = "Сначала сгенерируйте расписание и примите лучший вариант.";
+                ExportBtn.ToolTip = "Сначала сгенерируйте расписание и примите подходящий вариант.";
                 GateText.Text = "нет активного";
-                GateText.Foreground = (Brush)FindResource("BBad");
-                GateBadge.Background = (Brush)FindResource("BBadBg");
+                Bind(GateText, TextBlock.ForegroundProperty, "BBad");
+                Bind(GateBadge, Border.BackgroundProperty, "BBadBg");
                 ScopeText.Text = "Нет данных";
                 PreviewList.ItemsSource = Array.Empty<string>();
                 return;
@@ -57,13 +87,13 @@ public partial class ExportView : UserControl
             var ordered = active.Placements
                 .OrderBy(p => CN(p.OccurrenceId)).ThenBy(p => p.DayIndex).ThenBy(p => p.SlotIndex)
                 .Take(12)
-                .Select(p => $"{CN(p.OccurrenceId)} · день {p.DayIndex + 1}, урок {p.SlotIndex} — {SN(p.OccurrenceId)} ({TN(p.OccurrenceId)}, каб. {RN(p.RoomId)})")
+                .Select(p => $"{CN(p.OccurrenceId)} · день {p.DayIndex + 1}, урок {p.SlotIndex} — {SN(p.OccurrenceId)} ({TN(p.OccurrenceId)}, {UiFormat.Room(RN(p.RoomId))})")
                 .ToList();
             PreviewList.ItemsSource = ordered;
             ScopeText.Text = $"{problem.Classes.Count} классов · {active.Placements.Count} уроков · версия {active.Number}";
             GateText.Text = "готово к выгрузке";
-            GateText.Foreground = (Brush)FindResource("BGood");
-            GateBadge.Background = (Brush)FindResource("BGoodBg");
+            Bind(GateText, TextBlock.ForegroundProperty, "BGood");
+            Bind(GateBadge, Border.BackgroundProperty, "BGoodBg");
             ResultText.Text = "";
             ExportBtn.IsEnabled = true;
             ExportBtn.ToolTip = null;
@@ -71,7 +101,7 @@ public partial class ExportView : UserControl
         catch (Exception ex)
         {
             ResultText.Text = "Ошибка: " + ex.Message;
-            ResultText.Foreground = (Brush)FindResource("BBad");
+            Bind(ResultText, TextBlock.ForegroundProperty, "BBad");
             ExportBtn.IsEnabled = false;
             GateText.Text = "ошибка";
         }
@@ -79,7 +109,14 @@ public partial class ExportView : UserControl
 
     private void OnBrowseClick(object sender, RoutedEventArgs e)
     {
-        var dlg = new SaveFileDialog { Filter = "Excel (*.xlsx)|*.xlsx|HTML (*.html)|*.html", FileName = Path.GetFileName(PathBox.Text) };
+        string ext = SelectedExtension();
+        int idx = ext == ".html" ? 2 : ext == ".csv" ? 3 : 1;
+        var dlg = new SaveFileDialog
+        {
+            Filter = "Excel (*.xlsx)|*.xlsx|HTML (*.html)|*.html|CSV (*.csv)|*.csv",
+            FilterIndex = idx,
+            FileName = Path.GetFileName(PathBox.Text),
+        };
         if (dlg.ShowDialog() == true)
             PathBox.Text = dlg.FileName;
     }
@@ -90,20 +127,40 @@ public partial class ExportView : UserControl
         {
             string path = PathBox.Text.Trim();
             if (path.Length == 0) throw new InvalidOperationException("Укажите путь файла.");
-            if (path.EndsWith(".html", StringComparison.OrdinalIgnoreCase) ||
-                path.EndsWith(".htm", StringComparison.OrdinalIgnoreCase))
+            if (path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ||
+                (FormatCsvRadio?.IsChecked == true &&
+                 !path.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase) &&
+                 !path.EndsWith(".html", StringComparison.OrdinalIgnoreCase) &&
+                 !path.EndsWith(".htm", StringComparison.OrdinalIgnoreCase)))
+            {
+                if (!path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+                    path = Path.ChangeExtension(path, ".csv");
+                await _session.ExportActiveCsvAsync(path);
+            }
+            else if (path.EndsWith(".html", StringComparison.OrdinalIgnoreCase) ||
+                     path.EndsWith(".htm", StringComparison.OrdinalIgnoreCase) ||
+                     (FormatHtmlRadio?.IsChecked == true && !path.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase)))
+            {
+                if (!path.EndsWith(".html", StringComparison.OrdinalIgnoreCase) && !path.EndsWith(".htm", StringComparison.OrdinalIgnoreCase))
+                    path = Path.ChangeExtension(path, ".html");
                 await _session.ExportActiveHtmlAsync(path);
+            }
             else
+            {
+                if (!Path.HasExtension(path))
+                    path += ".xlsx";
                 await _session.ExportActiveAsync(path, TeacherSheetBox.IsChecked == true, RoomSheetBox.IsChecked == true);
+            }
+            PathBox.Text = path;
             ResultText.Text = "Выгружено: " + path;
-            ResultText.Foreground = (Brush)FindResource("BGood");
+            Bind(ResultText, TextBlock.ForegroundProperty, "BGood");
             ShowReveal(path);
         }
         catch (Exception ex)
         {
             ClearReveal();
             ResultText.Text = "Не выгружено: " + ex.Message;
-            ResultText.Foreground = (Brush)FindResource("BBad");
+            Bind(ResultText, TextBlock.ForegroundProperty, "BBad");
         }
     }
 
@@ -116,14 +173,14 @@ public partial class ExportView : UserControl
             var (placed, total) = await _session.ExportDraftAsync(dlg.FileName);
             ResultText.Text = $"Черновик собран: размещено {placed} из {total} " +
                 $"(неназначенные — листом «Неназначенные»). Это прикидка, не финал.";
-            ResultText.Foreground = (Brush)FindResource("BGood");
+            Bind(ResultText, TextBlock.ForegroundProperty, "BGood");
             ShowReveal(dlg.FileName);
         }
         catch (Exception ex)
         {
             ClearReveal();
             ResultText.Text = "Черновик не собран: " + ex.Message;
-            ResultText.Foreground = (Brush)FindResource("BBad");
+            Bind(ResultText, TextBlock.ForegroundProperty, "BBad");
         }
     }
 
@@ -141,14 +198,14 @@ public partial class ExportView : UserControl
             if (dlg.ShowDialog() != true) return;
             await _session.ExportTeacherAsync(dlg.FileName, teacher.Id);
             ResultText.Text = "Выгружено расписание: " + name;
-            ResultText.Foreground = (Brush)FindResource("BGood");
+            Bind(ResultText, TextBlock.ForegroundProperty, "BGood");
             ShowReveal(dlg.FileName);
         }
         catch (Exception ex)
         {
             ClearReveal();
             ResultText.Text = "Не выгружено: " + ex.Message;
-            ResultText.Foreground = (Brush)FindResource("BBad");
+            Bind(ResultText, TextBlock.ForegroundProperty, "BBad");
         }
     }
 
@@ -170,7 +227,7 @@ public partial class ExportView : UserControl
         if (_lastFile is not null && File.Exists(_lastFile)) return true;
         ClearReveal();
         ResultText.Text = "Файла больше нет — выгрузите заново.";
-        ResultText.Foreground = (Brush)FindResource("BBad");
+        Bind(ResultText, TextBlock.ForegroundProperty, "BBad");
         return false;
     }
 
@@ -184,7 +241,7 @@ public partial class ExportView : UserControl
         catch (Exception ex)
         {
             ResultText.Text = "Не удалось открыть файл: " + ex.Message;
-            ResultText.Foreground = (Brush)FindResource("BBad");
+            Bind(ResultText, TextBlock.ForegroundProperty, "BBad");
         }
     }
 
@@ -198,7 +255,7 @@ public partial class ExportView : UserControl
         catch (Exception ex)
         {
             ResultText.Text = "Не удалось показать в папке: " + ex.Message;
-            ResultText.Foreground = (Brush)FindResource("BBad");
+            Bind(ResultText, TextBlock.ForegroundProperty, "BBad");
         }
     }
 }

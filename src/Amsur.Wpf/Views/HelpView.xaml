@@ -7,7 +7,7 @@
     <StackPanel Margin="24" MaxWidth="860" TextElement.Foreground="{DynamicResource BText}">
       <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
         <StackPanel VerticalAlignment="Center">
-          <TextBlock Style="{StaticResource TH1}" FontSize="20" Text="Справочный центр"/>
+          <TextBlock Style="{StaticResource TH1}" Text="Справочный центр"/>
           <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
                      Text="Путь работы: Данные → Профиль → Генерация → Проверка → Печать."/>
         </StackPanel>

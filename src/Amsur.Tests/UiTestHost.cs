@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Threading;
 using Amsur.Wpf;
@@ -16,6 +17,7 @@ static class UiTestHost
     private static Dispatcher? _dispatcher;
     private static bool _appLoaded;
     private static readonly object InitLock = new();
+    private static readonly object RunLock = new();
 
     private static void EnsureThread()
     {
@@ -39,17 +41,25 @@ static class UiTestHost
     public static void Run(Func<Task> body)
     {
         EnsureThread();
-        Exception? error = null;
-        var done = new ManualResetEventSlim();
-        _dispatcher!.BeginInvoke(new Action(async () =>
+        if (Thread.CurrentThread == _thread)
         {
-            try { await body(); }
-            catch (Exception ex) { error = ex; }
-            finally { done.Set(); }
-        }));
-        if (!done.Wait(TimeSpan.FromMinutes(5)))
-            throw new Xunit.Sdk.XunitException("UI thread hung");
-        if (error is not null) throw error;
+            body().GetAwaiter().GetResult();
+            return;
+        }
+        lock (RunLock)
+        {
+            Exception? error = null;
+            var done = new ManualResetEventSlim();
+            _dispatcher!.BeginInvoke(new Action(async () =>
+            {
+                try { await body(); }
+                catch (Exception ex) { error = ex; }
+                finally { done.Set(); }
+            }));
+            if (!done.Wait(TimeSpan.FromMinutes(5)))
+                throw new Xunit.Sdk.XunitException("UI thread hung");
+            if (error is not null) ExceptionDispatchInfo.Capture(error).Throw();
+        }
     }
 
     public static App EnsureApp()

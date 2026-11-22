@@ -5,12 +5,10 @@
         MinWidth="1024" MinHeight="680" WindowStartupLocation="CenterScreen"
         WindowState="Maximized" Style="{DynamicResource ChromeWindow}"
         Background="{DynamicResource BBg}">
-  <!-- P-D0: оболочка одного окна. Контент разделов — views в ViewHost,
-       навигация — Navigator в code-behind. Дашборд живёт в Views/DashboardView. -->
   <DockPanel TextElement.Foreground="{DynamicResource BText}">
     <!-- Нижний статус-бар -->
-    <Border DockPanel.Dock="Bottom" Background="{DynamicResource BCard}"
-            BorderBrush="{DynamicResource BBorder}" BorderThickness="0,1,0,0" Padding="16,6">
+    <Border DockPanel.Dock="Bottom" Background="{DynamicResource BSidebar}"
+            BorderBrush="{DynamicResource BBorder}" BorderThickness="0,1,0,0" Padding="18,7">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*"/>
@@ -26,21 +24,23 @@
 
     <Grid>
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="240"/>
+        <ColumnDefinition Width="244"/>
         <ColumnDefinition Width="*" MinWidth="0"/>
       </Grid.ColumnDefinitions>
 
-      <!-- Левая навигация 240px: нумерованные шаги сверху, служебное — внизу -->
-      <Border Grid.Column="0" Background="{DynamicResource BCard}"
+      <!-- Левая навигация 244px: чистая структура без тяжёлых баннеров -->
+      <Border Grid.Column="0" Background="{DynamicResource BSidebar}"
               BorderBrush="{DynamicResource BBorder}" BorderThickness="0,0,1,0">
-        <DockPanel Margin="12">
+        <DockPanel Margin="10,14,10,12">
           <StackPanel DockPanel.Dock="Top">
-            <TextBlock Text="ШАГИ" Style="{StaticResource THCaption}" Margin="12,2,0,8"/>
+            <TextBlock Text="ШАГИ" Style="{StaticResource THCaption}" FontWeight="SemiBold" Margin="12,2,0,8"/>
             <Button x:Name="NavHome" Content="Главная" Tag="&#xE80F;" Style="{StaticResource NavBtnActive}" Margin="0,0,0,2" Click="OnNavClick"/>
             <Grid Margin="0,0,0,2">
               <Button x:Name="NavData" Content="1. Школа и нагрузка" Tag="&#xE779;" Style="{StaticResource NavBtn}" Click="OnNavClick"/>
               <Border HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"
-                      IsHitTestVisible="False" Background="{DynamicResource BSubtle}" CornerRadius="4" Padding="6,1">
+                      IsHitTestVisible="False" Background="{DynamicResource BSubtle}"
+                      BorderBrush="{DynamicResource BBorder}" BorderThickness="1"
+                      CornerRadius="4" Padding="6,1">
                 <TextBlock x:Name="SchoolNavBadge" FontSize="10" Foreground="{DynamicResource BTextSoft}" Text=""/>
               </Border>
             </Grid>
@@ -48,32 +48,28 @@
             <Button x:Name="NavSchedule" Content="3. Расписание и правка" Tag="&#xE787;" Style="{StaticResource NavBtn}" Margin="0,0,0,2" Click="OnNavClick"/>
             <Button x:Name="NavExport" Content="4. Выгрузка и печать" Tag="&#xE749;" Style="{StaticResource NavBtn}" Margin="0,0,0,2" Click="OnNavClick"/>
           </StackPanel>
+
           <StackPanel DockPanel.Dock="Bottom">
+            <Border Height="1" Background="{DynamicResource BBorder}" Margin="6,4,6,8"/>
             <Button x:Name="NavSettings" Content="Настройки и профили" Tag="&#xE713;" Style="{StaticResource NavBtn}" Margin="0,0,0,2" Click="OnNavClick"/>
             <!-- Дубль пути в настройки скрыт; поле оставлено для совместимости с тестами -->
             <Button x:Name="NavProfiles" Content="Профили" Tag="&#xE735;" Style="{StaticResource NavBtn}"
                     Visibility="Collapsed" Margin="0,0,0,2" Click="OnNavClick"/>
-            <Button x:Name="NavHelp" Content="Справка (F1)" Tag="&#xE897;" Style="{StaticResource NavBtn}" Margin="0,0,0,2" Click="OnNavClick"/>
-            <Border Style="{StaticResource Card}" Padding="12" Margin="0,8,0,8" Background="{DynamicResource BAccentSoft}">
-              <StackPanel>
-                <TextBlock Text="Нужна помощь?" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
-                <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,8"
-                           Text="Быстрый старт и ответы — в справке. F1 открывает справку, F5 запускает генерацию."/>
-                <Button Style="{StaticResource BtnSecondary}" Click="OnHelpNav">
-                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Открыть справку" VerticalAlignment="Center"/>
-                    <Border Background="{DynamicResource BSubtle}" BorderBrush="{DynamicResource BBorder}"
-                            BorderThickness="1" CornerRadius="4" Padding="5,0" Margin="8,0,0,0" VerticalAlignment="Center">
-                      <TextBlock Text="F1" FontSize="10" Foreground="{DynamicResource BTextSoft}"/>
-                    </Border>
-                  </StackPanel>
-                </Button>
-              </StackPanel>
-            </Border>
-            <TextBlock Text="Версия 2.0 · .NET 10 WPF" FontSize="11" Foreground="{DynamicResource BTextSoft}"/>
-            <CheckBox x:Name="ThemeBox" Content="Тёмная тема" Margin="0,8,0,0"
-                      ToolTip="Переключает светлую/тёмную тему мгновенно."
+            <Grid Margin="0,0,0,2">
+              <Button x:Name="NavHelp" Content="Справка" Tag="&#xE897;" Style="{StaticResource NavBtn}" Click="OnNavClick"/>
+              <Border HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"
+                      IsHitTestVisible="False" Background="{DynamicResource BSubtle}"
+                      BorderBrush="{DynamicResource BBorder}" BorderThickness="1"
+                      CornerRadius="4" Padding="6,1">
+                <TextBlock Text="F1" FontSize="10" Foreground="{DynamicResource BTextSoft}"/>
+              </Border>
+            </Grid>
+            <Border Height="1" Background="{DynamicResource BBorder}" Margin="6,8,6,6"/>
+            <CheckBox x:Name="ThemeBox" Content="Тёмная тема" Style="{StaticResource ToggleSwitch}"
+                      ToolTip="Переключает светлую и тёмную тему мгновенно."
                       Checked="OnThemeChanged" Unchecked="OnThemeChanged"/>
+            <TextBlock Text="Версия 2.0 · .NET 10 WPF" FontSize="11" Foreground="{DynamicResource BTextMuted}"
+                       Margin="10,4,10,2"/>
           </StackPanel>
         </DockPanel>
       </Border>
