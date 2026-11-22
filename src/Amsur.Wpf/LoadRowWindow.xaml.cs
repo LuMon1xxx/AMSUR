@@ -3,9 +3,8 @@ using Amsur.Application;
 
 namespace Amsur.Wpf;
 
-// P3: диалог ручного ввода строки нагрузки. Имена — свободный ввод:
-// неизвестное имя честно создаст сущность (как Excel-импортёр).
-// Валидация до закрытия; ShowDialog() == true — Result готов.
+// P3 + Stage 2: диалог ручного ввода строки нагрузки с автодополняемыми списками,
+// выбором кабинета/второго учителя и поддержкой профильной пары (Pair) без Excel.
 public partial class LoadRowWindow : Window
 {
     public LoadRow? Result { get; private set; }
@@ -22,14 +21,12 @@ public partial class LoadRowWindow : Window
         _inheritShift = inheritShift;
         _existing = existing;
         InitializeComponent();
-        if (knownClasses is { Count: > 0 })
-            ClassKnown.Text = "Уже есть: " + string.Join(", ", knownClasses.Take(12));
-        if (knownSubjects is { Count: > 0 })
-            SubjectKnown.Text = "Уже есть: " + string.Join(", ", knownSubjects.Take(12));
-        if (knownTeachers is { Count: > 0 })
-            TeacherKnown.Text = "Уже есть: " + string.Join(", ", knownTeachers.Take(12));
-        if (knownRooms is { Count: > 0 })
-            RoomKnown.Text = "Уже есть: " + string.Join(", ", knownRooms.Take(12));
+        ClassBox.ItemsSource = knownClasses?.ToList() ?? [];
+        SubjectBox.ItemsSource = knownSubjects?.ToList() ?? [];
+        var teachers = knownTeachers?.ToList() ?? [];
+        TeacherBox.ItemsSource = teachers;
+        TeacherBBox.ItemsSource = teachers;
+        RoomBox.ItemsSource = knownRooms?.ToList() ?? [];
         if (existing is not null)
         {
             ClassBox.Text = existing.ClassName;
@@ -40,8 +37,7 @@ public partial class LoadRowWindow : Window
             SplitBox.IsChecked = existing.SplitSubgroups;
             TeacherBBox.Text = existing.SplitTeacherBName ?? "";
             TeacherBBox.IsEnabled = existing.SplitSubgroups;
-            // Ручной carry-over: пара не редактируется (backlog, Excel-first),
-            // но сохраняется в Result без изменений.
+            PairBox.Text = existing.PairName ?? "";
             ShiftBox.Text = existing.Shift?.ToString() ?? "";
         }
     }
@@ -65,6 +61,7 @@ public partial class LoadRowWindow : Window
         string teacher = (TeacherBox.Text ?? "").Trim();
         string room = (RoomBox.Text ?? "").Trim();
         string teacherB = (TeacherBBox.Text ?? "").Trim();
+        string pair = (PairBox.Text ?? "").Trim();
         bool split = SplitBox.IsChecked == true;
         string shiftRaw = (ShiftBox.Text ?? "").Trim();
 
@@ -91,7 +88,8 @@ public partial class LoadRowWindow : Window
 
         Result = new LoadRow(cls, subj, hours, teacher, split,
             split ? teacherB : null, room.Length == 0 ? null : room,
-            _existing?.UnavailDays, _existing?.UnavailSlots, _existing?.PairName, shift);
+            _existing?.UnavailDays, _existing?.UnavailSlots,
+            pair.Length == 0 ? null : pair, shift);
         DialogResult = true;
         Close();
     }

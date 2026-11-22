@@ -1,46 +1,64 @@
 <Window x:Class="Amsur.Wpf.LoadRowWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Строка нагрузки" Height="540" Width="440"
-        MinWidth="380" MinHeight="480" WindowStartupLocation="CenterOwner"
+        xmlns:wpf="clr-namespace:Amsur.Wpf"
+        Title="Строка нагрузки" Height="600" Width="480"
+        MinWidth="420" MinHeight="520" WindowStartupLocation="CenterOwner"
         Style="{DynamicResource ChromeWindow}"
         Background="{DynamicResource BBg}">
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-  <StackPanel Margin="20" TextElement.Foreground="{DynamicResource BText}">
-    <TextBlock Style="{DynamicResource TH1}" FontSize="18" Text="Строка нагрузки"/>
+  <StackPanel Margin="22" TextElement.Foreground="{DynamicResource BText}">
+    <TextBlock Style="{DynamicResource TH1}" FontSize="19" Text="Строка нагрузки"/>
     <TextBlock x:Name="HintText" Style="{DynamicResource THint}" FontSize="12" Margin="0,4,0,0"
-               Text="Одна строка = один предмет у класса. Новое имя создаст класс, предмет, учителя или кабинет." TextWrapping="Wrap"/>
+               Text="Выберите из списка или введите новое имя — класс, предмет, учитель и кабинет создадутся автоматически."
+               TextWrapping="Wrap"/>
 
-    <TextBlock Text="Класс" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
-    <TextBox x:Name="ClassBox" ToolTip="Например: 5А"/>
-    <TextBlock x:Name="ClassKnown" Style="{DynamicResource THCaption}" Margin="0,4,0,0" Text=""/>
+    <TextBlock Text="Класс" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,5"/>
+    <ComboBox x:Name="ClassBox" IsEditable="True" IsTextSearchEnabled="True"
+              ToolTip="Выберите класс из списка или введите новый (например: 5А)"/>
 
-    <TextBlock Text="Предмет" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
-    <TextBox x:Name="SubjectBox" ToolTip="Например: Математика"/>
-    <TextBlock x:Name="SubjectKnown" Style="{DynamicResource THCaption}" Margin="0,4,0,0" Text=""/>
+    <TextBlock Text="Предмет" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,5"/>
+    <ComboBox x:Name="SubjectBox" IsEditable="True" IsTextSearchEnabled="True"
+              ToolTip="Выберите официальный предмет или введите свой"/>
 
-    <TextBlock Text="Часов в неделю" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
-    <TextBox x:Name="HoursBox" Text="1" Width="80" HorizontalAlignment="Left" ToolTip="Целое число 1..50"/>
+    <Grid Margin="0,12,0,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="16"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <StackPanel Grid.Column="0">
+        <TextBlock Text="Часов в неделю" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,5"/>
+        <TextBox x:Name="HoursBox" Text="1" ToolTip="Целое число 1..50"/>
+      </StackPanel>
+      <StackPanel Grid.Column="2">
+        <TextBlock Text="Смена (пусто = 1-я)" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,5"/>
+        <TextBox x:Name="ShiftBox" x:FieldModifier="public"
+                 ToolTip="Пусто или 1 — первая смена (№1–8), 2 — вторая (№6–12). Новая строка подхватывает смену своего класса."/>
+      </StackPanel>
+    </Grid>
 
-    <TextBlock Text="Учитель" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
-    <TextBox x:Name="TeacherBox" ToolTip="Например: Иванова Е.В."/>
-    <TextBlock x:Name="TeacherKnown" Style="{DynamicResource THCaption}" Margin="0,4,0,0" Text=""/>
+    <TextBlock Text="Учитель" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,5"/>
+    <ComboBox x:Name="TeacherBox" IsEditable="True" IsTextSearchEnabled="True"
+              ToolTip="Выберите учителя или введите ФИО нового учителя"/>
 
-    <TextBlock Text="Кабинет (необязательно)" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
-    <TextBox x:Name="RoomBox" ToolTip="Пусто — без привязки к кабинету"/>
-    <TextBlock x:Name="RoomKnown" Style="{DynamicResource THCaption}" Margin="0,4,0,0" Text=""/>
+    <TextBlock Text="Кабинет (необязательно)" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,5"/>
+    <ComboBox x:Name="RoomBox" IsEditable="True" IsTextSearchEnabled="True"
+              ToolTip="Оставьте пустым для автоподбора или выберите кабинет"/>
 
-    <CheckBox x:Name="SplitBox" Content="Делить на подгруппы A/B" Margin="0,14,0,0" Checked="OnSplitToggled" Unchecked="OnSplitToggled"/>
-    <TextBlock Text="Второй учитель (для подгруппы B)" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
-    <TextBox x:Name="TeacherBBox" IsEnabled="False" ToolTip="Обязателен при делении на подгруппы"/>
+    <CheckBox x:Name="SplitBox" Content="Делить на подгруппы A/B" Margin="0,14,0,0"
+              Checked="OnSplitToggled" Unchecked="OnSplitToggled"/>
+    <TextBlock Text="Второй учитель (для подгруппы B)" FontSize="13" FontWeight="SemiBold" Margin="0,10,0,5"/>
+    <ComboBox x:Name="TeacherBBox" IsEditable="True" IsTextSearchEnabled="True" IsEnabled="False"
+              ToolTip="Обязателен при делении класса на две подгруппы"/>
 
-    <TextBlock Text="Смена (необязательно)" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,6"/>
-    <TextBox x:Name="ShiftBox" x:FieldModifier="public" Width="80" HorizontalAlignment="Left"
-             ToolTip="Пусто или 1 — первая смена, 2 — вторая (№6–12). Новая строка подхватывает смену своего класса."/>
-    <TextBlock Style="{DynamicResource THCaption}" Margin="0,4,0,0" TextWrapping="Wrap"
-               Text="Профильные пары (10А/11А) задаются только через Excel — колонка Pair. Здесь пара сохраняется без изменений."/>
+    <TextBlock Text="Профильная пара (необязательно)" FontSize="13" FontWeight="SemiBold" Margin="0,12,0,5"/>
+    <TextBox x:Name="PairBox"
+             wpf:InputHints.Placeholder="Напр.: Иностр/Инф или Физ/Хим — пусто = обычный урок"
+             ToolTip="Две строки одного класса с одинаковым именем пары идут одновременно (две подгруппы на разных предметах)."/>
 
-    <TextBlock x:Name="ErrorText" FontSize="13" Foreground="{DynamicResource BBad}" Margin="0,12,0,0" TextWrapping="Wrap" Text=""/>
+    <TextBlock x:Name="ErrorText" FontSize="13" Foreground="{DynamicResource BBad}" Margin="0,12,0,0"
+               TextWrapping="Wrap" Text=""/>
 
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
       <Button Content="Отмена" Style="{DynamicResource BtnSecondary}" Click="OnCancelClick"/>

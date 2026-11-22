@@ -1,0 +1,95 @@
+<Window x:Class="Amsur.Wpf.SchoolWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wpf="clr-namespace:Amsur.Wpf"
+        Title="Мастер создания школы" Width="760" Height="650"
+        MinWidth="660" MinHeight="560" WindowStartupLocation="CenterOwner"
+        Style="{DynamicResource ChromeWindow}"
+        Background="{DynamicResource BBg}">
+  <DockPanel Margin="22" TextElement.Foreground="{DynamicResource BText}">
+    <StackPanel DockPanel.Dock="Top">
+      <TextBlock Style="{DynamicResource TH1}" FontSize="20" Text="Мастер создания школы без Excel"/>
+      <TextBlock Style="{DynamicResource THint}" Margin="0,4,0,0" TextWrapping="Wrap"
+                 Text="Укажите сколько классов в каждой параллели и сетку звонков. Программа создаст классы, типовую программу РБ, кабинеты и учителей-заглушек — затем всё можно доправить прямо в таблицах."/>
+
+      <!-- Быстрые пресеты -->
+      <WrapPanel Margin="0,12,0,0">
+        <TextBlock Text="Быстрый шаблон:" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,4"/>
+        <Button Content="Начальная (1–4)" Style="{DynamicResource BtnSecondary}" Padding="10,5" Margin="0,0,6,4"
+                Click="OnPresetPrimaryClick"/>
+        <Button Content="Базовая (5–9)" Style="{DynamicResource BtnSecondary}" Padding="10,5" Margin="0,0,6,4"
+                Click="OnPresetBasicClick"/>
+        <Button Content="Средняя (1–11)" Style="{DynamicResource BtnSecondary}" Padding="10,5" Margin="0,0,6,4"
+                Click="OnPresetFullClick"/>
+        <Button Content="Демо (6–8)" Style="{DynamicResource BtnSecondary}" Padding="10,5" Margin="0,0,6,4"
+                Click="OnPresetDemoClick"/>
+        <Button Content="Очистить" Style="{DynamicResource BtnSecondary}" Padding="10,5" Margin="0,0,0,4"
+                Click="OnClearClick"/>
+      </WrapPanel>
+
+      <!-- Сетка + опции -->
+      <Border Style="{DynamicResource Card}" Margin="0,8,0,0" Padding="14,10">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="Учебных дней:" VerticalAlignment="Center" FontSize="13"/>
+            <ComboBox x:Name="DaysBox" Width="80" Margin="6,0,16,0" SelectedIndex="0"
+                      SelectionChanged="OnOptionChanged">
+              <ComboBoxItem Content="5"/>
+              <ComboBoxItem Content="6"/>
+            </ComboBox>
+            <TextBlock Text="Уроков в день:" VerticalAlignment="Center" FontSize="13"/>
+            <ComboBox x:Name="SlotsBox" Width="120" Margin="6,0,0,0" SelectedIndex="1"
+                      SelectionChanged="OnOptionChanged">
+              <ComboBoxItem Content="7"/>
+              <ComboBoxItem Content="8"/>
+              <ComboBoxItem Content="12 (2 смены)"/>
+            </ComboBox>
+          </StackPanel>
+          <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+            <CheckBox x:Name="SubjectsBox" Content="Заполнить типовыми предметами РБ" IsChecked="True"
+                      Checked="OnOptionCheckChanged" Unchecked="OnOptionCheckChanged"/>
+            <CheckBox x:Name="RoomsBox" Content="Создать кабинеты классов (Каб 5А…)" IsChecked="True"
+                      Margin="20,0,0,0" Checked="OnOptionCheckChanged" Unchecked="OnOptionCheckChanged"/>
+          </StackPanel>
+        </Grid>
+      </Border>
+    </StackPanel>
+
+    <!-- Низ: превью + действия -->
+    <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+      <Border Style="{DynamicResource Badge}" Background="{DynamicResource BAccentSoft}"
+              BorderBrush="{DynamicResource BAccentBorder}" BorderThickness="1" Padding="12,8" HorizontalAlignment="Stretch">
+        <TextBlock x:Name="PreviewText" FontSize="13" Foreground="{DynamicResource BAccentText}" TextWrapping="Wrap"
+                   Text="Выберите хотя бы одну параллель."/>
+      </Border>
+      <TextBlock x:Name="ErrorText" FontSize="13" Foreground="{DynamicResource BBad}" Margin="0,8,0,0"
+                 TextWrapping="Wrap" Visibility="Collapsed"/>
+      <DockPanel Margin="0,10,0,0" LastChildFill="False">
+        <TextBlock DockPanel.Dock="Left" Style="{DynamicResource THCaption}" VerticalAlignment="Center"
+                   Text="Подсказка: в двухсменной школе 2-я смена автоматически использует уроки №6–12."/>
+        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+          <Button Content="Отмена" Style="{DynamicResource BtnSecondary}" Click="OnCancelClick"/>
+          <Button x:Name="CreateBtn" Content="Создать школу" Style="{DynamicResource BtnPrimary}"
+                  Margin="8,0,0,0" Click="OnCreateClick"/>
+        </StackPanel>
+      </DockPanel>
+    </StackPanel>
+
+    <!-- Таблица параллелей 1..11 -->
+    <DataGrid x:Name="GradesGrid" Margin="0,10,0,0" AutoGenerateColumns="False" CanUserAddRows="False"
+              CanUserDeleteRows="False" VerticalScrollBarVisibility="Auto"
+              CellEditEnding="OnGridEdited">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Параллель" Binding="{Binding GradeLabel}" Width="110" IsReadOnly="True"/>
+        <DataGridTextColumn Header="Кол-во классов (0..6)" Binding="{Binding ClassCount, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+        <DataGridTextColumn Header="Буквы (напр. АБВ)" Binding="{Binding Letters, UpdateSourceTrigger=PropertyChanged}" Width="*"/>
+        <DataGridComboBoxColumn x:Name="ShiftCol" Header="Смена" SelectedItemBinding="{Binding ShiftLabel, UpdateSourceTrigger=PropertyChanged}" Width="120"/>
+        <DataGridTextColumn Header="Будут классы" Binding="{Binding Preview}" Width="160" IsReadOnly="True"/>
+      </DataGrid.Columns>
+    </DataGrid>
+  </DockPanel>
+</Window>

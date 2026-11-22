@@ -7,51 +7,60 @@
     <StackPanel DockPanel.Dock="Top">
       <DockPanel>
         <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-          <TextBlock Style="{StaticResource TH1}" Text="Настройки качества"/>
-          <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
-                     Text="Обычному завучу ничего настраивать не нужно. «Применить» сохраняет веса, приоритет выпускных, черновик, перегрузку и дневные лимиты. «Сохранить „Моя школа“» дополнительно запоминает их как профиль."/>
+          <TextBlock Style="{DynamicResource TH1}" Text="Настройки качества"/>
+          <TextBlock Style="{DynamicResource THint}" Margin="0,4,0,0"
+                     Text="Обычному завучу ничего настраивать не нужно. «Применить» сохраняет веса, приоритет выпускных, перегрузку и черновик. «Сохранить „Моя школа“» запоминает их как профиль."/>
         </StackPanel>
-        <Border DockPanel.Dock="Right" Style="{StaticResource Badge}" Background="{DynamicResource BGoodBg}"
-                VerticalAlignment="Center" Margin="12,0,0,0">
+        <Border DockPanel.Dock="Right" Background="{DynamicResource BGoodBg}"
+                CornerRadius="6" Padding="8,4" VerticalAlignment="Center" Margin="12,0,0,0">
+          <Border.Style>
+            <Style TargetType="Border">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding Text, ElementName=SavedNameText}" Value="">
+                  <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Border.Style>
           <TextBlock x:Name="SavedNameText" FontSize="12" Foreground="{DynamicResource BGood}" Text=""/>
         </Border>
       </DockPanel>
       <!-- Пресеты: 4 карточки -->
       <UniformGrid Columns="4" Rows="1" Margin="0,12,0,0">
-        <RadioButton x:Name="PresetStandard" GroupName="Preset" Style="{StaticResource RadioCard}"
+        <RadioButton x:Name="PresetStandard" GroupName="Preset" Style="{DynamicResource RadioCard}"
                      Margin="0,0,6,0" Checked="OnPresetChanged">
           <StackPanel>
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="Стандарт" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-              <Border Style="{StaticResource Badge}" Background="{DynamicResource BAccentSoft}" Margin="6,0,0,0">
+              <Border Style="{DynamicResource Badge}" Background="{DynamicResource BAccentSoft}" Margin="6,0,0,0">
                 <TextBlock Text="Выбор АМСУР" FontSize="10" Foreground="{DynamicResource BAccentText}"/>
               </Border>
             </StackPanel>
-            <TextBlock Style="{StaticResource THint}" FontSize="11" Margin="0,4,0,0"
+            <TextBlock Style="{DynamicResource THint}" FontSize="11" Margin="0,4,0,0"
                        Text="Рекомендуется: баланс пожеланий. Строгие правила одни для всех." TextWrapping="Wrap"/>
           </StackPanel>
         </RadioButton>
-        <RadioButton x:Name="PresetStudent" GroupName="Preset" Style="{StaticResource RadioCard}"
+        <RadioButton x:Name="PresetStudent" GroupName="Preset" Style="{DynamicResource RadioCard}"
                      Margin="3,0,3,0" Checked="OnPresetChanged">
           <StackPanel>
             <TextBlock Text="Удобно ученикам" FontSize="13" FontWeight="SemiBold"/>
-            <TextBlock Style="{StaticResource THint}" FontSize="11" Margin="0,4,0,0"
+            <TextBlock Style="{DynamicResource THint}" FontSize="11" Margin="0,4,0,0"
                        Text="Пожелания в пользу учеников. Строгие правила не меняются." TextWrapping="Wrap"/>
           </StackPanel>
         </RadioButton>
-        <RadioButton x:Name="PresetTeacher" GroupName="Preset" Style="{StaticResource RadioCard}"
+        <RadioButton x:Name="PresetTeacher" GroupName="Preset" Style="{DynamicResource RadioCard}"
                      Margin="3,0,3,0" Checked="OnPresetChanged">
           <StackPanel>
             <TextBlock Text="Удобно учителям" FontSize="13" FontWeight="SemiBold"/>
-            <TextBlock Style="{StaticResource THint}" FontSize="11" Margin="0,4,0,0"
+            <TextBlock Style="{DynamicResource THint}" FontSize="11" Margin="0,4,0,0"
                        Text="Пожелания в пользу учителей. Строгие правила не меняются." TextWrapping="Wrap"/>
           </StackPanel>
         </RadioButton>
-        <RadioButton x:Name="PresetCustom" GroupName="Preset" Style="{StaticResource RadioCard}"
+        <RadioButton x:Name="PresetCustom" GroupName="Preset" Style="{DynamicResource RadioCard}"
                      Margin="6,0,0,0" Checked="OnPresetChanged">
           <StackPanel>
             <TextBlock Text="Наш профиль" FontSize="13" FontWeight="SemiBold"/>
-            <TextBlock Style="{StaticResource THint}" FontSize="11" Margin="0,4,0,0"
+            <TextBlock Style="{DynamicResource THint}" FontSize="11" Margin="0,4,0,0"
                        Text="Ваши сохранённые настройки из базы." TextWrapping="Wrap"/>
           </StackPanel>
         </RadioButton>
@@ -63,45 +72,50 @@
         <TextBlock Text="Имя профиля:" VerticalAlignment="Center"/>
         <TextBox x:Name="CustomNameBox" Text="Моя школа" Width="220" Margin="6,0,8,0"
                  wpf:InputHints.Placeholder="Название профиля"/>
-        <Button Content="Сохранить «Моя школа»" Style="{StaticResource BtnSecondary}" Click="OnSaveCustomClick"/>
+        <Button Content="Сохранить «Моя школа»" Style="{DynamicResource BtnSecondary}" Click="OnSaveCustomClick"/>
         <TextBlock x:Name="DirtyText" FontSize="12" Foreground="{DynamicResource BWarn}"
                    VerticalAlignment="Center" Margin="12,0,0,0" Text=""/>
       </StackPanel>
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-        <Button Content="Сбросить к Стандарту" Style="{StaticResource BtnSecondary}" Click="OnResetClick"/>
-        <Button Content="Применить" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0" Click="OnApplyClick"/>
+        <Button Content="Сбросить к Стандарту" Style="{DynamicResource BtnSecondary}" Click="OnResetClick"/>
+        <Button Content="Применить" Style="{DynamicResource BtnPrimary}" Margin="8,0,0,0" Click="OnApplyClick"/>
       </StackPanel>
       <TextBlock x:Name="MessageText" FontSize="13" TextWrapping="Wrap" Margin="0,8,0,0"/>
     </StackPanel>
 
     <Grid Margin="0,14,0,0">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="224"/>
+        <ColumnDefinition Width="232"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
-      <Border Style="{StaticResource Card}" Padding="10" Margin="0,0,14,0">
-        <StackPanel>
-          <TextBlock Text="КАТЕГОРИИ" Style="{StaticResource THCaption}" Margin="8,4,8,6"/>
-          <ListBox x:Name="SectionList" SelectionChanged="OnSectionChanged" BorderThickness="0" Background="Transparent">
-            <ListBoxItem Content="Качество" IsSelected="True"/>
-            <ListBoxItem Content="Предметы"/>
-            <ListBoxItem Content="Классы"/>
-            <ListBoxItem Content="Учителя"/>
-            <ListBoxItem Content="Экспертный режим"/>
-            <ListBoxItem Content="Предупреждения"/>
-          </ListBox>
-          <Border Style="{StaticResource Badge}" Background="{DynamicResource BGoodBg}" Margin="8,12,8,4">
-            <TextBlock Style="{StaticResource THCaption}" TextWrapping="Wrap" Foreground="{DynamicResource BGood}"
-                       Text="Готово к пуску: строгие правила проверяются автоматически."/>
-          </Border>
-        </StackPanel>
+      <Border Style="{DynamicResource Card}" Padding="10" Margin="0,0,14,0">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Bottom">
+            <Border Style="{DynamicResource Badge}" Background="{DynamicResource BSubtle}"
+                    BorderBrush="{DynamicResource BBorder}" BorderThickness="1" Padding="10,8" Margin="4,8,4,8">
+              <TextBlock Style="{DynamicResource THCaption}" TextWrapping="Wrap"
+                         Text="Лимиты классов, учителей, предметов и график доступности теперь в разделе «1. Школа и нагрузка»."/>
+            </Border>
+            <Button Content="Открыть «Школа и данные» →" Style="{DynamicResource BtnSecondary}"
+                    Margin="4,0,4,6" Padding="10,6" Click="OnOpenDataClick"/>
+            <Border Style="{DynamicResource Badge}" Background="{DynamicResource BGoodBg}" Margin="4,0,4,2" Padding="10,8">
+              <TextBlock Style="{DynamicResource THCaption}" TextWrapping="Wrap" Foreground="{DynamicResource BGood}"
+                         Text="Готово к пуску: строгие правила проверяются автоматически."/>
+            </Border>
+          </StackPanel>
+          <StackPanel DockPanel.Dock="Top">
+            <TextBlock Text="КАТЕГОРИИ" Style="{DynamicResource THCaption}" Margin="8,4,8,6"/>
+            <ListBox x:Name="SectionList" SelectionChanged="OnSectionChanged" BorderThickness="0" Background="Transparent">
+              <ListBoxItem Content="Качество" IsSelected="True"/>
+              <ListBoxItem Content="Экспертный режим"/>
+              <ListBoxItem Content="Предупреждения"/>
+            </ListBox>
+          </StackPanel>
+        </DockPanel>
       </Border>
-      <ScrollViewer Grid.Column="1" Margin="0,0,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel>
           <StackPanel x:Name="QualityPanel"/>
-          <StackPanel x:Name="SubjectsPanel" Visibility="Collapsed"/>
-          <StackPanel x:Name="ClassesPanel" Visibility="Collapsed"/>
-          <StackPanel x:Name="TeachersPanel" Visibility="Collapsed"/>
           <StackPanel x:Name="ExpertPanel" Visibility="Collapsed"/>
           <StackPanel x:Name="WarningsPanel" Visibility="Collapsed"/>
         </StackPanel>

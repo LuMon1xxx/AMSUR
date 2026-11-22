@@ -73,6 +73,18 @@ public sealed class SqliteFlexStore(string connectionString)
             CREATE TABLE IF NOT EXISTS TeacherLimit(
               TeacherName TEXT PRIMARY KEY,
               MaxLessonsPerDay INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS SubjectLimit(
+              SubjectName TEXT PRIMARY KEY,
+              MaxPerDay INTEGER NOT NULL);
+            CREATE TABLE IF NOT EXISTS TeacherDayOff(
+              TeacherName TEXT NOT NULL,
+              DayIndex INTEGER NOT NULL,
+              PRIMARY KEY(TeacherName, DayIndex));
+            CREATE TABLE IF NOT EXISTS TeacherUnavailSlot(
+              TeacherName TEXT NOT NULL,
+              DayIndex INTEGER NOT NULL,
+              SlotIndex INTEGER NOT NULL,
+              PRIMARY KEY(TeacherName, DayIndex, SlotIndex));
             """;
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = ddl;
@@ -155,6 +167,24 @@ public sealed class SqliteFlexStore(string connectionString)
             await ExecAsync(conn, tx,
                 "INSERT INTO TeacherLimit(TeacherName, MaxLessonsPerDay) VALUES($n, $v);",
                 ct, ("$n", (object)l.TeacherName), ("$v", l.MaxLessonsPerDay));
+
+        await ExecAsync(conn, tx, "DELETE FROM SubjectLimit;", ct);
+        foreach (var l in data.SubjectLimits ?? [])
+            await ExecAsync(conn, tx,
+                "INSERT INTO SubjectLimit(SubjectName, MaxPerDay) VALUES($n, $v);",
+                ct, ("$n", (object)l.SubjectName), ("$v", l.MaxPerDay));
+
+        await ExecAsync(conn, tx, "DELETE FROM TeacherDayOff;", ct);
+        foreach (var d in data.TeacherDaysOff ?? [])
+            await ExecAsync(conn, tx,
+                "INSERT INTO TeacherDayOff(TeacherName, DayIndex) VALUES($n, $d);",
+                ct, ("$n", (object)d.TeacherName), ("$d", d.DayIndex));
+
+        await ExecAsync(conn, tx, "DELETE FROM TeacherUnavailSlot;", ct);
+        foreach (var u in data.TeacherUnavailSlots ?? [])
+            await ExecAsync(conn, tx,
+                "INSERT INTO TeacherUnavailSlot(TeacherName, DayIndex, SlotIndex) VALUES($n, $d, $s);",
+                ct, ("$n", (object)u.TeacherName), ("$d", u.DayIndex), ("$s", u.SlotIndex));
 
         await ExecAsync(conn, tx, "DELETE FROM HourNorms;", ct);
         foreach (var n in data.HourNorms)
@@ -301,8 +331,32 @@ public sealed class SqliteFlexStore(string connectionString)
             while (await r.ReadAsync(ct))
                 teacherLimits.Add(new TeacherLimitRow(r.GetString(0), r.GetInt32(1)));
         }
+        var subjectLimits = new List<SubjectLimitRow>();
+        await using (var q = conn.CreateCommand())
+        {
+            q.CommandText = "SELECT SubjectName, MaxPerDay FROM SubjectLimit;";
+            await using var r = await q.ExecuteReaderAsync(ct);
+            while (await r.ReadAsync(ct))
+                subjectLimits.Add(new SubjectLimitRow(r.GetString(0), r.GetInt32(1)));
+        }
+        var teacherDaysOff = new List<TeacherDayOffRow>();
+        await using (var q = conn.CreateCommand())
+        {
+            q.CommandText = "SELECT TeacherName, DayIndex FROM TeacherDayOff;";
+            await using var r = await q.ExecuteReaderAsync(ct);
+            while (await r.ReadAsync(ct))
+                teacherDaysOff.Add(new TeacherDayOffRow(r.GetString(0), r.GetInt32(1)));
+        }
+        var teacherUnavailSlots = new List<TeacherUnavailSlotRow>();
+        await using (var q = conn.CreateCommand())
+        {
+            q.CommandText = "SELECT TeacherName, DayIndex, SlotIndex FROM TeacherUnavailSlot;";
+            await using var r = await q.ExecuteReaderAsync(ct);
+            while (await r.ReadAsync(ct))
+                teacherUnavailSlots.Add(new TeacherUnavailSlotRow(r.GetString(0), r.GetInt32(1), r.GetInt32(2)));
+        }
         return new FlexDataset(rooms, classes, norms, overrides, difficulty, common, assigns, settings,
-            classLimits, teacherLimits);
+            classLimits, teacherLimits, subjectLimits, teacherDaysOff, teacherUnavailSlots);
     }
 
     private static async Task ExecAsync(SqliteConnection conn, SqliteTransaction tx,

@@ -149,6 +149,19 @@ public sealed record TeacherLimitRow(
     string TeacherName,
     int MaxLessonsPerDay);
 
+public sealed record SubjectLimitRow(
+    string SubjectName,
+    int MaxPerDay);
+
+public sealed record TeacherDayOffRow(
+    string TeacherName,
+    int DayIndex);
+
+public sealed record TeacherUnavailSlotRow(
+    string TeacherName,
+    int DayIndex,
+    int SlotIndex);
+
 public sealed record HourNormRow(
     string SubjectName,
     int Grade,
@@ -227,7 +240,10 @@ public sealed record FlexDataset(
     IReadOnlyList<TeacherAssignRow> Assignments,
     FlexSettingsRow Settings,
     IReadOnlyList<ClassLimitRow>? ClassLimits = null,
-    IReadOnlyList<TeacherLimitRow>? TeacherLimits = null)
+    IReadOnlyList<TeacherLimitRow>? TeacherLimits = null,
+    IReadOnlyList<SubjectLimitRow>? SubjectLimits = null,
+    IReadOnlyList<TeacherDayOffRow>? TeacherDaysOff = null,
+    IReadOnlyList<TeacherUnavailSlotRow>? TeacherUnavailSlots = null)
 {
     public static FlexDataset Empty => new([], [], [], [], [], null, [],
         FlexSettingsRow.Default);

@@ -588,11 +588,17 @@
                   <ColumnDefinition Width="*"/>
                   <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <ContentPresenter Grid.Column="0"
+                <ContentPresenter x:Name="ContentSite" Grid.Column="0"
                                   Content="{TemplateBinding SelectionBoxItem}"
                                   ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                <ToggleButton Grid.Column="1" Style="{DynamicResource ComboBoxToggle}" Width="20"
+                <TextBox x:Name="PART_EditableTextBox" Grid.Column="0" Style="{x:Null}"
+                         Visibility="Hidden" Background="Transparent" BorderThickness="0"
+                         Padding="0" Margin="0" FontSize="{TemplateBinding FontSize}"
+                         Foreground="{TemplateBinding Foreground}" CaretBrush="{DynamicResource BText}"
+                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                         IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                <ToggleButton Grid.Column="1" Style="{DynamicResource ComboBoxToggle}" Width="20" ClickMode="Press"
                               IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
               </Grid>
               <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
@@ -607,6 +613,10 @@
               </Popup>
             </Grid>
             <ControlTemplate.Triggers>
+              <Trigger Property="IsEditable" Value="True">
+                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
+              </Trigger>
               <Trigger Property="IsMouseOver" Value="True">
                 <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource BBorderStrong}"/>
               </Trigger>
@@ -865,8 +875,16 @@
       <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="{DynamicResource BText}"/>
       <Setter Property="Padding" Value="10,6"/>
       <Setter Property="VerticalAlignment" Value="Center"/>
+      <Style.Triggers>
+        <Trigger Property="IsSelected" Value="True">
+          <Setter Property="Background" Value="{DynamicResource BAccentSoft}"/>
+          <Setter Property="Foreground" Value="{DynamicResource BText}"/>
+          <Setter Property="BorderBrush" Value="{DynamicResource BAccentSoft}"/>
+        </Trigger>
+      </Style.Triggers>
     </Style>
 
     <!-- Боковая навигация: полоса 3px слева у активного пункта через BorderBrush -->

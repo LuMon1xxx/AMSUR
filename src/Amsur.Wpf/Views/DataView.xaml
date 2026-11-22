@@ -5,25 +5,36 @@
              Background="{DynamicResource BBg}">
   <DockPanel Margin="24" TextElement.Foreground="{DynamicResource BText}">
     <StackPanel DockPanel.Dock="Top">
-      <DockPanel>
-        <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
-          <TextBlock Style="{StaticResource TH1}" Text="Школа и данные"/>
-          <TextBlock x:Name="SummaryText" Style="{StaticResource THint}" Margin="0,4,0,0" Text="Не загружены"/>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+          <TextBlock Style="{DynamicResource TH1}" Text="Школа и данные"/>
+          <TextBlock x:Name="SummaryText" Style="{DynamicResource THint}" Margin="0,4,0,0" Text="Не загружены"/>
         </StackPanel>
-        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-          <TextBlock Text="Дней:" VerticalAlignment="Center"/>
-          <TextBox x:Name="DaysBox" Text="5" Width="48" Padding="4,2" VerticalContentAlignment="Center" Margin="6,0,10,0"/>
-          <TextBlock Text="Уроков:" VerticalAlignment="Center"/>
-          <TextBox x:Name="SlotsBox" Text="8" Width="48" Padding="4,2" VerticalContentAlignment="Center" Margin="6,0,10,0"/>
-          <Button Content="Скачать шаблон" Style="{StaticResource BtnSecondary}" Click="OnTemplateClick"/>
-          <Button Content="Загрузить Excel" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0" Click="OnImportClick"/>
-          <Button x:Name="DemoBtn" x:FieldModifier="public" Content="Демо" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0"
-                  ToolTip="Загрузить маленькую демо-школу (6 классов) — попробовать без своего файла" Click="OnDemoClick"/>
-          <Button Content="Применить сетку" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0"
-                  ToolTip="Применить дни и уроки к текущим данным (без Excel)" Click="OnGridApplyClick"/>
-        </StackPanel>
-      </DockPanel>
-      <Border x:Name="ErrorCard" x:FieldModifier="public" Style="{StaticResource Card}" Margin="0,12,0,0"
+        <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,6,2">
+            <TextBlock Text="Дней:" VerticalAlignment="Center" FontSize="13"/>
+            <TextBox x:Name="DaysBox" Text="5" Width="46" Padding="4,4" TextAlignment="Center" VerticalContentAlignment="Center" Margin="5,0,8,0"/>
+            <TextBlock Text="Уроков:" VerticalAlignment="Center" FontSize="13"/>
+            <TextBox x:Name="SlotsBox" Text="8" Width="46" Padding="4,4" TextAlignment="Center" VerticalContentAlignment="Center" Margin="5,0,6,0"/>
+            <Button Content="Применить сетку" Style="{DynamicResource BtnSecondary}" Padding="10,6" Click="OnGridApplyClick"
+                    ToolTip="Применить количество дней и уроков к текущим данным"/>
+          </StackPanel>
+          <Button x:Name="WizardBtn" x:FieldModifier="public" Content="Мастер школы" Style="{DynamicResource BtnPrimary}"
+                  Padding="12,6" Margin="4,2,4,2" Click="OnWizardClick"
+                  ToolTip="Создать структуру школы с нуля без Excel: классы, смены, учебный план РБ и кабинеты"/>
+          <Button Content="Загрузить Excel" Style="{DynamicResource BtnSecondary}" Padding="10,6" Margin="4,2,4,2" Click="OnImportClick"/>
+          <Button x:Name="DemoBtn" x:FieldModifier="public" Content="Демо" Style="{DynamicResource BtnSecondary}"
+                  Padding="10,6" Margin="4,2,4,2"
+                  ToolTip="Загрузить демо-школу (6 классов) — попробовать без своего файла" Click="OnDemoClick"/>
+          <Button Content="Скачать шаблон" Style="{DynamicResource BtnSecondary}" Padding="10,6" Margin="4,2,0,2" Click="OnTemplateClick"/>
+        </WrapPanel>
+      </Grid>
+
+      <Border x:Name="ErrorCard" x:FieldModifier="public" Style="{DynamicResource Card}" Margin="0,12,0,0"
               Background="{DynamicResource BBadBg}" BorderBrush="{DynamicResource BBad}" Visibility="Collapsed">
         <StackPanel>
           <TextBlock Text="Данные не приняты — что исправить:" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource BBad}"/>
@@ -36,6 +47,26 @@
           </ItemsControl>
         </StackPanel>
       </Border>
+
+      <Border x:Name="CapacityBanner" x:FieldModifier="public" Style="{DynamicResource Card}" Margin="0,10,0,0" Padding="12,9"
+              Background="{DynamicResource BWarnBg}" BorderBrush="{DynamicResource BWarn}" Visibility="Collapsed">
+        <StackPanel>
+          <TextBlock Text="Проверка нагрузки и вместимости перед генерацией:" FontWeight="SemiBold" FontSize="13"
+                     Foreground="{DynamicResource BWarn}"/>
+          <ItemsControl x:Name="CapacityList" Margin="0,4,0,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" Foreground="{DynamicResource BText}"/>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border x:Name="StatusBanner" Style="{DynamicResource Card}" Margin="0,10,0,0" Padding="12,8"
+              Background="{DynamicResource BGoodBg}" BorderBrush="{DynamicResource BGood}" Visibility="Collapsed">
+        <TextBlock x:Name="StatusBannerText" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource BGood}" TextWrapping="Wrap"/>
+      </Border>
     </StackPanel>
 
     <Grid Margin="0,14,0,0">
@@ -43,21 +74,21 @@
         <ColumnDefinition Width="232"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
-      <Border Style="{StaticResource Card}" Padding="10" Margin="0,0,14,0">
+      <Border Style="{DynamicResource Card}" Padding="10" Margin="0,0,14,0">
         <DockPanel>
           <StackPanel DockPanel.Dock="Bottom">
-            <Border Style="{StaticResource Badge}" Background="{DynamicResource BAccentSoft}"
+            <Border Style="{DynamicResource Badge}" Background="{DynamicResource BAccentSoft}"
                     BorderBrush="{DynamicResource BAccentBorder}" BorderThickness="1"
                     Padding="10,8" Margin="4,10,4,8">
-              <TextBlock Style="{StaticResource THCaption}" TextWrapping="Wrap"
-                         Text="Можно и без Excel: добавляйте строки здесь. Правки всех вкладок сохраняет кнопка ниже."/>
+              <TextBlock Style="{DynamicResource THCaption}" TextWrapping="Wrap"
+                         Text="Excel не обязателен: настройте школу в Мастере, матрице часов и вкладках ниже. Кнопка сохраняет правки всех вкладок."/>
             </Border>
-            <Button x:Name="SaveAllBtn" x:FieldModifier="public" Content="Сохранить изменения" Style="{StaticResource BtnPrimary}"
+            <Button x:Name="SaveAllBtn" x:FieldModifier="public" Content="Сохранить изменения" Style="{DynamicResource BtnPrimary}"
                     Margin="4,0,4,2" Padding="12,8" Click="OnSaveAllClick"
-                    ToolTip="Сохранить правки всех вкладок сразу: классы, часы, учителя, предметы, кабинеты, общий урок"/>
+                    ToolTip="Сохранить правки всех вкладок сразу: классы, смены, лимиты, недоступность учителей, предметы, кабинеты, общий урок"/>
           </StackPanel>
           <StackPanel DockPanel.Dock="Top">
-            <TextBlock Text="СПРАВОЧНИКИ" Style="{StaticResource THCaption}" FontWeight="SemiBold" Margin="8,4,8,6"/>
+            <TextBlock Text="СПРАВОЧНИКИ" Style="{DynamicResource THCaption}" FontWeight="SemiBold" Margin="8,4,8,6"/>
             <ListBox x:Name="TabList" SelectionChanged="OnTabChanged" BorderThickness="0" Background="Transparent">
               <ListBoxItem x:Name="TabLoad" Content="Нагрузка" IsSelected="True"/>
               <ListBoxItem x:Name="TabHours" Content="Часы"/>
@@ -74,23 +105,30 @@
 
       <DockPanel Grid.Column="1">
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10" x:Name="LoadToolbar" LastChildFill="False">
-          <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
-            <TextBox x:Name="SearchBox" Width="290" Margin="0,0,8,0" TextChanged="OnFilterChanged"
+          <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
+              <Button x:Name="LoadTableModeBtn" Content="Таблица" Padding="10,5" Style="{DynamicResource BtnPrimary}"
+                      Click="OnLoadTableModeClick"/>
+              <Button x:Name="LoadMatrixModeBtn" Content="Матрица часов" Padding="10,5" Margin="4,0,0,0" Style="{DynamicResource BtnSecondary}"
+                      Click="OnLoadMatrixModeClick"
+                      ToolTip="Редактировать часы учебно-тематического плана (предмет × класс) без Excel"/>
+            </StackPanel>
+            <TextBox x:Name="SearchBox" Width="280" Margin="0,0,8,0" TextChanged="OnFilterChanged"
                      wpf:InputHints.Placeholder="Поиск по классу, предмету или учителю…"
                      ToolTip="Поиск по классу, предмету или учителю"/>
-            <ComboBox x:Name="ClassFilterBox" Width="170" SelectionChanged="OnFilterChanged"
+            <ComboBox x:Name="ClassFilterBox" Width="150" SelectionChanged="OnFilterChanged"
                       ToolTip="Показать только один класс"/>
           </StackPanel>
           <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-            <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Click="OnAddClick"/>
-            <Button Content="Изменить" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Click="OnEditClick"/>
-            <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Margin="8,0,0,0" Click="OnDeleteClick"/>
+            <Button x:Name="LoadAddBtn" Content="Добавить" Style="{DynamicResource BtnSecondary}" Click="OnAddClick"/>
+            <Button x:Name="LoadEditBtn" Content="Изменить" Style="{DynamicResource BtnSecondary}" Margin="8,0,0,0" Click="OnEditClick"/>
+            <Button x:Name="LoadDeleteBtn" Content="Удалить" Style="{DynamicResource BtnSecondary}" Margin="8,0,0,0" Click="OnDeleteClick"/>
           </StackPanel>
         </DockPanel>
 
         <!-- Замечания — компактный блок внизу, не отбирает высоту у таблицы. -->
         <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
-          <TextBlock x:Name="CountText" Style="{StaticResource THCaption}" HorizontalAlignment="Right"
+          <TextBlock x:Name="CountText" Style="{DynamicResource THCaption}" HorizontalAlignment="Right"
                      Margin="0,0,0,4" Text=""/>
           <Expander x:Name="NotesExpander" Header="Замечания" IsExpanded="False"
                     ToolTip="Предупреждения импорта и подсказки по данным">
@@ -104,10 +142,10 @@
           </Expander>
         </StackPanel>
 
-        <!-- Активная таблица занимает всю оставшуюся высоту: без MaxHeight и без внешнего ScrollViewer. -->
         <Grid>
+          <!-- Нагрузка (таблица) -->
           <DataGrid x:Name="LoadGrid" x:FieldModifier="public" AutoGenerateColumns="False" IsReadOnly="True"
-                    SelectionMode="Extended" CanUserDeleteRows="False"
+                    AlternationCount="2" SelectionMode="Extended" CanUserDeleteRows="False"
                     wpf:DataGridRowNumbers.ShowRowNumbers="True"
                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                     MouseDoubleClick="OnLoadGridDoubleClick" PreviewKeyDown="OnLoadGridKeyDown">
@@ -123,6 +161,72 @@
             </DataGrid.Columns>
           </DataGrid>
 
+          <!-- Onboarding card when school is empty -->
+          <Border x:Name="EmptyCard" Style="{DynamicResource Card}" MaxWidth="560" Padding="24"
+                  VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
+            <StackPanel>
+              <TextBlock Text="Школа ещё не заполнена" Style="{DynamicResource TH2}"/>
+              <TextBlock Style="{DynamicResource THint}" TextWrapping="Wrap" Margin="0,6,0,14"
+                         Text="Начните прямо здесь без Excel: Мастер школы за 30 секунд создаст параллели 1–11, смены, учебный план РБ и кабинеты. Либо загрузите готовую таблицу Excel или попробуйте демо-набор."/>
+              <WrapPanel ItemHeight="34">
+                <Button Content="Открыть Мастер школы" Style="{DynamicResource BtnPrimary}" Margin="0,0,8,6" Click="OnWizardClick"/>
+                <Button Content="Добавить строку вручную" Style="{DynamicResource BtnSecondary}" Margin="0,0,8,6" Click="OnAddClick"/>
+                <Button Content="Демо-школа (6 классов)" Style="{DynamicResource BtnSecondary}" Margin="0,0,0,6" Click="OnDemoClick"/>
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- Матрица часов: Предмет × Класс -->
+          <Grid x:Name="HoursMatrixPanel" x:FieldModifier="public" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Border Grid.Row="0" Style="{DynamicResource Card}" Padding="10,8" Margin="0,0,0,8">
+              <StackPanel>
+                <WrapPanel VerticalAlignment="Center">
+                  <TextBlock x:Name="MatrixCellLabel" Text="Выберите ячейку (предмет × класс) в таблице ниже"
+                             FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Margin="0,2,12,2"/>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,10,2">
+                    <TextBlock Text="Ч/нед:" VerticalAlignment="Center" FontSize="12" Margin="0,0,4,0"/>
+                    <Button Content="-" Width="28" Padding="0,4" Style="{DynamicResource BtnSecondary}" Click="OnMatrixDecClick"/>
+                    <TextBox x:Name="MatrixHoursBox" Width="48" Padding="4,4" Text="0" TextAlignment="Center"
+                             Margin="4,0" VerticalContentAlignment="Center"/>
+                    <Button Content="+" Width="28" Padding="0,4" Style="{DynamicResource BtnSecondary}" Click="OnMatrixIncClick"/>
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,10,2">
+                    <TextBlock Text="Учитель:" VerticalAlignment="Center" FontSize="12" Margin="0,0,4,0"/>
+                    <ComboBox x:Name="MatrixTeacherBox" IsEditable="True" Width="170" VerticalAlignment="Center"/>
+                  </StackPanel>
+                  <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,10,2">
+                    <TextBlock Text="Кабинет:" VerticalAlignment="Center" FontSize="12" Margin="0,0,4,0"/>
+                    <ComboBox x:Name="MatrixRoomBox" IsEditable="True" Width="92" VerticalAlignment="Center"/>
+                  </StackPanel>
+                  <CheckBox x:Name="MatrixSplitBox" Content="A/B" VerticalAlignment="Center" Margin="0,2,8,2"
+                            Checked="OnMatrixSplitChanged" Unchecked="OnMatrixSplitChanged"/>
+                  <ComboBox x:Name="MatrixTeacherBBox" IsEditable="True" Width="145" VerticalAlignment="Center" Margin="0,2,10,2"
+                            Visibility="Collapsed"/>
+                  <Button x:Name="MatrixApplyBtn" Content="Применить ячейку" Style="{DynamicResource BtnPrimary}"
+                          Padding="10,4" Margin="0,2,0,2" Click="OnMatrixApplyClick"/>
+                </WrapPanel>
+                <DockPanel Margin="0,8,0,0" LastChildFill="False">
+                  <TextBlock DockPanel.Dock="Left" Style="{DynamicResource THCaption}" VerticalAlignment="Center"
+                             Margin="0,2,16,2"
+                             Text="0 часов удаляет предмет у класса. Подгруппы и пары с нескольких строк — через «Таблица»."/>
+                  <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Новый предмет в матрицу:" VerticalAlignment="Center" FontSize="12" FontWeight="Medium" Margin="0,0,6,0"/>
+                    <ComboBox x:Name="MatrixNewSubjectBox" IsEditable="True" Width="180" Margin="0,0,6,0"/>
+                    <Button Content="Добавить в список" Style="{DynamicResource BtnSecondary}" Padding="10,4"
+                            Click="OnMatrixAddSubjectClick"/>
+                  </StackPanel>
+                </DockPanel>
+              </StackPanel>
+            </Border>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+              <Grid x:Name="HoursMatrixGrid" Margin="0,0,4,4"/>
+            </ScrollViewer>
+          </Grid>
+
           <!-- Часы: нормы параллелей + переопределения классов -->
           <Grid x:Name="HoursPanel" Visibility="Collapsed">
             <Grid.RowDefinitions>
@@ -134,11 +238,11 @@
               <RowDefinition Height="*"/>
               <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                       Text="Приоритет: класс > параллель > дефолт предмета. Параллель 0 = дефолт предмета на все классы. Пример: математика 0→4ч, 9→5ч, а 9Б — 7ч через переопределение."/>
+            <TextBlock Grid.Row="0" Style="{DynamicResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="Приоритет: класс &gt; параллель &gt; дефолт предмета. Параллель 0 = дефолт предмета на все классы. Пример: математика 0→4ч, 9→5ч, а 9Б — 7ч через переопределение."/>
             <TextBlock Grid.Row="1" Text="Нормы часов" FontWeight="SemiBold" FontSize="14"/>
             <DataGrid Grid.Row="2" x:Name="NormsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
-                      Margin="0,6,0,0" VerticalScrollBarVisibility="Auto"
+                      AlternationCount="2" Margin="0,6,0,0" VerticalScrollBarVisibility="Auto"
                       wpf:DataGridRowNumbers.ShowRowNumbers="True">
               <DataGrid.Columns>
                 <DataGridComboBoxColumn x:Name="NormSubjectCol" Header="Предмет" SelectedItemBinding="{Binding Subject}" Width="*"/>
@@ -147,12 +251,12 @@
               </DataGrid.Columns>
             </DataGrid>
             <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,6,0,0">
-              <Button Content="Добавить норму" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnNormAddClick"/>
-              <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnNormDelClick"/>
+              <Button Content="Добавить норму" Style="{DynamicResource BtnSecondary}" Padding="10,4" Click="OnNormAddClick"/>
+              <Button Content="Удалить" Style="{DynamicResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnNormDelClick"/>
             </StackPanel>
             <TextBlock Grid.Row="4" Text="Переопределения на класс" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/>
             <DataGrid Grid.Row="5" x:Name="OverridesGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
-                      Margin="0,6,0,0" VerticalScrollBarVisibility="Auto"
+                      AlternationCount="2" Margin="0,6,0,0" VerticalScrollBarVisibility="Auto"
                       wpf:DataGridRowNumbers.ShowRowNumbers="True">
               <DataGrid.Columns>
                 <DataGridComboBoxColumn x:Name="OvClassCol" Header="Класс" SelectedItemBinding="{Binding Class}" Width="100"/>
@@ -161,114 +265,185 @@
               </DataGrid.Columns>
             </DataGrid>
             <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,6,0,0">
-              <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnOverrideAddClick"/>
-              <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnOverrideDelClick"/>
+              <Button Content="Добавить" Style="{DynamicResource BtnSecondary}" Padding="10,4" Click="OnOverrideAddClick"/>
+              <Button Content="Удалить" Style="{DynamicResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnOverrideDelClick"/>
             </StackPanel>
           </Grid>
 
-          <!-- Классы: параллель, численность, классный руководитель -->
+          <!-- Классы: быстрое создание + лимит в день + смена + классный руководитель -->
           <Grid x:Name="ClassesPanel" Visibility="Collapsed">
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
-              <RowDefinition Height="*"/>
               <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                       Text="Классный руководитель ведёт общий урок (классный час) и показан в расписании."/>
-            <DataGrid Grid.Row="1" x:Name="ClassesGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
-                      VerticalScrollBarVisibility="Auto"
+            <Border Grid.Row="0" Style="{DynamicResource Card}" Padding="10,8" Margin="0,0,0,8">
+              <WrapPanel VerticalAlignment="Center">
+                <TextBlock Text="Новый класс:" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Margin="0,2,8,2"/>
+                <TextBox x:Name="NewClassNameBox" Width="96" Padding="6,4" Margin="0,2,8,2" wpf:InputHints.Placeholder="напр. 5В"/>
+                <TextBlock Text="Параллель:" VerticalAlignment="Center" FontSize="12" Margin="0,2,4,2"/>
+                <TextBox x:Name="NewClassGradeBox" Width="48" Padding="4,4" Text="5" TextAlignment="Center" Margin="0,2,8,2"/>
+                <TextBlock Text="Смена:" VerticalAlignment="Center" FontSize="12" Margin="0,2,4,2"/>
+                <ComboBox x:Name="NewClassShiftBox" Width="76" Margin="0,2,8,2" SelectedIndex="0">
+                  <ComboBoxItem Content="1-я"/>
+                  <ComboBoxItem Content="2-я"/>
+                </ComboBox>
+                <CheckBox x:Name="NewClassPresetBox" Content="Типовой план РБ" IsChecked="True" VerticalAlignment="Center" Margin="0,2,10,2"/>
+                <Button x:Name="AddClassBtn" Content="Добавить класс" Style="{DynamicResource BtnSecondary}" Padding="10,4"
+                        Margin="0,2,0,2" Click="OnAddClassClick"/>
+              </WrapPanel>
+            </Border>
+            <TextBlock Grid.Row="1" Style="{DynamicResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+                       Text="Дневной лимит, смена (1-я или 2-я), численность и классный руководитель сохраняются в базе по кнопке «Сохранить изменения»."/>
+            <DataGrid Grid.Row="2" x:Name="ClassesGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
+                      AlternationCount="2" VerticalScrollBarVisibility="Auto"
                       wpf:DataGridRowNumbers.ShowRowNumbers="True">
               <DataGrid.Columns>
-                <DataGridTextColumn Header="Класс" Binding="{Binding Name}" Width="80" IsReadOnly="True"/>
-                <DataGridTextColumn Header="Параллель" Binding="{Binding Grade}" Width="90"/>
-                <DataGridTextColumn Header="Учеников" Binding="{Binding StudentCount}" Width="90"/>
+                <DataGridTextColumn Header="Класс" Binding="{Binding Name}" Width="75" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Параллель" Binding="{Binding Grade}" Width="82"/>
+                <DataGridTextColumn Header="Учеников" Binding="{Binding StudentCount}" Width="82"/>
+                <DataGridTextColumn Header="Макс/день" Binding="{Binding MaxLessonsPerDay}" Width="82"/>
+                <DataGridComboBoxColumn x:Name="ClassShiftCol" Header="Смена" SelectedItemBinding="{Binding ShiftLabel}" Width="70"/>
                 <DataGridComboBoxColumn x:Name="ClassTeacherCol" Header="Классный руководитель" SelectedItemBinding="{Binding ClassTeacher}" Width="*"/>
               </DataGrid.Columns>
             </DataGrid>
           </Grid>
 
-          <!-- Учителя: режим закрепления + явные назначения -->
+          <!-- Учителя: лимит в день, переименование, сетка недоступности, закрепление -->
           <Grid x:Name="TeachersPanel" Visibility="Collapsed">
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="Auto"/>
-              <RowDefinition Height="Auto"/>
-              <RowDefinition Height="2*"/>
-              <RowDefinition Height="Auto"/>
               <RowDefinition Height="*"/>
               <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
-              <TextBlock Text="Режим закрепления:" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
-              <ComboBox x:Name="AssignModeBox" Width="220" Margin="8,0,0,0" VerticalAlignment="Center"/>
-            </StackPanel>
-            <TextBlock Grid.Row="1" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                       Text="Строго на класс: один учитель ведёт предмет в классе всю неделю (нарушение — ошибка импорта). Явные назначения ниже — исключения и параллели. Таблица только для чтения: учителя приходят из Excel, правка — через строки нагрузки или новый Excel."/>
+            <WrapPanel Grid.Row="0" VerticalAlignment="Center" Margin="0,0,0,8">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,16,2">
+                <TextBlock Text="Режим закрепления:" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold"/>
+                <ComboBox x:Name="AssignModeBox" Width="210" Margin="8,0,0,0" VerticalAlignment="Center"/>
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,2">
+                <TextBlock Text="Переименовать выбранного:" VerticalAlignment="Center" FontSize="12" Margin="0,0,6,0"/>
+                <TextBox x:Name="RenameTeacherBox" Width="195" wpf:InputHints.Placeholder="Новое ФИО учителя…"/>
+                <Button Content="Переименовать" Style="{DynamicResource BtnSecondary}" Padding="10,4" Margin="6,0,0,0"
+                        Click="OnRenameTeacherClick"/>
+              </StackPanel>
+            </WrapPanel>
             <!-- FlexP34Tests читает TeachersList: оставлен скрытым ради совместимости. -->
-            <ItemsControl Grid.Row="2" x:Name="TeachersList" x:FieldModifier="public" Visibility="Collapsed">
+            <ItemsControl Grid.Row="1" x:Name="TeachersList" x:FieldModifier="public" Visibility="Collapsed">
               <ItemsControl.ItemTemplate>
                 <DataTemplate><TextBlock Text="{Binding}" FontSize="13" Margin="0,2,0,0"/></DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <DataGrid Grid.Row="3" x:Name="TeachersGrid" x:FieldModifier="public" AutoGenerateColumns="False" IsReadOnly="True"
-                      CanUserAddRows="False" VerticalScrollBarVisibility="Auto"
-                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
-              <DataGrid.Columns>
-                <DataGridTextColumn Header="ФИО" Binding="{Binding Name}" Width="*"/>
-                <DataGridTextColumn Header="Часов/нед" Binding="{Binding HoursPerWeek}" Width="90"/>
-                <DataGridTextColumn Header="Предметов" Binding="{Binding SubjectCount}" Width="90"/>
-                <DataGridTextColumn Header="Классов" Binding="{Binding ClassCount}" Width="80"/>
-              </DataGrid.Columns>
-            </DataGrid>
-            <TextBlock Grid.Row="4" Text="Явные назначения" FontWeight="SemiBold" FontSize="14" Margin="0,12,0,0"/>
-            <DataGrid Grid.Row="5" x:Name="AssignGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
-                      Margin="0,6,0,0" VerticalScrollBarVisibility="Auto"
-                      wpf:DataGridRowNumbers.ShowRowNumbers="True">
-              <DataGrid.Columns>
-                <DataGridComboBoxColumn x:Name="AsTeacherCol" Header="Учитель" SelectedItemBinding="{Binding Teacher}" Width="*"/>
-                <DataGridComboBoxColumn x:Name="AsSubjectCol" Header="Предмет" SelectedItemBinding="{Binding Subject}" Width="*"/>
-                <DataGridComboBoxColumn x:Name="AsScopeCol" Header="Область" SelectedItemBinding="{Binding Scope}" Width="110"/>
-                <DataGridComboBoxColumn x:Name="AsClassCol" Header="Класс" SelectedItemBinding="{Binding Class}" Width="90"/>
-                <DataGridTextColumn Header="Параллель" Binding="{Binding Grade}" Width="90"/>
-              </DataGrid.Columns>
-            </DataGrid>
-            <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,6,0,0">
-              <Button Content="Добавить" Style="{StaticResource BtnSecondary}" Padding="10,4" Click="OnAssignAddClick"/>
-              <Button Content="Удалить" Style="{StaticResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnAssignDelClick"/>
-            </StackPanel>
+
+            <Grid Grid.Row="2">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="385"/>
+              </Grid.ColumnDefinitions>
+              <DataGrid Grid.Column="0" x:Name="TeachersGrid" x:FieldModifier="public" AutoGenerateColumns="False"
+                        IsReadOnly="False" CanUserSortColumns="True" AlternationCount="2"
+                        CanUserAddRows="False" VerticalScrollBarVisibility="Auto"
+                        wpf:DataGridRowNumbers.ShowRowNumbers="True"
+                        SelectionChanged="OnTeacherGridSelectionChanged">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="ФИО" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
+                  <DataGridTextColumn Header="Часов/нед" Binding="{Binding HoursPerWeek}" Width="82" IsReadOnly="True"/>
+                  <DataGridTextColumn Header="Предм." Binding="{Binding SubjectCount}" Width="64" IsReadOnly="True"/>
+                  <DataGridTextColumn Header="Классов" Binding="{Binding ClassCount}" Width="72" IsReadOnly="True"/>
+                  <DataGridTextColumn Header="Макс/день" Binding="{Binding MaxLessonsPerDay}" Width="88"/>
+                  <DataGridTextColumn Header="Недоступн." Binding="{Binding UnavailSummary}" Width="106" IsReadOnly="True"/>
+                </DataGrid.Columns>
+              </DataGrid>
+
+              <Border Grid.Column="1" x:Name="TeacherScheduleCard" Style="{DynamicResource Card}" Margin="12,0,0,0" Padding="12">
+                <DockPanel>
+                  <StackPanel DockPanel.Dock="Top">
+                    <TextBlock x:Name="SelectedTeacherTitle" Text="Выберите учителя в списке" FontSize="14"
+                               FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Style="{DynamicResource THCaption}" TextWrapping="Wrap" Margin="0,3,0,8"
+                               Text="Методические дни (целый день) и запрещённые уроки. Правки сохраняет кнопка «Сохранить изменения»."/>
+                    <TextBlock Text="Выходные / методические дни:" FontSize="12" FontWeight="Medium" Margin="0,0,0,4"/>
+                    <StackPanel x:Name="TeacherDaysOffPanel" Orientation="Horizontal" Margin="0,0,0,10"/>
+                    <TextBlock Text="Сетка уроков (клик — запретить / разрешить):" FontSize="12" FontWeight="Medium" Margin="0,0,0,4"/>
+                  </StackPanel>
+                  <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                    <Button DockPanel.Dock="Right" Content="Сбросить" Style="{DynamicResource BtnSecondary}" Padding="10,4"
+                            Click="OnClearTeacherUnavailClick"/>
+                    <TextBlock x:Name="TeacherUnavailNote" Style="{DynamicResource THCaption}" VerticalAlignment="Center"
+                               TextWrapping="Wrap" Margin="0,0,8,0"/>
+                  </DockPanel>
+                  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <Grid x:Name="TeacherScheduleGrid"/>
+                  </ScrollViewer>
+                </DockPanel>
+              </Border>
+            </Grid>
+
+            <Expander Grid.Row="3" Header="Явные назначения (исключения и параллели)" IsExpanded="False" Margin="0,10,0,0">
+              <StackPanel Margin="0,6,0,0">
+                <DataGrid x:Name="AssignGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
+                          AlternationCount="2" MaxHeight="190" VerticalScrollBarVisibility="Auto"
+                          wpf:DataGridRowNumbers.ShowRowNumbers="True">
+                  <DataGrid.Columns>
+                    <DataGridComboBoxColumn x:Name="AsTeacherCol" Header="Учитель" SelectedItemBinding="{Binding Teacher}" Width="*"/>
+                    <DataGridComboBoxColumn x:Name="AsSubjectCol" Header="Предмет" SelectedItemBinding="{Binding Subject}" Width="*"/>
+                    <DataGridComboBoxColumn x:Name="AsScopeCol" Header="Область" SelectedItemBinding="{Binding Scope}" Width="110"/>
+                    <DataGridComboBoxColumn x:Name="AsClassCol" Header="Класс" SelectedItemBinding="{Binding Class}" Width="90"/>
+                    <DataGridTextColumn Header="Параллель" Binding="{Binding Grade}" Width="90"/>
+                  </DataGrid.Columns>
+                </DataGrid>
+                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                  <Button Content="Добавить" Style="{DynamicResource BtnSecondary}" Padding="10,4" Click="OnAssignAddClick"/>
+                  <Button Content="Удалить" Style="{DynamicResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0" Click="OnAssignDelClick"/>
+                </StackPanel>
+              </StackPanel>
+            </Expander>
           </Grid>
 
-          <!-- Предметы: сложность + макс/день -->
+          <!-- Предметы: сложность + макс/день (сохраняется в SQLite) -->
           <Grid x:Name="SubjectsPanel" Visibility="Collapsed">
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="*"/>
-              <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
-                       Text="Сложность 1..10 сохраняется и переживает перезапуск. Макс/день — только просмотр (правка в «Настройках качества», на сессию)."/>
+            <DockPanel Grid.Row="0" Margin="0,0,0,8">
+              <Button DockPanel.Dock="Right" Content="Пресет сложностей РБ" Style="{DynamicResource BtnSecondary}"
+                      Padding="10,4" Margin="12,0,0,0" Click="OnApplySubjectPresetClick"
+                      ToolTip="Подставить типовую сложность 1..10 для канонических предметов"/>
+              <TextBlock Style="{DynamicResource THint}" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center"
+                         Text="Сложность (1..10) и дневной лимит (Макс/день, 1..6) сохраняются в базе по кнопке «Сохранить изменения»."/>
+            </DockPanel>
             <DataGrid Grid.Row="1" x:Name="SubjectsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
-                      VerticalScrollBarVisibility="Auto"
+                      AlternationCount="2" VerticalScrollBarVisibility="Auto"
                       wpf:DataGridRowNumbers.ShowRowNumbers="True">
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Предмет" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
                 <DataGridTextColumn Header="Сложность (1..10)" Binding="{Binding Difficulty}" Width="140"/>
-                <DataGridTextColumn Header="Макс/день" Binding="{Binding MaxPerDay}" Width="100" IsReadOnly="True"/>
+                <DataGridTextColumn Header="Макс/день" Binding="{Binding MaxPerDay}" Width="100"/>
               </DataGrid.Columns>
             </DataGrid>
           </Grid>
 
-          <!-- Кабинеты: режим + вместимость -->
+          <!-- Кабинеты: создание + режим + вместимость -->
           <Grid x:Name="RoomsPanel" Visibility="Collapsed">
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
-              <RowDefinition Height="*"/>
               <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+            <Border Grid.Row="0" Style="{DynamicResource Card}" Padding="10,8" Margin="0,0,0,8">
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Новый кабинет:" FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <TextBox x:Name="NewRoomBox" Width="170" wpf:InputHints.Placeholder="напр. 305 или Спортзал-2"/>
+                <Button Content="Добавить кабинет" Style="{DynamicResource BtnSecondary}" Padding="10,4" Margin="8,0,0,0"
+                        Click="OnAddRoomClick"/>
+              </StackPanel>
+            </Border>
+            <TextBlock Grid.Row="1" Style="{DynamicResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
                        Text="Только вручную: программа сама туда ничего не ставит (назначить можно вручную). Только предмет: чужой урок — жёсткая ошибка. Желательно 0 = без претензий."/>
-            <DataGrid Grid.Row="1" x:Name="RoomsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
-                      VerticalScrollBarVisibility="Auto"
+            <DataGrid Grid.Row="2" x:Name="RoomsGrid" x:FieldModifier="public" CanUserAddRows="False" AutoGenerateColumns="False"
+                      AlternationCount="2" VerticalScrollBarVisibility="Auto"
                       wpf:DataGridRowNumbers.ShowRowNumbers="True">
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Кабинет" Binding="{Binding Name}" Width="*" IsReadOnly="True"/>
@@ -281,17 +456,16 @@
             </DataGrid>
           </Grid>
 
-          <!-- Подгруппы: только чтение (задаются колонкой «Группа» в Excel/диалоге строки).
-               Правок здесь нет сознательно: строки нагрузки ссылаются на подгруппы. -->
+          <!-- Подгруппы: только чтение -->
           <Grid x:Name="GroupsPanel" Visibility="Collapsed">
             <Grid.RowDefinitions>
               <RowDefinition Height="Auto"/>
               <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+            <TextBlock Grid.Row="0" Style="{DynamicResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
                        Text="Подгруппы задаются колонкой «Группа» в Excel или диалогом строки нагрузки. Таблица только для чтения."/>
             <DataGrid Grid.Row="1" x:Name="GroupsGrid" x:FieldModifier="public" AutoGenerateColumns="False" IsReadOnly="True"
-                      CanUserAddRows="False" VerticalScrollBarVisibility="Auto"
+                      AlternationCount="2" CanUserAddRows="False" VerticalScrollBarVisibility="Auto"
                       wpf:DataGridRowNumbers.ShowRowNumbers="True">
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Класс" Binding="{Binding ClassName}" Width="90"/>
@@ -304,7 +478,7 @@
 
           <!-- Общие уроки: классный час -->
           <StackPanel x:Name="CommonPanel" Visibility="Collapsed" VerticalAlignment="Top">
-            <TextBlock Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
+            <TextBlock Style="{DynamicResource THint}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"
                        Text="По умолчанию выключено. Включение ставит один урок всем выбранным параллелям в одну клетку; ведёт классный руководитель. Учитель — из таба «Классы»."/>
             <CheckBox x:Name="CommonEnabledBox" Content="Включить общий урок (классный час)" FontSize="13" FontWeight="SemiBold"/>
             <Grid Margin="0,10,0,0">

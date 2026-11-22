@@ -231,6 +231,66 @@ public sealed class AppSession
         File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
     }
 
+    /// <summary>Stage 2 (Мастер школы): атомарно применяет новые строки и Flex нового учебного года.</summary>
+    public async Task ImportWizardAsync(
+        IReadOnlyList<LoadRow> rows, FlexDataset flex, int days, int slots,
+        CancellationToken ct = default)
+    {
+        var yearId = Guid.NewGuid();
+        var prevYear = AcademicYearId;
+        var prevData = Data;
+        var prevRows = LoadRows;
+        var prevSource = DataSource;
+        AcademicYearId = yearId;
+        try
+        {
+            AcceptRows(rows, days, slots, source: "manual", flex: flex);
+            await _flexStore.SaveAsync(flex, ct);
+            await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
+                Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
+            Flex = flex;
+            File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+        }
+        catch
+        {
+            AcademicYearId = prevYear;
+            Data = prevData;
+            LoadRows = prevRows;
+            DataSource = prevSource;
+            throw;
+        }
+    }
+
+    /// <summary>Stage 2 (переименование учителя / смена класса): атомарно сохраняет LoadRows + Flex в текущем году.</summary>
+    public async Task SaveManualSetupAsync(
+        IReadOnlyList<LoadRow> rows, FlexDataset flex, int days, int slots,
+        CancellationToken ct = default)
+    {
+        var prevYear = AcademicYearId;
+        var prevData = Data;
+        var prevRows = LoadRows;
+        var prevSource = DataSource;
+        if (AcademicYearId == Guid.Empty)
+            AcademicYearId = Guid.NewGuid();
+        try
+        {
+            AcceptRows(rows, days, slots, source: "manual", flex: flex);
+            await _flexStore.SaveAsync(flex, ct);
+            await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
+                Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
+            Flex = flex;
+            File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+        }
+        catch
+        {
+            AcademicYearId = prevYear;
+            Data = prevData;
+            LoadRows = prevRows;
+            DataSource = prevSource;
+            throw;
+        }
+    }
+
     /// <summary>
     /// P3/R1–R9: применить гибкие настройки: перепроверка текущего входа с новым
     /// flex (fail-loud — при ошибке старые данные и настройки нетронуты) + персист.

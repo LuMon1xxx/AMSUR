@@ -23,7 +23,6 @@ public partial class SettingsView : UserControl
     private QualitySettingsEditor _editor;
     private readonly HashSet<string> _confirmedDangerous = new(StringComparer.Ordinal);
     private string _baseProfile = "STANDARD";
-    private readonly List<(Guid Id, TextBox Box, int Min, int Max, string Label)> _entityBoxes = [];
     private readonly List<(string Code, TextBox Box)> _expertBoxes = [];
 
     private static void Bind(FrameworkElement el, DependencyProperty prop, string key)
@@ -46,7 +45,6 @@ public partial class SettingsView : UserControl
         CheckPresetRadio();
         SavedNameText.Text = session.CustomProfileName is null ? "" : $"Сохранён: {session.CustomProfileName}";
         BuildQualityPanel();
-        BuildEntityPanels();
         BuildExpertPanel();
         BuildWarningsPanel();
         RefreshSectionCounts();
@@ -73,17 +71,14 @@ public partial class SettingsView : UserControl
         finally { _suppressPreset = false; }
     }
 
-    // P0-5: честные счётчики секций (из Session.Data, иначе 0 — без выдумок).
     private void RefreshSectionCounts()
     {
-        var d = _session.Data;
         SetSectionText(0, $"Качество ({_editor.Options.Count})");
-        SetSectionText(1, $"Предметы ({d?.Subjects.Count ?? 0})");
-        SetSectionText(2, $"Классы ({d?.Classes.Count ?? 0})");
-        SetSectionText(3, $"Учителя ({d?.Teachers.Count ?? 0})");
-        SetSectionText(4, "Экспертный режим");
-        SetSectionText(5, "Предупреждения");
+        SetSectionText(1, "Экспертный режим");
+        SetSectionText(2, "Предупреждения");
     }
+
+    private void OnOpenDataClick(object sender, RoutedEventArgs e) => Navigator?.NavigateTo("Data");
 
     private void SetSectionText(int index, string text)
     {
@@ -196,6 +191,7 @@ public partial class SettingsView : UserControl
             card.Child = sp;
             QualityPanel.Children.Add(card);
         }
+        QualityPanel.Children.Add(BuildOverloadCard());
         QualityPanel.Children.Add(BuildDraftFallbackCard());
     }
 
@@ -449,23 +445,29 @@ public partial class SettingsView : UserControl
         _gradePrioBox.Unchecked += (_, _) => MarkDirty();
         sp.Children.Add(_gradePrioBox);
         var grid = new Grid { Margin = new Thickness(0, 8, 0, 0) };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(220) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(60) });
-        for (int i = 0; i < 4; i++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(165) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(24) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(175) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(56) });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         string[] labels = ["Вес 11-х классов:", "Вес 9-х классов:", "Вес остальных:", "Порог тяжести (1..10):"];
         string[] vals = [st.W11.ToString(), st.W9.ToString(), st.WOther.ToString(), st.IsHeavyThreshold.ToString()];
         var boxes = new TextBox[4];
         for (int i = 0; i < 4; i++)
         {
+            int rowIdx = i / 2;
+            int colBase = (i % 2) * 3;
             var lb = new TextBlock
             {
                 Text = labels[i], FontSize = 13, VerticalAlignment = VerticalAlignment.Center,
             };
-            Grid.SetRow(lb, i); Grid.SetColumn(lb, 0);
+            Grid.SetRow(lb, rowIdx); Grid.SetColumn(lb, colBase);
             grid.Children.Add(lb);
             var tb = new TextBox { Text = vals[i], Margin = new Thickness(0, 3, 0, 3) };
             tb.TextChanged += (_, _) => MarkDirty();
-            Grid.SetRow(tb, i); Grid.SetColumn(tb, 1);
+            Grid.SetRow(tb, rowIdx); Grid.SetColumn(tb, colBase + 1);
             grid.Children.Add(tb);
             boxes[i] = tb;
         }
@@ -586,45 +588,13 @@ public partial class SettingsView : UserControl
         RefreshJsonPreview();
     }
 
-    // --- Предметы / Классы / Учителя ---
-    private void BuildEntityPanels()
-    {
-        SubjectsPanel.Children.Clear();
-        ClassesPanel.Children.Clear();
-        TeachersPanel.Children.Clear();
-        _entityBoxes.Clear();
-        var data = _session.Data;
-        if (data is null)
-        {
-            SubjectsPanel.Children.Add(EmptyText("Сначала загрузите данные школы — здесь появятся предметы."));
-            ClassesPanel.Children.Add(EmptyText("Сначала загрузите данные школы — здесь появятся классы."));
-            TeachersPanel.Children.Add(EmptyText("Сначала загрузите данные школы — здесь появятся учителя."));
-            return;
-        }
-        SubjectsPanel.Children.Add(SectionHint("Сколько раз предмет может стоять у класса в день (повторы сверх — пожелание с весом)."));
-        foreach (var s in data.Subjects.OrderBy(x => x.Name))
-            AddEntityRow(SubjectsPanel, s.Name, $"предмет «{s.Name}»", s.Id,
-                s.MaxPerDay, 1, 7, v => s.MaxPerDay = v);
-        ClassesPanel.Children.Add(SectionHint("Дневной лимит класса (правило школы: в СанПиН РБ нормы уроков в день нет). Начало дня: позже 2-го урока начинать нельзя (строгое по шаблону — ослабляется в «Качестве» через подтверждение)."));
-        foreach (var c in data.Classes.OrderBy(x => x.Name))
-            AddEntityRow(ClassesPanel, $"{c.Name} (параллель {c.Grade})", $"класс {c.Name}", c.Id,
-                c.MaxLessonsPerDay, 1, 10, v => c.MaxLessonsPerDay = v);
-        TeachersPanel.Children.Add(SectionHint("Дневной лимит учителя. Пожелания по конкретным дням/часам — следующая версия (зафиксировано в backlog)."));
-        BuildOverloadCard();
-        foreach (var t in data.Teachers.OrderBy(x => x.Name).Take(200))
-            AddEntityRow(TeachersPanel, t.Name, $"учитель {t.Name}", t.Id,
-                t.MaxLessonsPerDay, 1, 12, v => t.MaxLessonsPerDay = v);
-        if (data.Teachers.Count > 200)
-            TeachersPanel.Children.Add(SectionHint($"…и ещё {data.Teachers.Count - 200} (список обрезан для скорости)."));
-    }
-
     // --- A1: перегрузка учителей (движок+персист D-39, проводка в UI) ---
     private CheckBox? _overloadBox;
     private Slider? _overloadCapSlider;
     private TextBlock? _overloadCapText;
     private TextBlock? _overloadStatus;
 
-    private void BuildOverloadCard()
+    private Border BuildOverloadCard()
     {
         var st = _session.Flex.Settings;
         var card = new Border { Style = (Style)FindResource("Card"), Margin = new Thickness(0, 0, 0, 8) };
@@ -692,7 +662,7 @@ public partial class SettingsView : UserControl
         Bind(_overloadStatus, TextBlock.ForegroundProperty, "BTextSoft");
         sp.Children.Add(_overloadStatus);
         card.Child = sp;
-        TeachersPanel.Children.Add(card);
+        return card;
     }
 
     private string OverloadStatusText()
@@ -739,16 +709,6 @@ public partial class SettingsView : UserControl
         }
     }
 
-    private static TextBlock EmptyText(string s)
-    {
-        var tb = new TextBlock
-        {
-            Text = s, FontSize = 13, TextWrapping = TextWrapping.Wrap,
-        };
-        Bind(tb, TextBlock.ForegroundProperty, "BTextSoft");
-        return tb;
-    }
-
     private static TextBlock SectionHint(string s)
     {
         var tb = new TextBlock
@@ -759,26 +719,6 @@ public partial class SettingsView : UserControl
         Bind(tb, TextBlock.ForegroundProperty, "BTextSoft");
         return tb;
     }
-
-    private void AddEntityRow(StackPanel panel, string title, string what, Guid id,
-        int cur, int min, int max, Action<int> apply)
-    {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
-        row.Children.Add(new TextBlock
-        {
-            Text = title, FontSize = 13, Width = 300, TextTrimming = TextTrimming.CharacterEllipsis,
-            VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = title,
-        });
-        var box = new TextBox { Text = cur.ToString(), Width = 50, Margin = new Thickness(8, 0, 0, 0), Tag = id };
-        box.TextChanged += (_, _) => MarkDirty();
-        box.Tag = new EntityTag(id, min, max, what, apply);
-        row.Children.Add(box);
-        panel.Children.Add(row);
-        _entityBoxes.Add((id, box, min, max, what));
-    }
-
-    private sealed record EntityTag(Guid Id, int Min, int Max, string What, Action<int> Apply);
 
     // --- Эксперт ---
     private void BuildExpertPanel()
@@ -859,11 +799,8 @@ public partial class SettingsView : UserControl
         if (!IsLoaded) return; // событие при парсинге XAML
         int i = SectionList.SelectedIndex;
         QualityPanel.Visibility = i == 0 ? Visibility.Visible : Visibility.Collapsed;
-        SubjectsPanel.Visibility = i == 1 ? Visibility.Visible : Visibility.Collapsed;
-        ClassesPanel.Visibility = i == 2 ? Visibility.Visible : Visibility.Collapsed;
-        TeachersPanel.Visibility = i == 3 ? Visibility.Visible : Visibility.Collapsed;
-        ExpertPanel.Visibility = i == 4 ? Visibility.Visible : Visibility.Collapsed;
-        WarningsPanel.Visibility = i == 5 ? Visibility.Visible : Visibility.Collapsed;
+        ExpertPanel.Visibility = i == 1 ? Visibility.Visible : Visibility.Collapsed;
+        WarningsPanel.Visibility = i == 2 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnPresetChanged(object sender, RoutedEventArgs e)
@@ -895,20 +832,6 @@ public partial class SettingsView : UserControl
     // В однооконной навигации «Отмена» = выйти без применения:
     // view пересоздаётся при каждом входе, неприменённое исчезает само.
     private void OnCancelClick(object sender, RoutedEventArgs e) => Navigator?.NavigateTo("Dashboard");
-
-    private bool ReadEntityBoxes(out string? error)
-    {
-        foreach (var (_, box, min, max, what) in _entityBoxes)
-        {
-            if (!int.TryParse(box.Text, out int v) || v < min || v > max)
-            {
-                error = $"Для «{what}» нужно число {min}..{max}.";
-                return false;
-            }
-        }
-        error = null;
-        return true;
-    }
 
     private bool ReadExpertBoxes(out string? badTitle)
     {
@@ -1016,84 +939,11 @@ public partial class SettingsView : UserControl
         return true;
     }
 
-    /// <summary>Лимиты по именам: после пересборки данных Id сущностей новые.</summary>
-    private List<(string Kind, string Name, int Value)> CaptureLimits()
-    {
-        var list = new List<(string Kind, string Name, int Value)>();
-        foreach (var (_, box, _, _, what) in _entityBoxes)
-        {
-            if (!int.TryParse(box.Text, out int v)) continue;
-            var (kind, name) = KindOf(what);
-            if (kind.Length > 0) list.Add((kind, name, v));
-        }
-        return list;
-    }
-
-    private static (string Kind, string Name) KindOf(string what) =>
-        what.StartsWith("класс ", StringComparison.Ordinal) ? ("class", what["класс ".Length..])
-        : what.StartsWith("учитель ", StringComparison.Ordinal) ? ("teacher", what["учитель ".Length..])
-        : what.StartsWith("предмет ", StringComparison.Ordinal)
-            ? ("subject", what["предмет ".Length..].Trim('«', '»'))
-            : ("", what);
-
-    /// <summary>
-    /// Переносит дневные лимиты в текущие сущности сессии (по именам) и
-    /// перестраивает карточки, чтобы поля показывали актуальные значения.
-    /// Классы и учители уже пришли из FlexDataset при импорте (D-28, персист в SQLite);
-    /// этот проход нужен для предметов — их лимит остаётся сессионным.
-    /// </summary>
-    private void ApplyLimits(IReadOnlyList<(string Kind, string Name, int Value)> limits)
-    {
-        var d = _session.Data;
-        if (d is null) return;
-        foreach (var (kind, name, value) in limits)
-        {
-            switch (kind)
-            {
-                case "class":
-                    var c = d.Classes.FirstOrDefault(x =>
-                        string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
-                    if (c is not null) c.MaxLessonsPerDay = value;
-                    break;
-                case "teacher":
-                    var t = d.Teachers.FirstOrDefault(x =>
-                        string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
-                    if (t is not null) t.MaxLessonsPerDay = value;
-                    break;
-                case "subject":
-                    var s = d.Subjects.FirstOrDefault(x =>
-                        string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase));
-                    if (s is not null) s.MaxPerDay = value;
-                    break;
-            }
-        }
-        BuildEntityPanels();
-    }
-
-    private async Task<(bool Ok, string? Error)> TryApplySettingsAsync(
-        FlexSettingsRow settings, IReadOnlyList<(string Kind, string Name, int Value)> limits)
+    private async Task<(bool Ok, string? Error)> TryApplySettingsAsync(FlexSettingsRow settings)
     {
         try
         {
-            // D-28: лимиты классов/учителей едут в FlexDataset и пишутся в SQLite.
-            // Предметные лимиты (MaxPerDay) в формат не входят — они остаются в сессии.
-            var classLimits = (_session.Flex.ClassLimits ?? [])
-                .ToDictionary(x => x.ClassName, x => x.MaxLessonsPerDay, StringComparer.OrdinalIgnoreCase);
-            var teacherLimits = (_session.Flex.TeacherLimits ?? [])
-                .ToDictionary(x => x.TeacherName, x => x.MaxLessonsPerDay, StringComparer.OrdinalIgnoreCase);
-            foreach (var (kind, name, value) in limits)
-            {
-                if (kind == "class") classLimits[name] = value;
-                else if (kind == "teacher") teacherLimits[name] = value;
-            }
-            await _session.ApplyFlexAsync(_session.Flex with
-            {
-                Settings = settings,
-                ClassLimits = classLimits
-                    .Select(kv => new ClassLimitRow(kv.Key, kv.Value)).ToList(),
-                TeacherLimits = teacherLimits
-                    .Select(kv => new TeacherLimitRow(kv.Key, kv.Value)).ToList(),
-            });
+            await _session.ApplyFlexAsync(_session.Flex with { Settings = settings });
             return (true, null);
         }
         catch (Exception ex)
@@ -1110,41 +960,8 @@ public partial class SettingsView : UserControl
         RefreshExpertBoxes();
     }
 
-    // B3: повышение дневных лимитов выше школьного правила — через подтверждение.
-    // Снижение и движение в пределах правила — молча. Один попап на все строки.
-    private async Task<bool> ConfirmCapRaisesAsync()
-    {
-        var data = _session.Data;
-        if (data is null) return true;
-        var raises = new List<string>();
-        foreach (var (id, box, _, _, what) in _entityBoxes)
-        {
-            if (!int.TryParse(box.Text, out int v)) continue;
-            if (what.StartsWith("учитель ", StringComparison.Ordinal))
-            {
-                var t = data.Teachers.FirstOrDefault(x => x.Id == id);
-                if (t is not null && v > 6 && v > t.MaxLessonsPerDay)
-                    raises.Add($"{t.Name}: {t.MaxLessonsPerDay}→{v}/день");
-            }
-            else if (what.StartsWith("класс ", StringComparison.Ordinal))
-            {
-                var c = data.Classes.FirstOrDefault(x => x.Id == id);
-                if (c is null) continue;
-                int schoolCap = c.Grade <= 4 ? 5 : c.Grade <= 6 ? 6 : 7;
-                if (v > schoolCap && v > c.MaxLessonsPerDay)
-                    raises.Add($"{c.Name}: {c.MaxLessonsPerDay}→{v}/день (лимит школы {schoolCap})");
-            }
-        }
-        if (raises.Count == 0) return true;
-        return await _session.ConfirmDangerousAsync(System.Windows.Window.GetWindow(this), "cap-raise", "Повышение дневных лимитов",
-            DangerousConsequence("cap-raise") + " Сверх школьного лимита: " +
-            string.Join("; ", raises.Take(5)) +
-            (raises.Count > 5 ? $" и ещё {raises.Count - 5}." : "."));
-    }
-
     private async void OnApplyClick(object sender, RoutedEventArgs e)
     {
-        if (!ReadEntityBoxes(out string? err)) { Say(err!, true); return; }
         // Карточки читаем ДО ReadExpertBoxes: он перестраивает панель качества,
         // и незасохранённые значения приоритета/черновика иначе потеряются.
         if (!TryReadFlexSettings(out var nextSettings, out string? settingsErr))
@@ -1152,24 +969,19 @@ public partial class SettingsView : UserControl
             Say(settingsErr!, true);
             return;
         }
-        // Лимиты классов/учителей применяются независимо от Эксперта:
-        // кривой вес больше не блокирует дневные нормы.
         bool expertOk = ReadExpertBoxes(out string? expertBad);
-        if (!await ConfirmCapRaisesAsync()) { Say("Отменено — лимиты не тронуты.", true); return; }
         if (!await ConfirmSettingsChangesAsync(nextSettings))
         {
             Say("Отменено — настройки не изменены.", true);
             return;
         }
-        var limits = CaptureLimits();
         if (!expertOk)
         {
-            var (settingsOk, applyError) = await TryApplySettingsAsync(nextSettings, limits);
-            ApplyLimits(limits);
+            var (settingsOk, applyError) = await TryApplySettingsAsync(nextSettings);
             if (settingsOk) RefreshCardValues();
             MarkClean();
             Say(settingsOk
-                ? "Настройки и дневные лимиты применены. " +
+                ? "Настройки применены. " +
                   $"Эксперт НЕ применён — поле «{expertBad}»: только числа из указанного диапазона."
                 : $"Сохранить настройки не удалось: {applyError}", !settingsOk);
             return;
@@ -1183,8 +995,7 @@ public partial class SettingsView : UserControl
             _session.ApplyOverrides(_editor.GetOverrides(), _confirmedDangerous);
         }
         catch (Exception ex) { Say("Не применено: " + ex.Message, true); return; }
-        var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings, limits);
-        ApplyLimits(limits);
+        var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings);
         if (!flexOk)
         {
             Say($"Веса применены, но настройки карточек не сохранились: {flexErr}", true);
@@ -1193,18 +1004,13 @@ public partial class SettingsView : UserControl
         RefreshCardValues();
         MarkClean();
         Say(_editor.IsModified
-            ? "Применено: веса, приоритет выпускных, черновик, перегрузка и дневные лимиты — " +
-              "действуют на следующие генерации (лимиты классов и учителей сохранены в базе; " +
-              "дневной лимит предметов — до перезапуска)."
-            : "Сохранено: приоритет выпускных, черновик, перегрузка и дневные лимиты " +
-              "(веса не менялись; лимиты классов и учителей сохранены в базе, " +
-              "дневной лимит предметов — до перезапуска).", false);
+            ? "Применено: веса, приоритет выпускных, черновик и перегрузка — действуют на следующие генерации."
+            : "Сохранено: приоритет выпускных, черновик и перегрузка (веса не менялись).", false);
         CheckPresetAfterApply();
     }
 
     private async void OnSaveCustomClick(object sender, RoutedEventArgs e)
     {
-        if (!ReadEntityBoxes(out string? err)) { Say(err!, true); return; }
         // Как и в «Применить»: карточки — до ReadExpertBoxes (он перестраивает панель).
         if (!TryReadFlexSettings(out var nextSettings, out string? settingsErr))
         {
@@ -1220,23 +1026,19 @@ public partial class SettingsView : UserControl
         if (name.Length == 0) { Say("Введите имя профиля.", true); return; }
         try
         {
-            if (!await ConfirmCapRaisesAsync()) { Say("Отменено — лимиты не тронуты.", true); return; }
             if (!await ConfirmSettingsChangesAsync(nextSettings))
             {
                 Say("Отменено — настройки не изменены.", true);
                 return;
             }
-            var limits = CaptureLimits();
             await _session.SaveCustomProfileAsync(name, _baseProfile, _editor.GetOverrides(), _confirmedDangerous);
-            var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings, limits);
-            ApplyLimits(limits);
+            var (flexOk, flexErr) = await TryApplySettingsAsync(nextSettings);
             if (flexOk) RefreshCardValues();
             SavedNameText.Text = $"Сохранён: {name}";
             SetPresetRadio(PresetCustom);
             MarkClean();
             Say(flexOk
-                ? $"Профиль «{name}» сохранён: веса, приоритет выпускных, черновик, перегрузка и дневные лимиты " +
-                  "применены. Лимиты классов и учителей сохранены в базе."
+                ? $"Профиль «{name}» сохранён: веса, приоритет выпускных, черновик и перегрузка применены."
                 : $"Профиль «{name}» сохранён, но настройки карточек не применились: {flexErr}", !flexOk);
         }
         catch (Exception ex) { Say("Не сохранено: " + ex.Message, true); }

@@ -256,6 +256,10 @@ public static class SchoolDataImporter
                 // есть, но уроком не считается (край дня, вне часов/окон).
                 if (SubjectTiers.IsNonLessonName(key))
                     s.IsNonLesson = true;
+                var subLim = flex.SubjectLimits?.FirstOrDefault(x =>
+                    string.Equals(x.SubjectName, key, StringComparison.OrdinalIgnoreCase));
+                if (subLim is { MaxPerDay: >= 1 and <= 6 })
+                    s.MaxPerDay = subLim.MaxPerDay;
                 // R6: явная сложность предмета (1..10) бьёт дефолт 5.
                 var diff = flex.SubjectDifficulty.FirstOrDefault(x =>
                     string.Equals(x.SubjectName, key, StringComparison.OrdinalIgnoreCase));
@@ -456,10 +460,22 @@ public static class SchoolDataImporter
         }
         var daysOff = new List<TeacherDayOff>();
         var unavailability = new List<TeacherUnavailability>();
+        var dayOffKeys = new HashSet<(Guid TeacherId, int DayIndex)>();
+        var unavailKeys = new HashSet<(Guid TeacherId, int DayIndex, int SlotIndex)>();
         foreach (var (tname, set) in offDays)
         {
             var t = Teach(tname);
-            daysOff.AddRange(set.Select(d => new TeacherDayOff { TeacherId = t.Id, DayIndex = d }));
+            foreach (int d in set)
+                if (dayOffKeys.Add((t.Id, d)))
+                    daysOff.Add(new TeacherDayOff { TeacherId = t.Id, DayIndex = d });
+        }
+        foreach (var row in flex.TeacherDaysOff ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(row.TeacherName)) continue;
+            if (!teachers.TryGetValue(row.TeacherName.Trim(), out var t)) continue;
+            if (row.DayIndex < 0 || row.DayIndex >= daysCount) continue;
+            if (dayOffKeys.Add((t.Id, row.DayIndex)))
+                daysOff.Add(new TeacherDayOff { TeacherId = t.Id, DayIndex = row.DayIndex });
         }
         foreach (var (tname, set) in offSlots)
         {
@@ -467,10 +483,25 @@ public static class SchoolDataImporter
             // (движок матчит точное (DayIndex, SlotIndex), см. ProblemBuilder).
             var t = Teach(tname);
             foreach (int d in Enumerable.Range(0, daysCount))
-                unavailability.AddRange(set.Select(s => new TeacherUnavailability
+                foreach (int s in set)
+                    if (unavailKeys.Add((t.Id, d, s)))
+                        unavailability.Add(new TeacherUnavailability
+                        {
+                            TeacherId = t.Id, DayIndex = d, SlotIndex = s, Kind = AvailabilityKind.Forbidden
+                        });
+        }
+        foreach (var row in flex.TeacherUnavailSlots ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(row.TeacherName)) continue;
+            if (!teachers.TryGetValue(row.TeacherName.Trim(), out var t)) continue;
+            if (row.DayIndex < 0 || row.DayIndex >= daysCount) continue;
+            if (row.SlotIndex < 1 || row.SlotIndex > slotsPerDay) continue;
+            if (unavailKeys.Add((t.Id, row.DayIndex, row.SlotIndex)))
+                unavailability.Add(new TeacherUnavailability
                 {
-                    TeacherId = t.Id, DayIndex = d, SlotIndex = s, Kind = AvailabilityKind.Forbidden
-                }));
+                    TeacherId = t.Id, DayIndex = row.DayIndex, SlotIndex = row.SlotIndex,
+                    Kind = AvailabilityKind.Forbidden
+                });
         }
         if (daysOff.Count > 0 || unavailability.Count > 0)
             notes.Add($"Недоступность учителей: дней — {daysOff.Count}, слотов — {unavailability.Count}.");
