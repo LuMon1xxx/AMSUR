@@ -345,7 +345,7 @@ public partial class ScheduleView : UserControl
                     Children =
                     {
                         new TextBlock { Text = dayName, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = text },
-                        new TextBlock { Text = $"{count} уроков", FontSize = 11, Foreground = textSoft },
+                        new TextBlock { Text = UiFormat.Lessons(count), FontSize = 11, Foreground = textSoft },
                     },
                 },
             };
@@ -479,7 +479,7 @@ public partial class ScheduleView : UserControl
             };
             inner = new StackPanel
             {
-                Margin = new Thickness(8, 0, 0, 0),
+                Margin = new Thickness(8, 0, 4, 0),
                 Children =
                 {
                     new TextBlock { Text = row.SubjectName, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = text, TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis },
@@ -493,7 +493,7 @@ public partial class ScheduleView : UserControl
             // P5: сплит/профильная пара — «Предмет · Учитель 1 (каб.) / Учитель 2 (каб.)».
             inner = new StackPanel
             {
-                Margin = new Thickness(8, 0, 0, 0),
+                Margin = new Thickness(8, 0, 4, 0),
                 Children =
                 {
                     new TextBlock
@@ -518,7 +518,7 @@ public partial class ScheduleView : UserControl
         var cell = new Border
         {
             CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(6), Cursor = Cursors.Hand, Tag = tag,
+            Padding = new Thickness(7, 6, 8, 6), Cursor = Cursors.Hand, Tag = tag,
             Child = dock,
         };
         cell.ToolTip = string.Join("\n", cellRows.Select(r =>
@@ -601,7 +601,7 @@ public partial class ScheduleView : UserControl
                     Children =
                     {
                         new TextBlock { Text = cls, FontSize = 13, FontWeight = FontWeights.SemiBold, Foreground = text },
-                        new TextBlock { Text = $"{count} уроков", FontSize = 11, Foreground = textSoft },
+                        new TextBlock { Text = UiFormat.Lessons(count), FontSize = 11, Foreground = textSoft },
                     },
                 },
             };

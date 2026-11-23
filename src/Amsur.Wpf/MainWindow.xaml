@@ -37,10 +37,10 @@
             <Button x:Name="NavHome" Content="Главная" Tag="&#xE80F;" Style="{StaticResource NavBtnActive}" Margin="0,0,0,2" Click="OnNavClick"/>
             <Grid Margin="0,0,0,2">
               <Button x:Name="NavData" Content="1. Школа и нагрузка" Tag="&#xE779;" Style="{StaticResource NavBtn}" Click="OnNavClick"/>
-              <Border HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"
+              <Border x:Name="SchoolNavBadgeFrame" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0"
                       IsHitTestVisible="False" Background="{DynamicResource BSubtle}"
                       BorderBrush="{DynamicResource BBorder}" BorderThickness="1"
-                      CornerRadius="4" Padding="6,1">
+                      CornerRadius="4" Padding="6,1" Visibility="Collapsed">
                 <TextBlock x:Name="SchoolNavBadge" FontSize="10" Foreground="{DynamicResource BTextSoft}" Text=""/>
               </Border>
             </Grid>

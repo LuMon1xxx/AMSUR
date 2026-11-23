@@ -63,7 +63,7 @@ public partial class MainWindow : Window, IViewNavigator
         if (view == "Generate") { OpenGenerateOrReuse(); return; }
         UserControl next = view switch
         {
-            "Data" => new DataView(Session) { Navigator = this },
+            "Data" => new DataView(Session) { Navigator = this, ChromeRefresh = RefreshChrome },
             "Settings" => new SettingsView(Session) { Navigator = this },
             "Schedule" => new ScheduleView(Session) { Navigator = this },
             "Export" => new ExportView(Session),
@@ -74,6 +74,7 @@ public partial class MainWindow : Window, IViewNavigator
         ViewHost.Content = next;
         PlayEnter(next);
         PaintNav(view);
+        RefreshChrome();
     }
 
     // Генерация без заглушки: последний GenerateView храним и показываем как есть —
@@ -89,6 +90,7 @@ public partial class MainWindow : Window, IViewNavigator
             ViewHost.Content = _lastGenerateView;
             PlayEnter(_lastGenerateView);
             PaintNav("Generate");
+            RefreshChrome();
             return;
         }
         NavigateTo("Dashboard");
@@ -135,6 +137,7 @@ public partial class MainWindow : Window, IViewNavigator
         ViewHost.Content = view;
         PlayEnter(view);
         PaintNav("Generate");
+        RefreshChrome();
     }
 
     private void OnNavClick(object sender, RoutedEventArgs e)
@@ -169,6 +172,7 @@ public partial class MainWindow : Window, IViewNavigator
     {
         var s = Session.Summary;
         SchoolNavBadge.Text = s is null ? "" : $"{s.Classes} кл.";
+        SchoolNavBadgeFrame.Visibility = s is null ? Visibility.Collapsed : Visibility.Visible;
         try
         {
             long mb = Process.GetCurrentProcess().WorkingSet64 / 1024 / 1024;
@@ -178,6 +182,6 @@ public partial class MainWindow : Window, IViewNavigator
         catch { }
         FooterRightText.Text = s is null
             ? "Нет данных"
-            : $"{s.Classes} классов · {s.Teachers} учителей · {s.Days} дн. × {s.Slots} ур.";
+            : $"{UiFormat.Classes(s.Classes)} · {UiFormat.Teachers(s.Teachers)} · {s.Days} дн. × {s.Slots} ур.";
     }
 }

@@ -32,8 +32,8 @@
           <StackPanel>
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="Стандарт" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-              <Border Style="{DynamicResource Badge}" Background="{DynamicResource BAccentSoft}" Margin="6,0,0,0">
-                <TextBlock Text="Выбор АМСУР" FontSize="10" Foreground="{DynamicResource BAccentText}"/>
+              <Border Style="{DynamicResource Badge}" Background="{DynamicResource BAccent}" Margin="6,0,0,0">
+                <TextBlock Text="Рекомендуем" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource BAccentForeground}"/>
               </Border>
             </StackPanel>
             <TextBlock Style="{DynamicResource THint}" FontSize="11" Margin="0,4,0,0"
@@ -96,7 +96,7 @@
               <TextBlock Style="{DynamicResource THCaption}" TextWrapping="Wrap"
                          Text="Лимиты классов, учителей, предметов и график доступности теперь в разделе «1. Школа и нагрузка»."/>
             </Border>
-            <Button Content="Открыть «Школа и данные» →" Style="{DynamicResource BtnSecondary}"
+            <Button Content="Открыть «1. Школа и нагрузка» →" Style="{DynamicResource BtnSecondary}"
                     Margin="4,0,4,6" Padding="10,6" Click="OnOpenDataClick"/>
             <Border Style="{DynamicResource Badge}" Background="{DynamicResource BGoodBg}" Margin="4,0,4,2" Padding="10,8">
               <TextBlock Style="{DynamicResource THCaption}" TextWrapping="Wrap" Foreground="{DynamicResource BGood}"

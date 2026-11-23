@@ -521,6 +521,208 @@ public sealed class Stage2DataEditorTests : IAsyncDisposable
         });
     }
 
+    [Fact]
+    public void Importer_RejectsOutOfRangeSubjectLimit()
+    {
+        var rows = new List<LoadRow>
+        {
+            new("5А", "Математика", 4, "Иванова", false, null, "101"),
+        };
+
+        foreach (int bad in new[] { 0, 7 })
+        {
+            var flex = FlexDataset.Empty with
+            {
+                SubjectLimits = [new SubjectLimitRow("Математика", bad)],
+            };
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                SchoolDataImporter.Import(Guid.NewGuid(), rows, daysCount: 5, slotsPerDay: 7, flex: flex));
+            Assert.Contains("максимум в день — 1..6", ex.Message);
+        }
+    }
+
+    [Fact]
+    public void LoadRowWindow_ShiftInheritAppliesToNewRow_NotClearingExistingRow()
+    {
+        UiTestHost.Run(() =>
+        {
+            UiTestHost.EnsureApp();
+
+            LoadRow? Submit(LoadRow? existing, string className, string shiftText)
+            {
+                var win = new LoadRowWindow(existing, ["6А", "7А"], ["Математика"], ["Иванова"], ["101"],
+                    inheritShift: cls => cls is "6А" or "7А" ? 2 : null)
+                {
+                    WindowStartupLocation = WindowStartupLocation.Manual,
+                    Left = -10000,
+                    Top = -10000,
+                    ShowInTaskbar = false,
+                };
+                win.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
+                {
+                    ((ComboBox)win.FindName("ClassBox")!).Text = className;
+                    ((ComboBox)win.FindName("SubjectBox")!).Text = "Математика";
+                    ((TextBox)win.FindName("HoursBox")!).Text = "4";
+                    ((ComboBox)win.FindName("TeacherBox")!).Text = "Иванова";
+                    win.ShiftBox.Text = shiftText;
+                    FindVisualChildren<Button>(win)
+                        .First(b => b.Content is string s && s == "Сохранить")
+                        .RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+                });
+                bool? ok = win.ShowDialog();
+                Assert.True(ok);
+                return win.Result;
+            }
+
+            // Новая строка класса со 2-й сменой при пустом ShiftBox наследует смену 2.
+            var created = Submit(null, "6А", "");
+            Assert.Equal(2, created!.Shift);
+
+            // Существующая строка того же класса при очистке ShiftBox сбрасывает смену в null (1-я).
+            var existing = new LoadRow("6А", "Математика", 4, "Иванова", false, null, "101", Shift: 2);
+            var cleared = Submit(existing, "6А", "");
+            Assert.Null(cleared!.Shift);
+
+            // Перенос существующей строки в другой класс с 2-й сменой при пустом ShiftBox наследует смену 2.
+            var moved = Submit(existing, "7А", "");
+            Assert.Equal(2, moved!.Shift);
+
+            return Task.CompletedTask;
+        });
+    }
+
+    [Fact]
+    public void Stage3_HelpViewV2Content_AndMainWindowChromeRefreshOnDataView()
+    {
+        UiTestHost.Run(async () =>
+        {
+            Directory.CreateDirectory(_dir);
+            var app = UiTestHost.EnsureApp();
+            app.ApplyTheme("light");
+            var session = new AppSession(_dir);
+            await session.InitAsync();
+            typeof(App).GetProperty("Session")!.SetValue(app, session);
+
+            var help = new HelpView();
+            var helpHost = ShowHost(help);
+            string helpTexts;
+            try
+            {
+                helpTexts = string.Join("\n", FindVisualChildren<TextBlock>(help).Select(tb => tb.Text));
+            }
+            finally
+            {
+                helpHost.Close();
+            }
+            Assert.Contains("Мастер школы", helpTexts);
+            Assert.Contains("CSV", helpTexts);
+            Assert.DoesNotContain("Только через Excel", helpTexts);
+
+            var main = new MainWindow
+            {
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Left = -10000,
+                Top = -10000,
+                ShowInTaskbar = false,
+            };
+            try
+            {
+                var navBadge = (TextBlock)main.FindName("SchoolNavBadge")!;
+                Assert.Equal("Нет данных", main.FooterRightText.Text);
+                Assert.Equal("", navBadge.Text);
+
+                main.NavigateTo("Data");
+                var dv = Assert.IsType<DataView>(main.ViewHost.Content);
+                Assert.NotNull(dv.ChromeRefresh);
+
+                dv.DemoBtn.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+                for (int i = 0; i < 60 && !session.HasData; i++)
+                {
+                    await Task.Delay(50);
+                    FlushUi(main);
+                }
+                FlushUi(main);
+
+                Assert.True(session.HasData);
+                Assert.Contains("кл.", navBadge.Text);
+                Assert.Contains("класс", main.FooterRightText.Text);
+            }
+            finally
+            {
+                main.Close();
+            }
+        });
+    }
+
+    [Fact]
+    public void Stage3_SevenDayGrid_AndEmptyDashboardDataBtnWorkCleanly()
+    {
+        UiTestHost.Run(async () =>
+        {
+            Directory.CreateDirectory(_dir);
+            var app = UiTestHost.EnsureApp();
+            app.ApplyTheme("light");
+            var session = new AppSession(_dir);
+            await session.InitAsync();
+            typeof(App).GetProperty("Session")!.SetValue(app, session);
+
+            var main = new MainWindow
+            {
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Left = -10000,
+                Top = -10000,
+                ShowInTaskbar = false,
+            };
+            try
+            {
+                // Кнопка «Просмотреть» при пустых данных открывает раздел данных без ошибки.
+                main.ViewHost.Content = null;
+                var host = ShowHost(main.Dashboard);
+                try
+                {
+                    var viewBtn = FindVisualChildren<Button>(main.Dashboard)
+                        .First(b => b.Content is string s && s == "Просмотреть");
+                    viewBtn.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+                }
+                finally
+                {
+                    host.Content = null;
+                    host.Close();
+                }
+                Assert.IsType<DataView>(main.ViewHost.Content);
+
+                // 7-дневная сетка не должна падать в сетке недоступности учителей.
+                await session.ImportLoadAsync(
+                    [new LoadRow("5А", "Математика", 4, "Иванова", false, null, "101")],
+                    days: 7, slots: 7);
+                var dv7 = new DataView(session);
+                var host7 = ShowHost(dv7);
+                try
+                {
+                    var daysPanel = (StackPanel)dv7.FindName("TeacherDaysOffPanel")!;
+                    var schedGrid = (Grid)dv7.FindName("TeacherScheduleGrid")!;
+                    Assert.Equal(7, daysPanel.Children.Count);
+                    Assert.True(schedGrid.Children.OfType<Button>().Count() >= 49);
+                }
+                finally
+                {
+                    host7.Close();
+                }
+
+                // Failed ImportLoadAsync preserves existing AcademicYearId and data.
+                var prevYear = session.AcademicYearId;
+                await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    session.ImportLoadAsync([], days: 5, slots: 7));
+                Assert.Equal(prevYear, session.AcademicYearId);
+                Assert.True(session.HasData);
+            }
+            finally
+            {
+                main.Close();
+            }
+        });
+    }
+
     private static Window ShowHost(object content)
     {
         var host = new Window
@@ -588,7 +790,6 @@ public sealed class Stage2VisualCaptureTests : IAsyncDisposable
                 var session = new AppSession(_dir);
                 await session.InitAsync();
                 typeof(App).GetProperty("Session")!.SetValue(app, session);
-                await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
 
                 string? shotsDir = Environment.GetEnvironmentVariable("AMSUR_CAPTURE_STAGE2_DIR");
                 if (!string.IsNullOrWhiteSpace(shotsDir))
@@ -607,6 +808,24 @@ public sealed class Stage2VisualCaptureTests : IAsyncDisposable
                 main.Width = 1536;
                 main.Height = 864;
                 await FlushAsync(main, 200);
+                Capture(main, shotsDir, "light-dashboard-empty.png");
+
+                await session.ImportLoadAsync(DemoSchoolTests.DemoRows(), days: 5, slots: 7);
+                session.SetGenerateMode("QUICK");
+                var (genView, orch) = GenerateHost.CreateView(session.Data!.ToProblemInput(true), session, "Быстро");
+                genView.Navigator = main;
+                var outcome = await orch.RunAsync([11]);
+                Assert.True(outcome.HasFeasible);
+                Assert.NotNull(orch.ViewModel.Top5.Best);
+                var accepted = await orch.AcceptAsync(orch.ViewModel.Top5.Best);
+                Assert.True(accepted.Succeeded);
+                typeof(GenerateView)
+                    .GetField("_started", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                    .SetValue(genView, true);
+                typeof(MainWindow)
+                    .GetField("_lastGenerateView", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+                    .SetValue(main, genView);
+                main.Dashboard.RefreshAll();
 
                 await CaptureThemeAsync(app, main, shotsDir, "light");
 
@@ -628,6 +847,10 @@ public sealed class Stage2VisualCaptureTests : IAsyncDisposable
 
     private static async Task CaptureThemeAsync(App app, MainWindow main, string? shotsDir, string theme)
     {
+        main.NavigateTo("Dashboard");
+        await FlushAsync(main, 250);
+        Capture(main, shotsDir, $"{theme}-dashboard.png");
+
         main.NavigateTo("Data");
         await FlushAsync(main, 350);
         var dv = Assert.IsType<DataView>(main.ViewHost.Content);
@@ -668,6 +891,37 @@ public sealed class Stage2VisualCaptureTests : IAsyncDisposable
         main.NavigateTo("Settings");
         await FlushAsync(main, 300);
         Capture(main, shotsDir, $"{theme}-settings-clean.png");
+
+        main.NavigateTo("Generate");
+        await FlushAsync(main, 250);
+        var gv = Assert.IsType<GenerateView>(main.ViewHost.Content);
+        var genSv = FindVisualChildren<ScrollViewer>(gv).FirstOrDefault();
+        genSv?.ScrollToTop();
+        await FlushAsync(main, 150);
+        Capture(main, shotsDir, $"{theme}-generate-top5.png");
+        genSv?.ScrollToVerticalOffset(420);
+        await FlushAsync(main, 150);
+        Capture(main, shotsDir, $"{theme}-generate-cards.png");
+
+        main.NavigateTo("Schedule");
+        await FlushAsync(main, 150);
+        var sv = Assert.IsType<ScheduleView>(main.ViewHost.Content);
+        for (int i = 0; i < 60 && sv.StatusText.Text == "Загрузка…"; i++)
+            await FlushAsync(main, 100);
+        await FlushAsync(main, 250);
+        Capture(main, shotsDir, $"{theme}-schedule.png");
+
+        main.NavigateTo("Export");
+        await FlushAsync(main, 150);
+        var ev = Assert.IsType<ExportView>(main.ViewHost.Content);
+        for (int i = 0; i < 60 && ev.GateText.Text == "проверка…"; i++)
+            await FlushAsync(main, 100);
+        await FlushAsync(main, 200);
+        Capture(main, shotsDir, $"{theme}-export.png");
+
+        main.NavigateTo("Help");
+        await FlushAsync(main, 250);
+        Capture(main, shotsDir, $"{theme}-help.png");
 
         var wizard = new SchoolWizardWindow
         {

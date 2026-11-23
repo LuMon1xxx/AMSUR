@@ -83,13 +83,9 @@ public static class GenerateHost
 
         var stream = new ThrottledIncumbentStream();
         var vm = new GenerateViewModel();
-        AcceptScheduleService? acceptor = null;
-        if (session.DbPath is not null)
-        {
-            var store = new Infrastructure.SqliteScheduleStore($"Data Source={session.DbPath}");
-            store.InitializeAsync().GetAwaiter().GetResult();
-            acceptor = new AcceptScheduleService(store);
-        }
+        AcceptScheduleService? acceptor = session.DbPath is not null
+            ? new AcceptScheduleService(session.Store)
+            : null;
         var orchestrator = new GenerationOrchestrator(Factory, run, stream, vm, acceptor: acceptor);
         orchestrator.Rules = rs;
         orchestrator.CandidateAccepted += card =>

@@ -78,8 +78,8 @@
     <!-- Центр: сетка-матрица + таблица -->
     <ScrollViewer Margin="0,12,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel>
-        <ScrollViewer x:Name="MatrixScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-                      MaxHeight="560" Visibility="Collapsed">
+        <ScrollViewer x:Name="MatrixScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                      Visibility="Collapsed">
           <Grid x:Name="MatrixGrid" Margin="0,0,0,4"/>
         </ScrollViewer>
         <TextBlock x:Name="EmptyText" Style="{DynamicResource THint}" Margin="0,8,0,0"

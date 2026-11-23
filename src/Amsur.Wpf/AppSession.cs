@@ -199,22 +199,40 @@ public sealed class AppSession
         IReadOnlyList<LoadRow> rows, int days, int slots,
         CancellationToken ct = default)
     {
+        var prevYear = AcademicYearId;
         AcademicYearId = Guid.NewGuid();
-        AcceptRows(rows, days, slots, source: "excel");
-        await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
-            Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
-        File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+        try
+        {
+            AcceptRows(rows, days, slots, source: "excel");
+            await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
+                Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
+            File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+        }
+        catch
+        {
+            AcademicYearId = prevYear;
+            throw;
+        }
     }
 
     /// <summary>Демо-школа в 1 клик (без Excel): те же данные, что гоняют тесты.
     /// Перезаписывает текущие данные; год пересоздаётся, как при Excel-импорте.</summary>
     public async Task ImportDemoAsync(CancellationToken ct = default)
     {
+        var prevYear = AcademicYearId;
         AcademicYearId = Guid.NewGuid();
-        AcceptRows(DemoSchoolData.Rows(), DemoSchoolData.Days, DemoSchoolData.Slots, source: "demo");
-        await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
-            Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
-        File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+        try
+        {
+            AcceptRows(DemoSchoolData.Rows(), DemoSchoolData.Days, DemoSchoolData.Slots, source: "demo");
+            await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
+                Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
+            File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+        }
+        catch
+        {
+            AcademicYearId = prevYear;
+            throw;
+        }
     }
 
     /// <summary>P3: ручные правки — тот же AcceptRows, но год сохраняется
@@ -223,12 +241,21 @@ public sealed class AppSession
         IReadOnlyList<LoadRow> rows, int days, int slots,
         CancellationToken ct = default)
     {
+        var prevYear = AcademicYearId;
         if (AcademicYearId == Guid.Empty)
             AcademicYearId = Guid.NewGuid();
-        AcceptRows(rows, days, slots, source: "manual");
-        await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
-            Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
-        File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+        try
+        {
+            AcceptRows(rows, days, slots, source: "manual");
+            await _schoolData.SaveAsync(AcademicYearId, ToStored(LoadRows),
+                Data!.DaysCount, Data.SlotsPerDay, DataSource, ct);
+            File.WriteAllText(_yearFile, AcademicYearId.ToString("D"));
+        }
+        catch
+        {
+            AcademicYearId = prevYear;
+            throw;
+        }
     }
 
     /// <summary>Stage 2 (Мастер школы): атомарно применяет новые строки и Flex нового учебного года.</summary>

@@ -60,13 +60,15 @@ public partial class TrajectoryChart : UserControl
             ? Plot.ActualWidth
             : Math.Max(50, ActualWidth - 26);
 
-        const double padL = 44, padR = 8, padT = 18, padB = 20;
+        const double padL = 48, padR = 14, padT = 18, padB = 20;
         double w = Math.Max(50, plotWidth - padL - padR);
         double h = Math.Max(40, Plot.ActualHeight - padT - padB);
 
         _lastLabelX = double.NegativeInfinity;
         var pts = snapshot.Points;
         double tMax = Math.Max(1, pts.Max(p => p.Elapsed.TotalSeconds));
+        if (snapshot.Markers.Count > 0)
+            tMax = Math.Max(tMax, snapshot.Markers.Max(m => m.Elapsed.TotalSeconds));
         var lineBrush = ResBrush("BAccentText", Brushes.Teal);
         var axisBrush = ResBrush("BTextMuted", Brushes.Gray);
         var doneBrush = ResBrush("BGood", Brushes.SeaGreen);
@@ -113,9 +115,16 @@ public partial class TrajectoryChart : UserControl
         }
 
         DrawTimeAxis(padL, w, h, padT, tMax, axisBrush, labelBrush);
-        // Подписи оси значений: только фактические min/max.
-        Plot.Children.Add(Text($"{vMax}", padL - 40, padT - 8, 36, labelBrush));
-        Plot.Children.Add(Text($"{vMin}", padL - 40, padT + h - 8, 36, labelBrush));
+        // Подписи оси значений: не дублируем, если min == max (ровное плато).
+        if (vMax == vMin)
+        {
+            Plot.Children.Add(Text($"{vMax}", padL - 44, Y(vMax) - 8, 40, labelBrush));
+        }
+        else
+        {
+            Plot.Children.Add(Text($"{vMax}", padL - 44, padT - 8, 40, labelBrush));
+            Plot.Children.Add(Text($"{vMin}", padL - 44, padT + h - 8, 40, labelBrush));
+        }
         Plot.Children.Add(Text("меньше — лучше", padL + Math.Max(36, (w - 96) / 2), padT + h + 4, 140, labelBrush, italic: true));
 
         foreach (var m in snapshot.Markers)
@@ -131,7 +140,9 @@ public partial class TrajectoryChart : UserControl
             Stroke = axisBrush, StrokeThickness = 1,
         });
         Plot.Children.Add(Text("0 с", padL - 4, padT + h + 4, 60, labelBrush));
-        Plot.Children.Add(Text($"{tMax:F0} с", padL + w - 30, padT + h + 4, 60, labelBrush));
+        var endLbl = Text($"{Math.Ceiling(tMax):F0} с", padL + w - 58, padT + h + 4, 58, labelBrush);
+        endLbl.TextAlignment = TextAlignment.Right;
+        Plot.Children.Add(endLbl);
     }
 
     private double _lastLabelX = double.NegativeInfinity;
@@ -148,12 +159,13 @@ public partial class TrajectoryChart : UserControl
             StrokeThickness = terminal ? 2 : 1,
             StrokeDashArray = terminal ? null : [4, 3],
         });
-        if (x - _lastLabelX >= 46)
+        if (x - _lastLabelX >= 46 || terminal)
         {
-            string text = m.Label.StartsWith("Запуск ", StringComparison.Ordinal)
-                ? "№" + m.Label["Запуск ".Length..]
-                : m.Label;
-            Plot.Children.Add(Text(text, Math.Min(x + 3, padL + w - 90), 0, 120, labelBrush, terminal));
+            string text = m.Label;
+            double lblX = terminal ? Math.Max(padL, x - 48) : Math.Min(x + 3, padL + w - 90);
+            var lbl = Text(text, lblX, 0, terminal ? 46 : 120, labelBrush, terminal);
+            if (terminal) lbl.TextAlignment = TextAlignment.Right;
+            Plot.Children.Add(lbl);
             _lastLabelX = x;
         }
     }

@@ -194,11 +194,17 @@ public partial class DashboardView : UserControl
         SubText.Text = hasData
             ? "Данные готовы. Проверьте режим и создавайте расписание."
             : "Загрузите данные школы, чтобы начать.";
+        HeroTitleText.Text = hasData
+            ? "Готовы создать расписание?"
+            : "Сначала добавьте данные школы";
+        HeroSubText.Text = hasData
+            ? "Убедитесь, что исходные данные проверены. Выберите режим справа и нажмите запуск."
+            : "Загрузите таблицу Excel, откройте «1. Школа и нагрузка» → «Мастер школы» или выберите демо-данные.";
 
         if (s is null)
         {
             SchoolCardText.Text = "Данные не загружены";
-            SchoolCardDetail.Text = "Шаблон Excel → заполнить → загрузить.";
+            SchoolCardDetail.Text = "Мастер школы, ручной ввод или Excel.";
             DataDetailText.Text = "";
             MiniDataStatus.Text = "Не загружены";
             Bind(MiniDataStatus, TextBlock.ForegroundProperty, "BTextMuted");
@@ -206,9 +212,9 @@ public partial class DashboardView : UserControl
         }
         else
         {
-            string summary = $"{s.Classes} классов · {s.Teachers} учителей";
+            string summary = $"{UiFormat.Classes(s.Classes)} · {UiFormat.Teachers(s.Teachers)}";
             SchoolCardText.Text = summary;
-            SchoolCardDetail.Text = $"{s.Lessons} уроков в неделю";
+            SchoolCardDetail.Text = $"{UiFormat.Lessons(s.Lessons)} в неделю";
             DataDetailText.Text = $"{s.Days} дн. × {s.Slots} ур. · " +
                 (Session.DataSource == "manual" ? "Ручной ввод"
                     : Session.DataSource == "demo" ? "Демо-данные" : "Excel-импорт");
@@ -269,7 +275,7 @@ public partial class DashboardView : UserControl
         {
             _next = NextAction.Import;
             NextStepTitle.Text = "Загрузите данные школы";
-            NextStepText.Text = "Шаблон Excel → заполнить → загрузить. Это займёт несколько минут.";
+            NextStepText.Text = "Откройте «1. Школа и нагрузка» → «Мастер школы», загрузите Excel или попробуйте демо-данные.";
             NextStepBtn.Content = "Загрузить Excel";
         }
         else if (!hasActive)
@@ -290,7 +296,7 @@ public partial class DashboardView : UserControl
         {
             _next = NextAction.Export;
             NextStepTitle.Text = "Расписание готово — можно выгружать";
-            NextStepText.Text = "Заберите Excel для школы или посмотрите сетку ещё раз.";
+            NextStepText.Text = "Выгрузите расписание в Excel, HTML или CSV, либо проверьте сетку ещё раз.";
             NextStepBtn.Content = "Выгрузить";
         }
     }
@@ -382,7 +388,7 @@ public partial class DashboardView : UserControl
             return;
         }
         QualityLabelText.Text = q.Label;
-        var palette = new[] { "BWarn", "BAccentText", "BTextSoft" };
+        var palette = new[] { "BWarn", "BBad", "BTextSoft" };
         string levelKey = q.Level switch
         {
             0 => "BGood",
@@ -509,7 +515,7 @@ public partial class DashboardView : UserControl
         {
             if (!Session.HasData)
             {
-                ShowErrors(["Сначала загрузите данные школы — кнопка «Загрузить Excel» выше."]);
+                ShowErrors(["Сначала настройте школу («1. Школа и нагрузка» → «Мастер школы») или загрузите Excel / демо-данные."]);
                 return;
             }
             // P-D3: генерация — внутри оболочки (view + оркестратор), без popup.
@@ -530,11 +536,8 @@ public partial class DashboardView : UserControl
     private void OnExportClick(object sender, RoutedEventArgs e) =>
         Navigator?.NavigateTo("Export");
 
-    private void OnDataInfoClick(object sender, RoutedEventArgs e)
-    {
-        if (!Session.HasData) { ShowErrors(["Данные не загружены."]); return; }
+    private void OnDataInfoClick(object sender, RoutedEventArgs e) =>
         Navigator?.NavigateTo("Data");
-    }
 
     private void OnQualityDetailsClick(object sender, RoutedEventArgs e)
     {

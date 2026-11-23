@@ -1,15 +1,14 @@
 <UserControl x:Class="Amsur.Wpf.Views.HelpView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- P-D3: справка как view (контент из HelpWindow 1-в-1, кнопка «Закрыть» убрана —
-       в однооконной навигации она не нужна; назад — через rail). -->
+  <!-- Stage 3: актуальная справка для v2.0 (названия разделов, режимы, кнопки и расположение переключателей выверены под UI). -->
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="24" MaxWidth="860" TextElement.Foreground="{DynamicResource BText}">
       <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
         <StackPanel VerticalAlignment="Center">
           <TextBlock Style="{StaticResource TH1}" Text="Справочный центр"/>
           <TextBlock Style="{StaticResource THint}" Margin="0,4,0,0"
-                     Text="Путь работы: Данные → Профиль → Генерация → Проверка → Печать."/>
+                     Text="Путь работы: Данные → Настройки → Генерация → Проверка → Экспорт."/>
         </StackPanel>
       </StackPanel>
 
@@ -17,23 +16,23 @@
         <StackPanel>
           <TextBlock Text="Путь работы (5 шагов)" FontSize="16" FontWeight="SemiBold"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"
-                     Text="1. Данные: скачайте шаблон Excel, заполните нагрузку, загрузите файл (дни и уроки в день)."/>
+                     Text="1. Данные: откройте «1. Школа и нагрузка» — создайте школу через «Мастер школы» (параллели 1–11, 1-я/2-я смена, заполнение типовыми предметами РБ), настройте «Матрицу часов» и сетку недоступности учителей либо импортируйте Excel / демо-данные."/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
-                     Text="2. Профиль: оставьте «Стандарт» или выберите другой в настройках качества."/>
+                     Text="2. Настройки: оставьте профиль «Стандарт» или выберите «Удобно ученикам», «Удобно учителям» либо «Наш профиль» в «Настройках качества»; там же задаются правила перегрузки и черновика."/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
-                     Text="3. Генерация: выберите режим и нажмите «Сгенерировать» (F5)."/>
+                     Text="3. Генерация: выберите режим скорости на Главной и нажмите «Сгенерировать расписание» (F5)."/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
-                     Text="4. Проверка: примите лучший вариант, при желании поправьте урок вручную."/>
+                     Text="4. Проверка: сравните до 5 найденных вариантов (Hard = 0), примите любой из них, проверьте расписание в разделе «3. Расписание и правка» (по классу, учителю, кабинету или шахматкой дня) и при желании перенесите урок вручную."/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
-                     Text="5. Печать: выгрузите активное расписание в Excel/HTML. Нет времени ждать — кнопка «Собрать черновик» даст прикидку за секунды (с честными дырами)."/>
+                     Text="5. Печать и экспорт: выгрузите активное расписание в разделе «4. Выгрузка и печать» в Excel (.xlsx), HTML или CSV. Нет времени ждать — кнопка «Собрать черновик» даст быструю прикидку со списком неназначенных уроков."/>
         </StackPanel>
       </Border>
 
       <Border Style="{StaticResource Card}" Margin="0,12,0,0">
         <StackPanel>
-          <TextBlock Text="Профили" FontSize="16" FontWeight="SemiBold"/>
+          <TextBlock Text="Профили и тема оформления" FontSize="16" FontWeight="SemiBold"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"
-                     Text="Стандарт — рекомендуется. «Удобно ученикам» и «Удобно учителям» меняют только пожелания: строгие правила (ноль окон у учеников, старт не позже 2-го урока) одни для всех. «Наш профиль» — ваши сохранённые настройки."/>
+                     Text="Стандарт — рекомендуется. «Удобно ученикам» и «Удобно учителям» меняют только пожелания: строгие правила (ноль окон у учеников, старт не позже 2-го урока) одни для всех. «Наш профиль» — ваши сохранённые настройки. Переключатель «Тёмная тема» в левой панели мгновенно меняет светлую и тёмную тему и сохраняется между запусками."/>
         </StackPanel>
       </Border>
 
@@ -43,11 +42,11 @@
           <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
                      Text="Что делать, если расписание не найдено за отведённое время?"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
-                     Text="Это не «невозможно»: попробуйте режим «Максимальное качество» — больше времени на поиск."/>
+                     Text="Это не «невозможно»: выберите режим «Максимум» или «Топ-качество» — у алгоритма будет больше времени и запусков поиска."/>
           <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
                      Text="Где посмотреть, почему такая оценка?"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
-                     Text="Кнопка «Почему так?» у оценки открывает подробное объяснение по строкам расчёта."/>
+                     Text="На экране генерации подробный разбор показывается под каждой карточкой, а на Главной кнопка «Показать подробный анализ» открывает сводку по строкам расчёта."/>
           <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
                      Text="Что такое черновик?"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
@@ -59,19 +58,31 @@
           <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
                      Text="Как поправить один урок вручную?"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
-                     Text="В окне расписания выберите урок, укажите день и урок, нажмите «Проверить ход», затем «Сохранить ход»."/>
+                     Text="В разделе «3. Расписание и правка» выберите урок, укажите или кликните новый день и урок, нажмите «Проверить ход», затем «Сохранить ход»."/>
           <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
                      Text="Ошибки загрузки показывают список «что исправить»?"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
-                     Text="Да — прямо на главном экране и в окне «Школа и данные», до 8 первых замечаний."/>
+                     Text="Да — прямо на Главной и в разделе «1. Школа и нагрузка», до 8 первых замечаний."/>
           <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
                      Text="Как задать профильные пары (10А/11А — два предмета одновременно)?"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
-                     Text="Только через Excel: колонка Pair — одинаковое значение в двух строках одного класса (например, П1). Часы равные, учителя разные, сплиты в парах не участвуют. Ошибка в паре — громкое сообщение, что исправить."/>
+                     Text="Профильные пары задаются прямо в программе (в диалоге «Строка нагрузки» — поле «Профильная пара», одинаковое имя в двух строках одного класса, например П1) или через колонку Pair в Excel. Часы равные, учителя разные, сплиты в парах не участвуют. Ошибка в паре — громкое сообщение, что исправить."/>
           <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
                      Text="Как указать вторую смену (6–7-е классы)?"/>
           <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
-                     Text="Колонка Shift в Excel: 2 — вторая смена (уроки №6–12), пусто — первая (№1–8). У класса смена одна на все строки. Двухсменка требует сетку 12 уроков в день."/>
+                     Text="Вторую смену можно настроить в «Мастере школы», на вкладке «Классы» раздела «1. Школа и нагрузка» (переключите «Смена» на «2-я» — сетка автоматически расширится до 12 уроков), в диалоге «Строка нагрузки» или через колонку Shift в Excel (2 — уроки №6–12, пусто/1 — №1–8). У класса смена одна на все строки."/>
+          <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                     Text="Как задать выходные и недоступные уроки учителя?"/>
+          <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                     Text="Откройте «1. Школа и нагрузка» → вкладка «Учителя», выберите учителя, отметьте методические дни и запрещённые уроки в сетке справа и нажмите «Сохранить изменения»."/>
+          <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                     Text="Зачем жёлтый баннер предупреждений в «1. Школа и нагрузка»?"/>
+          <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                     Text="Предварительная диагностика проверяет вместимость учебной сетки и предупреждает, если классу или учителю физически не хватает доступных слотов, ещё до запуска генерации."/>
+          <TextBlock FontSize="13" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"
+                     Text="Как работает проверка СанПиН и типовые предметы РБ?"/>
+          <TextBlock Style="{StaticResource THint}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap"
+                     Text="Стартовые пресеты часов/сложности и проверка СанПиН в окне расписания носят справочный характер (NEEDS-CHECK) и требуют сверки с действующим учебным планом школы и НПА (Постановления №206 / №35)."/>
         </StackPanel>
       </Border>
 

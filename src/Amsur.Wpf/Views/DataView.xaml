@@ -6,21 +6,23 @@
   <DockPanel Margin="24" TextElement.Foreground="{DynamicResource BText}">
     <StackPanel DockPanel.Dock="Top">
       <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
-        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
-          <TextBlock Style="{DynamicResource TH1}" Text="Школа и данные"/>
-          <TextBlock x:Name="SummaryText" Style="{DynamicResource THint}" Margin="0,4,0,0" Text="Не загружены"/>
-        </StackPanel>
-        <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <TextBlock Grid.Row="0" Grid.Column="0" Style="{DynamicResource TH1}" Text="1. Школа и нагрузка" VerticalAlignment="Center" Margin="0,0,12,0"/>
+        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" x:Name="SummaryText" Style="{DynamicResource THint}" Margin="0,4,0,0" Text="Не загружены"/>
+        <WrapPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,6,2">
             <TextBlock Text="Дней:" VerticalAlignment="Center" FontSize="13"/>
-            <TextBox x:Name="DaysBox" Text="5" Width="46" Padding="4,4" TextAlignment="Center" VerticalContentAlignment="Center" Margin="5,0,8,0"/>
+            <TextBox x:Name="DaysBox" Text="5" Width="44" Padding="4,4" TextAlignment="Center" VerticalContentAlignment="Center" Margin="5,0,8,0"/>
             <TextBlock Text="Уроков:" VerticalAlignment="Center" FontSize="13"/>
-            <TextBox x:Name="SlotsBox" Text="8" Width="46" Padding="4,4" TextAlignment="Center" VerticalContentAlignment="Center" Margin="5,0,6,0"/>
-            <Button Content="Применить сетку" Style="{DynamicResource BtnSecondary}" Padding="10,6" Click="OnGridApplyClick"
+            <TextBox x:Name="SlotsBox" Text="8" Width="44" Padding="4,4" TextAlignment="Center" VerticalContentAlignment="Center" Margin="5,0,6,0"/>
+            <Button Content="Применить" Style="{DynamicResource BtnSecondary}" Padding="10,6" Click="OnGridApplyClick"
                     ToolTip="Применить количество дней и уроков к текущим данным"/>
           </StackPanel>
           <Button x:Name="WizardBtn" x:FieldModifier="public" Content="Мастер школы" Style="{DynamicResource BtnPrimary}"
@@ -81,7 +83,7 @@
                     BorderBrush="{DynamicResource BAccentBorder}" BorderThickness="1"
                     Padding="10,8" Margin="4,10,4,8">
               <TextBlock Style="{DynamicResource THCaption}" TextWrapping="Wrap"
-                         Text="Excel не обязателен: настройте школу в Мастере, матрице часов и вкладках ниже. Кнопка сохраняет правки всех вкладок."/>
+                         Text="Excel не обязателен: настройте школу в Мастере, матрице часов и справочниках сверху. Кнопка сохраняет правки всех вкладок."/>
             </Border>
             <Button x:Name="SaveAllBtn" x:FieldModifier="public" Content="Сохранить изменения" Style="{DynamicResource BtnPrimary}"
                     Margin="4,0,4,2" Padding="12,8" Click="OnSaveAllClick"
@@ -91,7 +93,7 @@
             <TextBlock Text="СПРАВОЧНИКИ" Style="{DynamicResource THCaption}" FontWeight="SemiBold" Margin="8,4,8,6"/>
             <ListBox x:Name="TabList" SelectionChanged="OnTabChanged" BorderThickness="0" Background="Transparent">
               <ListBoxItem x:Name="TabLoad" Content="Нагрузка" IsSelected="True"/>
-              <ListBoxItem x:Name="TabHours" Content="Часы"/>
+              <ListBoxItem x:Name="TabHours" Content="Нормы часов"/>
               <ListBoxItem x:Name="TabClasses" Content="Классы"/>
               <ListBoxItem x:Name="TabTeachers" Content="Учителя"/>
               <ListBoxItem x:Name="TabSubjects" Content="Предметы"/>
@@ -215,7 +217,8 @@
                              Text="0 часов удаляет предмет у класса. Подгруппы и пары с нескольких строк — через «Таблица»."/>
                   <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="Новый предмет в матрицу:" VerticalAlignment="Center" FontSize="12" FontWeight="Medium" Margin="0,0,6,0"/>
-                    <ComboBox x:Name="MatrixNewSubjectBox" IsEditable="True" Width="180" Margin="0,0,6,0"/>
+                    <ComboBox x:Name="MatrixNewSubjectBox" IsEditable="True" Width="180" Margin="0,0,6,0"
+                              wpf:InputHints.Placeholder="Выберите предмет…"/>
                     <Button Content="Добавить в список" Style="{DynamicResource BtnSecondary}" Padding="10,4"
                             Click="OnMatrixAddSubjectClick"/>
                   </StackPanel>

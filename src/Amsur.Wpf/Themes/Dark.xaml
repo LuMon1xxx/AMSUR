@@ -21,7 +21,7 @@
   <Color x:Key="CText">#ECEFF3</Color>
   <Color x:Key="CTextSoft">#A6B0BD</Color>
   <Color x:Key="CTextSecondary">#A6B0BD</Color>
-  <Color x:Key="CTextMuted">#7D8794</Color>
+  <Color x:Key="CTextMuted">#8F99A8</Color>
 
   <Color x:Key="CGood">#4ADE80</Color>
   <Color x:Key="CWarn">#FBBF24</Color>

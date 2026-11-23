@@ -105,13 +105,20 @@ public sealed class GroupRowVm
 public partial class DataView : UserControl
 {
     public IViewNavigator? Navigator { get; set; }
+    public Action? ChromeRefresh { get; set; }
     private const string None = "—";
     private static readonly string[] RoomModes = ["Универсальный", "Только вручную", "Только предмет"];
     private static readonly string[] AssignScopes = ["Класс", "Параллель"];
     private static readonly string[] AssignModes = ["Выключено", "Мягкое (подсветка)", "Строго на класс", "Строго на параллель"];
-    private static readonly string[] WeekDays = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"];
-    private static readonly string[] ShortDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+    private static readonly string[] WeekDays = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
+    private static readonly string[] ShortDays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
     private static readonly string[] ShiftLabels = ["1-я", "2-я"];
+
+    private static string ShortDayName(int dayIdx) =>
+        dayIdx >= 0 && dayIdx < ShortDays.Length ? ShortDays[dayIdx] : $"Д{dayIdx + 1}";
+
+    private static string FullDayName(int dayIdx) =>
+        dayIdx >= 0 && dayIdx < WeekDays.Length ? WeekDays[dayIdx] : $"День {dayIdx + 1}";
 
     private readonly AppSession _session;
     private ObservableCollection<LoadRowVm> _allLoad = [];
@@ -208,7 +215,8 @@ public partial class DataView : UserControl
             TabSubjects.Content = "Предметы";
             TabRooms.Content = $"Кабинеты ({_roomRows.Count})";
             TabGroups.Content = "Подгруппы";
-            TabHours.Content = $"Часы ({flex.HourNorms.Count + flex.HourOverrides.Count})";
+            int emptyHoursCount = flex.HourNorms.Count + flex.HourOverrides.Count;
+            TabHours.Content = emptyHoursCount > 0 ? $"Нормы часов ({emptyHoursCount})" : "Нормы часов";
             LoadFlexSharedTabs(flex, [], [], GridDays());
             if (clearErrorCard && _session.LastImportErrors.Count == 0)
                 ErrorCard.Visibility = Visibility.Collapsed;
@@ -216,6 +224,7 @@ public partial class DataView : UserControl
             UpdateEmptyStateVisibility();
             BuildHoursMatrix();
             BuildTeacherScheduleGrid();
+            ChromeRefresh?.Invoke();
             return;
         }
 
@@ -232,7 +241,8 @@ public partial class DataView : UserControl
         TabSubjects.Content = $"Предметы ({d.Subjects.Count})";
         TabRooms.Content = $"Кабинеты ({d.Rooms.Count})";
         TabGroups.Content = $"Подгруппы ({d.Groups.Count})";
-        TabHours.Content = $"Часы ({flex.HourNorms.Count + flex.HourOverrides.Count})";
+        int hoursCount = flex.HourNorms.Count + flex.HourOverrides.Count;
+        TabHours.Content = hoursCount > 0 ? $"Нормы часов ({hoursCount})" : "Нормы часов";
 
         _allLoad = new ObservableCollection<LoadRowVm>(_session.LoadRows
             .Select((r, i) => (Row: r, Index: i))
@@ -382,6 +392,7 @@ public partial class DataView : UserControl
         ApplyFilter();
         BuildHoursMatrix();
         BuildTeacherScheduleGrid();
+        ChromeRefresh?.Invoke();
     }
 
     private void LoadFlexSharedTabs(
@@ -474,7 +485,7 @@ public partial class DataView : UserControl
         var parts = new List<string>();
         if (dayCount > 0)
         {
-            var names = daysOff!.Where(i => i >= 0 && i < ShortDays.Length).OrderBy(i => i).Select(i => ShortDays[i]);
+            var names = daysOff!.Where(i => i >= 0).OrderBy(i => i).Select(ShortDayName);
             parts.Add($"Вых: {string.Join(",", names)}");
         }
         if (slotCount > 0) parts.Add($"{slotCount} ур.");
@@ -768,7 +779,17 @@ public partial class DataView : UserControl
         await ApplyManualRows(rows, GridDays(), GridSlots());
     }
 
-    private void OnLoadGridDoubleClick(object sender, MouseButtonEventArgs e) => OnEditClick(sender, e);
+    private void OnLoadGridDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        for (var d = e.OriginalSource as DependencyObject; d is not null; d = System.Windows.Media.VisualTreeHelper.GetParent(d))
+        {
+            if (d is DataGridRow)
+            {
+                OnEditClick(sender, e);
+                return;
+            }
+        }
+    }
 
     private void OnLoadGridKeyDown(object sender, KeyEventArgs e)
     {
@@ -1253,21 +1274,22 @@ public partial class DataView : UserControl
         if (!_workingUnavailSlots.TryGetValue(_selectedTeacher, out var unavail))
             unavail = _workingUnavailSlots[_selectedTeacher] = [];
 
-        for (int d = 0; d < Math.Min(days, ShortDays.Length); d++)
+        for (int d = 0; d < days; d++)
         {
             int dayIdx = d;
             bool isOff = daysOff.Contains(dayIdx);
+            string fullDay = FullDayName(dayIdx);
             var dayBtn = new Button
             {
-                Content = ShortDays[dayIdx],
+                Content = ShortDayName(dayIdx),
                 MinWidth = 38,
                 Padding = new Thickness(8, 4, 8, 4),
                 Margin = new Thickness(0, 0, 4, 0),
                 BorderThickness = new Thickness(1),
                 FontSize = 12,
                 FontWeight = isOff ? FontWeights.SemiBold : FontWeights.Normal,
-                ToolTip = isOff ? $"{WeekDays[dayIdx]}: методический/выходной день (нажмите, чтобы открыть)"
-                    : $"{WeekDays[dayIdx]}: рабочий день (нажмите, чтобы закрыть целиком)",
+                ToolTip = isOff ? $"{fullDay}: методический/выходной день (нажмите, чтобы открыть)"
+                    : $"{fullDay}: рабочий день (нажмите, чтобы закрыть целиком)",
             };
             dayBtn.SetResourceReference(Control.BackgroundProperty, isOff ? "BBadBg" : "BSubtle");
             dayBtn.SetResourceReference(Control.BorderBrushProperty, isOff ? "BBad" : "BBorder");
@@ -1328,6 +1350,7 @@ public partial class DataView : UserControl
                 bool dayClosed = daysOff.Contains(dayIdx);
                 bool forbidden = dayClosed || unavail.Contains((dayIdx, slotIdx));
 
+                string dayName = ShortDayName(dayIdx);
                 var cellBtn = new Button
                 {
                     Content = dayClosed ? "Вых" : forbidden ? "×" : "",
@@ -1339,10 +1362,10 @@ public partial class DataView : UserControl
                     BorderThickness = new Thickness(1),
                     IsEnabled = !dayClosed,
                     ToolTip = dayClosed
-                        ? $"{ShortDays[dayIdx]}: закрыт весь день"
+                        ? $"{dayName}: закрыт весь день"
                         : forbidden
-                            ? $"{ShortDays[dayIdx]}, {slotIdx} урок: запрещён (клик — разрешить)"
-                            : $"{ShortDays[dayIdx]}, {slotIdx} урок: разрешён (клик — запретить)",
+                            ? $"{dayName}, {slotIdx} урок: запрещён (клик — разрешить)"
+                            : $"{dayName}, {slotIdx} урок: разрешён (клик — запретить)",
                 };
                 cellBtn.SetResourceReference(Control.BackgroundProperty, forbidden ? "BBadBg" : "BCard");
                 cellBtn.SetResourceReference(Control.BorderBrushProperty, forbidden ? "BBad" : "BBorder");
@@ -1659,7 +1682,6 @@ public partial class DataView : UserControl
             var errs = _session.LastImportErrors;
             ErrorCard.Visibility = Visibility.Visible;
             ErrorList.ItemsSource = (errs.Count > 0 ? errs : new[] { ex.Message }).Take(8).ToList();
-            LoadAll(clearErrorCard: false);
         }
     }
 

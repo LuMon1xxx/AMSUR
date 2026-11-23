@@ -55,8 +55,8 @@
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
-              <TextBlock Text="Готовы создать расписание?" FontSize="19" FontWeight="SemiBold" Foreground="White"/>
-              <TextBlock Margin="0,4,0,0" FontSize="13" Foreground="White" Opacity="0.88" TextWrapping="Wrap"
+              <TextBlock x:Name="HeroTitleText" Text="Готовы создать расписание?" FontSize="19" FontWeight="SemiBold" Foreground="White"/>
+              <TextBlock x:Name="HeroSubText" Margin="0,4,0,0" FontSize="13" Foreground="White" Opacity="0.88" TextWrapping="Wrap"
                          Text="Убедитесь, что исходные данные проверены. Выберите режим справа и нажмите запуск."/>
             </StackPanel>
             <Button x:Name="HeroGenerateBtn" Grid.Column="1" VerticalAlignment="Center"
@@ -264,7 +264,7 @@
                   <TextBlock x:Name="Step5Num" Tag="5" Text="5" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource BTextSoft}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <TextBlock Text="Экспортируйте" FontSize="13" FontWeight="SemiBold" Margin="0,6,0,0" TextWrapping="Wrap"/>
-                <TextBlock Text="В Excel" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap"/>
+                <TextBlock Text="Excel / HTML / CSV" Style="{StaticResource THint}" FontSize="12" TextWrapping="Wrap"/>
               </StackPanel>
             </UniformGrid>
           </StackPanel>

@@ -90,7 +90,7 @@ public partial class ExportView : UserControl
                 .Select(p => $"{CN(p.OccurrenceId)} · день {p.DayIndex + 1}, урок {p.SlotIndex} — {SN(p.OccurrenceId)} ({TN(p.OccurrenceId)}, {UiFormat.Room(RN(p.RoomId))})")
                 .ToList();
             PreviewList.ItemsSource = ordered;
-            ScopeText.Text = $"{problem.Classes.Count} классов · {active.Placements.Count} уроков · версия {active.Number}";
+            ScopeText.Text = $"{UiFormat.Classes(problem.Classes.Count)} · {UiFormat.Lessons(active.Placements.Count)} · версия {active.Number}";
             GateText.Text = "готово к выгрузке";
             Bind(GateText, TextBlock.ForegroundProperty, "BGood");
             Bind(GateBadge, Border.BackgroundProperty, "BGoodBg");

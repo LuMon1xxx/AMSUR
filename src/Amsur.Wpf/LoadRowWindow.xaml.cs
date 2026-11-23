@@ -83,8 +83,16 @@ public partial class LoadRowWindow : Window
             ErrorText.Text = err;
             return;
         }
-        // Наследование смены: пустое поле + известный класс со сменой → смена класса.
-        shift = shiftRaw switch { "1" => 1, "2" => 2, _ => _inheritShift?.Invoke(cls) };
+        // Наследование смены: пустое поле + новая строка (или перенос в другой класс) → смена класса;
+        // при очистке поля у существующей строки этого же класса возвращаем null (1-я смена).
+        bool shouldInherit = _existing is null ||
+            !string.Equals(cls, _existing.ClassName, StringComparison.OrdinalIgnoreCase);
+        shift = shiftRaw switch
+        {
+            "1" => 1,
+            "2" => 2,
+            _ => shouldInherit ? _inheritShift?.Invoke(cls) : null,
+        };
 
         Result = new LoadRow(cls, subj, hours, teacher, split,
             split ? teacherB : null, room.Length == 0 ? null : room,

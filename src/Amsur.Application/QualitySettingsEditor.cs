@@ -51,7 +51,7 @@ public sealed class QualitySettingsEditor
             ed.Options.Add(new QualityOption
             {
                 Code = code, Title = h.Title, Kind = "Строгое",
-                Hint = $"{h.What} {h.UpDown} Дефолт: строгое (шаблон так делает). " +
+                Hint = $"{h.What} {h.UpDown} По умолчанию: строгое правило (как в профиле «Стандарт»). " +
                        $"Ослабление — только через подтверждение.",
                 IsStrict = true, Tunable = true,
                 Level = DangerousWeightToLevel(w),

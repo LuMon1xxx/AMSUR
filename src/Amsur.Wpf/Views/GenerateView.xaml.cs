@@ -66,6 +66,9 @@ public partial class GenerateView : UserControl
         // Сюда доходим только из StartOnce при живых orch+session.
         var orch = _orch!;
         var session = _session!;
+        bool acceptedDuringRun = false;
+        void OnCandidateAccepted(CandidateCardModel _) => acceptedDuringRun = true;
+        orch.CandidateAccepted += OnCandidateAccepted;
         try
         {
             // Новый запуск отменяет старый черновик: карточка не должна переживать прогон.
@@ -75,6 +78,7 @@ public partial class GenerateView : UserControl
             await Task.Run(() => orch.RunAsync(session.GenerateMode.Seeds));
             await Dispatcher.InvokeAsync(() =>
             {
+                if (!ReferenceEquals(_orch, orch) || acceptedDuringRun) return;
                 var best = _vm.Top5.Best;
                 if (best?.Candidate is not null)
                 {
@@ -99,6 +103,7 @@ public partial class GenerateView : UserControl
         }
         finally
         {
+            orch.CandidateAccepted -= OnCandidateAccepted;
             _running = false;
             _ = Dispatcher.InvokeAsync(() =>
             {

@@ -258,8 +258,13 @@ public static class SchoolDataImporter
                     s.IsNonLesson = true;
                 var subLim = flex.SubjectLimits?.FirstOrDefault(x =>
                     string.Equals(x.SubjectName, key, StringComparison.OrdinalIgnoreCase));
-                if (subLim is { MaxPerDay: >= 1 and <= 6 })
+                if (subLim is not null)
+                {
+                    if (subLim.MaxPerDay < 1 || subLim.MaxPerDay > 6)
+                        throw new InvalidOperationException(
+                            $"Предмет '{key}': максимум в день — 1..6 (задано {subLim.MaxPerDay}).");
                     s.MaxPerDay = subLim.MaxPerDay;
+                }
                 // R6: явная сложность предмета (1..10) бьёт дефолт 5.
                 var diff = flex.SubjectDifficulty.FirstOrDefault(x =>
                     string.Equals(x.SubjectName, key, StringComparison.OrdinalIgnoreCase));
